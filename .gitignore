@@ -21,3 +21,7 @@ DOOM64.WDD
 compile_commands.json
 .vscode/
 .idea/
+
+# Rust build output
+/renderer/target/
+target/

@@ -307,20 +307,89 @@ static s32 vbl_now(void)
 /* ------------------------------------------------------------------ */
 /* events                                                             */
 /* ------------------------------------------------------------------ */
-static void save_screenshot(void)
+static void save_screenshot_named(const char *name)
 {
     int w = 0, h = 0;
     SDL_Surface *s;
-    char name[256];
     SDL_GetWindowSizeInPixels(window, &w, &h);
+    /* the game area is 4:3; save it at the window's height */
+    w = h * 4 / 3;
     s = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_ABGR8888);
     if (!s)
         return;
     d64gfx_read_frame((uint8_t *)s->pixels, (uint32_t)w, (uint32_t)h);
-    SDL_snprintf(name, sizeof(name), "doom64rtx_%llu.bmp", (unsigned long long)SDL_GetTicks());
     SDL_SaveBMP(s, name);
     SDL_DestroySurface(s);
     SDL_Log("Saved %s", name);
+}
+
+static void save_screenshot(void)
+{
+    char name[256];
+    SDL_snprintf(name, sizeof(name), "doom64rtx_%llu.bmp", (unsigned long long)SDL_GetTicks());
+    save_screenshot_named(name);
+}
+
+/* Automated testing: D64_SHOTS="frame,frame,..." saves shot_<frame>.bmp,
+ * D64_QUIT_AT=<frame> exits, D64_PRESS="frame:button,..." taps pad buttons
+ * (button = hex mask of the high 16 bits). */
+static unsigned frame_no;
+
+static int list_has(const char *list, unsigned v)
+{
+    while (list && *list)
+    {
+        if ((unsigned)SDL_strtoul(list, NULL, 10) == v)
+            return 1;
+        list = SDL_strchr(list, ',');
+        if (list) list++;
+    }
+    return 0;
+}
+
+static int test_pad_buttons(void)
+{
+    const char *p = SDL_getenv("D64_PRESS");
+    int pad = 0;
+    while (p && *p)
+    {
+        char *end;
+        unsigned f = (unsigned)SDL_strtoul(p, &end, 10);
+        unsigned len = 4;
+        if (*end == ':')
+        {
+            unsigned mask = (unsigned)SDL_strtoul(end + 1, &end, 16);
+            if (*end == '/')
+                len = (unsigned)SDL_strtoul(end + 1, &end, 10);
+            if (frame_no >= f && frame_no < f + len)
+                pad |= (int)(mask << 16);
+        }
+        p = SDL_strchr(p, ',');
+        if (p) p++;
+    }
+    return pad;
+}
+
+static void test_hooks(void)
+{
+    const char *q = SDL_getenv("D64_QUIT_AT");
+    frame_no++;
+    if (list_has(SDL_getenv("D64_SHOTS"), frame_no))
+    {
+        char name[64];
+        SDL_snprintf(name, sizeof(name), "shot_%04u.bmp", frame_no);
+        save_screenshot_named(name);
+    }
+    if (q && frame_no >= (unsigned)SDL_strtoul(q, NULL, 10))
+    {
+        const gbistats_t *st = GBI_Stats();
+        SDL_Log("D64_QUIT_AT reached (last frame: %u cmds, %u verts, %u tex uploads)",
+                st->cmds, st->vertices, st->tex_uploads);
+        d64gfx_shutdown();
+        destroy_window();
+        SDL_Quit();
+        exit(0);
+    }
 }
 
 void I_PCToggleRaytracing(void)
@@ -402,6 +471,7 @@ int I_GetControllerData(void)
         last_pad = IN_ReadPad();
     else
         last_pad = 0;
+    last_pad |= test_pad_buttons();
     return last_pad;
 }
 
@@ -539,6 +609,7 @@ void I_DrawFrame(void)
         I_Error("I_DrawFrame: VTX Overflow by %d\n", index);
 
     submit_frame();
+    test_hooks();
     pump_events();
     I_PCAudioUpdate();
 

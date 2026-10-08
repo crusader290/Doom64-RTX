@@ -73,10 +73,35 @@ cmake --build build
 ```
 Windows cross-compile from Linux: `cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake`.
 
+## Testing without a GPU (works in the cloud container)
+Mesa's llvmpipe (OpenGL 4.5) and lavapipe (Vulkan 1.4 **with VK_KHR_ray_query and
+VK_KHR_acceleration_structure**) run under Xvfb, so every backend can be exercised headless:
+```
+Xvfb :99 -screen 0 1280x1024x24 &
+cd <dir with the ROM>
+DISPLAY=:99 D64_HEADLESS=1 D64_SHOTS=200,500 D64_QUIT_AT=501 ./doom64rtx -gl     # or -vulkan, -rt
+```
+Test hooks (src/port/i_main_pc.c): `D64_SHOTS` = frames to save as shot_NNNN.bmp,
+`D64_QUIT_AT` = exit at frame, `D64_PRESS="frame:hexmask[/len],..."` = tap N64 buttons
+(mask = high 16 bits of the pad word, e.g. 1000 = START, 8000 = A), `D64_HEADLESS` = no
+message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
+`-DD64_NULL_RENDERER=ON` builds without the Rust renderer (prints frame stats).
+
 ## Session log
 ### 2026-10-08 — session 1 (restarted several times; earlier attempts left nothing pushed)
 - Lesson: **commit + push early and often**; previous workers were restarted and lost all work.
 - Imported DOOM64-RE sources (commit 6931e678a0b2958be1b49598f2fe60712c6596e1) into src/doom64.
 - Reference doom64-rt at 750c1d84f87546de38fe8ad774da59ff6a606ed0.
+- Bugs found & fixed while bringing it up (watch for the same classes elsewhere):
+  - `W_CheckNumForName` masks name words with `0x7fffffff` (big-endian) -> byte-swap masks.
+  - `P_GroupLines` allocated `total*4` for an array of pointers -> heap corruption on 64-bit.
+  - Header-defined globals (`R_RenderSKY`, `gametic`) need `extern` with modern GCC (-fno-common).
+  - `boolean` enum clashed with stdbool's `true/false` macros pulled in by SDL -> `typedef int`.
+  - LoadTLUT must read from the start of the texture image (not the load tile's stale `uls`);
+    wrong palettes looked like noise and also defeated the texture cache.
+  - Asset headers (`spriteN64_t`, `textureN64_t`, `gfxN64_t`) are big-endian -> `BE16()` on reads;
+    demo lumps are big-endian ints -> swapped after `W_ReadLump`; passwords keep N64 byte order.
+- Milestone: OpenGL fallback renders the legal screen and the title-map demo correctly
+  (docs/img/gl_title_demo.png).
 - Container setup used: `apt-get install glslang-tools mingw-w64 libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.

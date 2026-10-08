@@ -277,7 +277,8 @@ static void tmem_load_tlut(int tile, int count)
     const uint8_t *src;
     if (!rdp.timg)
         return;
-    src = rdp.timg + (t->uls >> 2) * 2;
+    /* gDPLoadTLUTCmd always loads from the start of the texture image */
+    src = rdp.timg;
     for (i = 0; i <= count; i++)
         for (lane = 0; lane < 4; lane++)
         {
@@ -508,6 +509,20 @@ static uint32_t texture_for_tile(int tidx)
         for (x = 0; x < w; x++)
             tmem_fetch(tl, x, y, rgba + ((size_t)y * w + x) * 4);
     id = d64gfx_texture_create((uint32_t)w, (uint32_t)h, rgba);
+    if (getenv("D64_DUMPTEX"))
+    {   /* debug: write every uploaded texture as a PAM file */
+        static int dumped;
+        char name[96];
+        FILE *f;
+        snprintf(name, sizeof(name), "tex_%04d_f%d_s%d_%dx%d.pam", dumped++, tl->fmt, tl->siz, w, h);
+        f = fopen(name, "wb");
+        if (f)
+        {
+            fprintf(f, "P7\nWIDTH %d\nHEIGHT %d\nDEPTH 4\nMAXVAL 255\nTUPLTYPE RGB_ALPHA\nENDHDR\n", w, h);
+            fwrite(rgba, 4, (size_t)w * h, f);
+            fclose(f);
+        }
+    }
     free(rgba);
     stats.tex_uploads++;
 

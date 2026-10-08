@@ -1,0 +1,24 @@
+[package]
+name = "d64gfx"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Doom64-RTX renderer: Vulkan (ash) raster + ray tracing, OpenGL fallback (glow)"
+
+[lib]
+crate-type = ["staticlib"]
+path = "src/lib.rs"
+
+[dependencies]
+ash = { version = "0.38", default-features = false, features = ["std", "debug"] }
+glow = "0.14"
+
+[profile.release]
+opt-level = 3
+debug = false
+panic = "abort"
+lto = "thin"
+
+[profile.dev]
+panic = "abort"
+opt-level = 1
