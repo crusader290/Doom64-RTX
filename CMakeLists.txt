@@ -162,4 +162,10 @@ endif()
 
 if(WIN32)
   set_target_properties(doom64rtx PROPERTIES WIN32_EXECUTABLE OFF)
+  # ship SDL3.dll next to the executable
+  add_custom_command(TARGET doom64rtx POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:SDL3::SDL3> $<TARGET_FILE_DIR:doom64rtx>)
+  if(MINGW)
+    target_link_options(doom64rtx PRIVATE -static-libgcc)
+  endif()
 endif()

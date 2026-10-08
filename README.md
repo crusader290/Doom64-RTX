@@ -28,7 +28,7 @@ temporal accumulation and denoising). No code is shared with that project.
 | Vulkan raster renderer | working |
 | Vulkan ray traced world | in progress |
 | Sound and music (WESS / N64 synth) | in progress (silent for now) |
-| Windows build | in progress |
+| Windows build (MinGW-w64) | builds; runtime test pending |
 | Saves (Controller Pak emulation) | working, needs more testing |
 
 See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
@@ -118,14 +118,14 @@ cmake --build build
 
 ### Windows
 
-With Visual Studio 2022 and Rust (`x86_64-pc-windows-msvc`):
+Experimental (CI runs it, not yet verified) with Visual Studio 2022 and Rust (`x86_64-pc-windows-msvc`):
 
 ```bat
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 cmake --build build --config Release
 ```
 
-Or cross-compile from Linux with MinGW-w64 (`rustup target add x86_64-pc-windows-gnu`):
+Supported: cross-compile from Linux with MinGW-w64 (`rustup target add x86_64-pc-windows-gnu`):
 
 ```sh
 cmake -S . -B build-win -G Ninja -DCMAKE_BUILD_TYPE=Release \

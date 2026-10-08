@@ -35,8 +35,13 @@ static inline uint32_t d64_bswap32(uint32_t v)
 {
     return (v >> 24) | ((v >> 8) & 0xff00u) | ((v & 0xff00u) << 8) | (v << 24);
 }
-#define BE16(x) ((__typeof__(x))d64_bswap16((uint16_t)(x)))
-#define BE32(x) ((__typeof__(x))d64_bswap32((uint32_t)(x)))
+/* C11 _Generic keeps the field's signedness (MSVC has no __typeof__ in C). */
+#define BE16(x) _Generic((x), \
+    unsigned short: (unsigned short)d64_bswap16((uint16_t)(x)), \
+    default: (short)d64_bswap16((uint16_t)(x)))
+#define BE32(x) _Generic((x), \
+    unsigned int: (unsigned int)d64_bswap32((uint32_t)(x)), \
+    default: (int)d64_bswap32((uint32_t)(x)))
 
 /* The original printf-alike took a hand-rolled argument pointer. */
 #define D_vsprintf(buf, fmt, args) vsprintf((buf), (fmt), (args))

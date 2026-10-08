@@ -1,0 +1,69 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build \
+            libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev \
+            libwayland-dev libxkbcommon-dev libegl-dev libgl-dev libdecor-0-dev \
+            libasound2-dev libpulse-dev libudev-dev libdbus-1-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp build/doom64rtx dist/
+          cp build/_deps/sdl3-build/libSDL3.so* dist/ 2>/dev/null || true
+          cp README.md LICENSE dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doom64rtx-linux-x86_64
+          path: dist
+
+  windows-mingw:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MinGW-w64
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build mingw-w64
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-gnu
+      - name: Configure
+        run: cmake -S . -B build-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake
+      - name: Build
+        run: cmake --build build-win
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp build-win/doom64rtx.exe build-win/SDL3.dll README.md LICENSE dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: doom64rtx-windows-x86_64
+          path: dist
+
+  windows-msvc:
+    runs-on: windows-2022
+    continue-on-error: true   # experimental: GCC/MinGW is the supported Windows toolchain
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Configure
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+      - name: Build
+        run: cmake --build build --config Release
