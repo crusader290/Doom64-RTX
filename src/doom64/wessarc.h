@@ -138,7 +138,7 @@ typedef struct
 typedef struct
 {
 	track_header	*trk_hdr;//*
-	unsigned long	*plabellist;//*4
+	unsigned int	*plabellist;//*4
 	char			*ptrk_data;//*8
 }track_data;
 
@@ -306,17 +306,17 @@ typedef struct
 	unsigned short	qpm;			//*22
 	unsigned short	labellist_count;//*24
 	unsigned short	labellist_max;	//*26
-	unsigned long   ppi;			//*28
-	unsigned long	starppi;		//*32
+	unsigned int   ppi;			//*28
+	unsigned int	starppi;		//*32
 	unsigned int	accppi;			//*36
 	unsigned int	totppi;			//*40
 	unsigned int	endppi;			//*44
 	unsigned char	*pstart;		//*48
 	unsigned char	*ppos;			//*52
-	unsigned long	*plabellist;	//*56
-	unsigned long	*psubstack;		//*60
+	unsigned int	*plabellist;	//*56
+	unsigned int	*psubstack;		//*60
 	unsigned char	*psp;			//*64
-	unsigned long	*pstackend;		//*68
+	unsigned int	*pstackend;		//*68
 	unsigned int	data_size;		//*72
 	unsigned int	data_space;		//*76
 }track_status;
@@ -333,12 +333,12 @@ typedef struct
 	unsigned char		sndtype;		//*7
 	patchmaps_header 	*patchmaps;		//*8
 	patchinfo_header 	*patchinfo;		//*12 /* offset to wavetable struct           */
-	unsigned long		pabstime;		//*16
+	unsigned int		pabstime;		//*16
 }voice_status;//size 24 bytes
 
 typedef struct
 {
-	unsigned long		*pabstime;				//*---
+	unsigned int		*pabstime;				//*---
 	unsigned char		seqs_active;			//*4
 	unsigned char		trks_active;			//*5
 	unsigned char		voices_active;			//*6
@@ -395,7 +395,7 @@ extern int wess_driver_max_subs_per_trk;
 extern int enabledecay;
 
 extern int SeqOn;
-extern unsigned long millicount;
+extern unsigned int millicount;
 extern int WessTimerActive;
 
 
@@ -422,7 +422,7 @@ extern void wess_low_level_init(void);//L8003531C()
 extern void wess_low_level_exit(void);//L80035324()
 
 extern short GetIntsPerSec(void);
-extern unsigned long CalcPartsPerInt(short ips,short ppq,short qpm);
+extern unsigned int CalcPartsPerInt(short ips,short ppq,short qpm);
 
 extern void init_WessTimer(void);
 extern void exit_WessTimer(void);
@@ -434,15 +434,15 @@ extern void wess_free(char *mem);
 extern Wess_File_IO_Struct *module_open(char *filename);
 extern int module_read(void *destptr, int readbytes, Wess_File_IO_Struct *fileptr);
 extern int module_seek(Wess_File_IO_Struct *fileptr, int seekpos, int seekmode);
-extern unsigned long module_tell(Wess_File_IO_Struct *fileptr);
+extern unsigned int module_tell(Wess_File_IO_Struct *fileptr);
 extern void module_close(Wess_File_IO_Struct *fileptr);
 
-extern int wess_decomp(unsigned char decomp_type, char *fileref, unsigned long file_offset, char *ramdest, unsigned long uncompressed_size);
+extern int wess_decomp(unsigned char decomp_type, char *fileref, unsigned int file_offset, char *ramdest, unsigned int uncompressed_size);
 extern void wess_enable(void);
 extern void wess_disable(void);
 
 
-extern long WessInterruptHandler(void);
+extern int WessInterruptHandler(void);
 
 typedef void(*WessAction)(track_status *ptmp, int value);
 

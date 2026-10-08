@@ -37,14 +37,14 @@ int wess_driver_max_subs_per_trk = 0;       // 8005D97C
 
 int WessTimerActive = 0;        // 8005D984
 int T2counter = 0;              // 8005D988
-unsigned long millicount = 0;   // 8005D98C
+unsigned int millicount = 0;   // 8005D98C
 int SeqOn = 0;                  // 8005D990
-unsigned long accmpi = 0;       // 8005D994
+unsigned int accmpi = 0;       // 8005D994
 int disabledeep = 0;            // 8005D998
 
 WessErrorCallbackProc wesserr;  // 800B4210
 WessDecompCallbackProc wessdecomp; // 800B4214
-long imask; // 800B4218
+int imask; // 800B4218
 
 void wess_set_error_callback(WessErrorCallbackProc errcall) // 80035290
 {
@@ -66,9 +66,9 @@ void wess_set_decomp_callback(WessDecompCallbackProc decompcall) // 800352C8
 
 int wess_decomp(unsigned char decomp_type,
 	char          *fileref,
-	unsigned long file_offset,
+	unsigned int file_offset,
 	char          *ramdest,
-	unsigned long uncompressed_size) // 800352D4
+	unsigned int uncompressed_size) // 800352D4
 {
 	if (wessdecomp != 0)
 	{
@@ -132,10 +132,10 @@ short GetIntsPerSec(void) // 800353DC
 }
 
 
-unsigned long CalcPartsPerInt(short ips, short ppq, short qpm) // 800353E4
+unsigned int CalcPartsPerInt(short ips, short ppq, short qpm) // 800353E4
 {
-	register unsigned long arg0;
-	register unsigned long ppi;
+	register unsigned int arg0;
+	register unsigned int ppi;
 
     __ll_mul((s32) qpm >> 31, qpm, 0, (1<<16));
     asm("move	%0,$2":"=r"(arg0) : );
@@ -152,7 +152,7 @@ unsigned long CalcPartsPerInt(short ips, short ppq, short qpm) // 800353E4
     return (u32) ppi;
 }
 
-long WessInterruptHandler(void) // 80035458
+int WessInterruptHandler(void) // 80035458
 {
 	accmpi += 0x85555;
 	millicount += (accmpi >> 16);
@@ -214,9 +214,9 @@ int module_seek(Wess_File_IO_Struct *fileptr, int seekpos, int seekmode) // 8003
 	return 0;
 }
 
-unsigned long module_tell(Wess_File_IO_Struct *fileptr) // 800355B0
+unsigned int module_tell(Wess_File_IO_Struct *fileptr) // 800355B0
 {
-	return (unsigned long)fileptr->src;
+	return (unsigned int)fileptr->src;
 }
 
 void module_close(Wess_File_IO_Struct *fileptr) // 800355BC

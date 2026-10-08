@@ -9,6 +9,7 @@
 #include "ultra64.h"
 
 typedef s32 ALMicroTime;
+typedef void ALWaveTable; /* WESS passes its own ALWaveTable2 */
 typedef u8  ALPan;
 typedef s32 ALFxId;
 

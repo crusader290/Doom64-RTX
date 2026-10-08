@@ -18,7 +18,7 @@ enum HandleFlag { NoHandle, YesHandle };
 /* used by wess_seq_stop and wess_seq_stop_and_voiceramp functions */
 enum MuteRelease { NoMuteRelease, YesMuteRelease};
 
-void wess_seq_trigger_type(int seq_num, unsigned long seq_type) // 80032160
+void wess_seq_trigger_type(int seq_num, unsigned int seq_type) // 80032160
 {
 	sequence_data *psq_info;
 
@@ -27,7 +27,7 @@ void wess_seq_trigger_type(int seq_num, unsigned long seq_type) // 80032160
 	wess_seq_structrig(psq_info, seq_num, seq_type, NoHandle, NULL);
 }
 
-void wess_seq_trigger_type_special(int seq_num, unsigned long seq_type, TriggerPlayAttr *attr) // 800321A8
+void wess_seq_trigger_type_special(int seq_num, unsigned int seq_type, TriggerPlayAttr *attr) // 800321A8
 {
 	sequence_data *psq_info;
 
@@ -121,9 +121,9 @@ void updatetrackstat(track_status *ptk_stat, TriggerPlayAttr *attr) // 800321FC
 	}
 }
 
-void wess_seq_update_type_special(unsigned long seq_type, TriggerPlayAttr *attr) // 80032460
+void wess_seq_update_type_special(unsigned int seq_type, TriggerPlayAttr *attr) // 80032460
 {
-    unsigned long _seq_type;
+    unsigned int _seq_type;
     TriggerPlayAttr *_attr;
 
     _seq_type = seq_type;
@@ -132,25 +132,25 @@ void wess_seq_update_type_special(unsigned long seq_type, TriggerPlayAttr *attr)
 	wess_disable();
 
 	queue_the_function(QUEUE_SEQ_UPDATE_TYPE_SPECIAL);
-	queue_the_data(&_seq_type, sizeof(unsigned long));
+	queue_the_data(&_seq_type, sizeof(unsigned int));
 	queue_the_data(&_attr, sizeof(TriggerPlayAttr));
 
 	wess_enable();
 }
 
-void queue_wess_seq_update_type_special(unsigned long seq_type, TriggerPlayAttr *attr);
+void queue_wess_seq_update_type_special(unsigned int seq_type, TriggerPlayAttr *attr);
 
 void run_queue_wess_seq_update_type_special(void) // 800324AC
 {
-	unsigned long seq_type;
+	unsigned int seq_type;
 	TriggerPlayAttr attr;
 
-	unqueue_the_data(&seq_type, sizeof(unsigned long));
+	unqueue_the_data(&seq_type, sizeof(unsigned int));
 	unqueue_the_data(&attr, sizeof(TriggerPlayAttr));
 	queue_wess_seq_update_type_special(seq_type, &attr);
 }
 
-void queue_wess_seq_update_type_special(unsigned long seq_type, TriggerPlayAttr *attr) // 800324E8
+void queue_wess_seq_update_type_special(unsigned int seq_type, TriggerPlayAttr *attr) // 800324E8
 {
 	/* immediate stop of sequence */
 	char nt, na;
@@ -159,7 +159,7 @@ void queue_wess_seq_update_type_special(unsigned long seq_type, TriggerPlayAttr 
 	char *lpdest;
 	int li, lj;
 
-	unsigned long _seq_type;
+	unsigned int _seq_type;
 	TriggerPlayAttr *_attr;
 
 	_seq_type = seq_type;
@@ -211,13 +211,13 @@ void queue_wess_seq_update_type_special(unsigned long seq_type, TriggerPlayAttr 
 	wess_enable();
 }
 
-int wess_seq_type_status(unsigned long sequence_type) // 8003266C
+int wess_seq_type_status(unsigned int sequence_type) // 8003266C
 {
 	char nt, na;
 	sequence_status *psq_stat;
 	int status;
 
-	unsigned long _sequence_type;
+	unsigned int _sequence_type;
 
 	_sequence_type = sequence_type;
 
@@ -262,12 +262,12 @@ int wess_seq_type_status(unsigned long sequence_type) // 8003266C
 	return(status);
 }
 
-void __wess_seq_stoptype(unsigned long sequence_type, enum MuteRelease mrelease, int millisec) // 80032758
+void __wess_seq_stoptype(unsigned int sequence_type, enum MuteRelease mrelease, int millisec) // 80032758
 {
 	char nt, na;
 	sequence_status *psq_stat;
 
-	unsigned long _sequence_type;
+	unsigned int _sequence_type;
 	enum MuteRelease _mrelease;
 	int _millisec;
 
@@ -318,37 +318,37 @@ void __wess_seq_stoptype(unsigned long sequence_type, enum MuteRelease mrelease,
 	wess_enable();
 }
 
-void wess_seq_stoptype(unsigned long sequence_type) // 80032868
+void wess_seq_stoptype(unsigned int sequence_type) // 80032868
 {
 	__wess_seq_stoptype(sequence_type, NoMuteRelease, 0);
 }
 
-void wess_seq_stoptype_and_voiceramp(unsigned long sequence_type, int millisec) // 8003288C
+void wess_seq_stoptype_and_voiceramp(unsigned int sequence_type, int millisec) // 8003288C
 {
 	__wess_seq_stoptype(sequence_type, YesMuteRelease, millisec);
 }
 
-void queue_wess_seq_stoptype(unsigned long sequence_type, enum MuteRelease mrelease, int millisec);
+void queue_wess_seq_stoptype(unsigned int sequence_type, enum MuteRelease mrelease, int millisec);
 
 void run_queue_wess_seq_stoptype(void) // 800328B0
 {
-	unsigned long sequence_type;
+	unsigned int sequence_type;
 
-	unqueue_the_data(&sequence_type, sizeof(unsigned long));
+	unqueue_the_data(&sequence_type, sizeof(unsigned int));
 	queue_wess_seq_stoptype(sequence_type, NoMuteRelease, 0);
 }
 
 void run_queue_wess_seq_stoptype_and_voiceramp(void) // 800328E4
 {
 	int millisec;
-	unsigned long sequence_type;
+	unsigned int sequence_type;
 
 	unqueue_the_data(&millisec, sizeof(int));
-	unqueue_the_data(&sequence_type, sizeof(unsigned long));
+	unqueue_the_data(&sequence_type, sizeof(unsigned int));
 	queue_wess_seq_stoptype(sequence_type, YesMuteRelease, millisec);
 }
 
-void queue_wess_seq_stoptype(unsigned long sequence_type, enum MuteRelease mrelease, int millisec) // 80032924
+void queue_wess_seq_stoptype(unsigned int sequence_type, enum MuteRelease mrelease, int millisec) // 80032924
 {
 	char nt, na;
 	sequence_status *psq_stat;
@@ -357,7 +357,7 @@ void queue_wess_seq_stoptype(unsigned long sequence_type, enum MuteRelease mrele
 	int li, lj;
 	int get_millisec;
 
-	unsigned long _sequence_type;
+	unsigned int _sequence_type;
 	enum MuteRelease _mrelease;
 	int _millisec;
 

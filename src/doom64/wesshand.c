@@ -390,7 +390,7 @@ void wess_handle_fastsettempo(int handle, short tempo) // 80033658
 
 	int li, lj;
 	char *lpdest;
-	unsigned long ppi;
+	unsigned int ppi;
 
 	int _handle;
 	short _tempo;

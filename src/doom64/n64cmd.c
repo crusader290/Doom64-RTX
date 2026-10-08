@@ -99,9 +99,9 @@ master_status_structure		*pmsbase;				// 800B66F0
 sequence_status				*pssbase;				// 800B66F4
 track_status				*ptsbase;				// 800B66F8
 voice_status				*pvsbase;				// 800B66FC
-unsigned long				nvss;					// 800B6700
+unsigned int				nvss;					// 800B6700
 patch_group_data			*ppgd;					// 800B6704
-unsigned long				*pcurabstime;			// 800B6708
+unsigned int				*pcurabstime;			// 800B6708
 patches_header				*patchesbase;			// 800B670C
 patchmaps_header			*patchmapsbase;			// 800B6710
 patchinfo_header			*samplesbase;			// 800B6714
@@ -241,22 +241,22 @@ f32 WessCents2Ratio(s32 cents) // 80037A00
 	return ratio * wess_output_ratio;
 }
 
-/*extern unsigned long				drv_pitch1;				//L8007EEB8
-extern unsigned long				drv_pitch2;				//L8007EEBC
-extern unsigned long				drv_pitch3;				//L8007EEC0
-extern unsigned long				drv_volume_1;			//L8007EEC4
+/*extern unsigned int				drv_pitch1;				//L8007EEB8
+extern unsigned int				drv_pitch2;				//L8007EEBC
+extern unsigned int				drv_pitch3;				//L8007EEC0
+extern unsigned int				drv_volume_1;			//L8007EEC4
 extern track_status				    *drv_ptrk_stat;			//L8007EEC8
 extern short				        drv_pan_1;				//L8007EECC*/
 
 void TriggerN64Voice(voice_status *voice_stat) // 80037A64
 {
 	static track_status		*pts;	  //800B697C
-	static long				adjvol;	  //800B6980
+	static int				adjvol;	  //800B6980
 	static short			adjpan;	  //800B6984
-	static long				adjpitch; //800B6988
+	static int				adjpitch; //800B6988
 	static ALVoiceConfig	config;	  //800b698c
 	static float			pitch;	  //800B6994
-	static long				deltatime;//800B6998
+	static int				deltatime;//800B6998
 
 	u32 volume;
 	s32 priority;
@@ -365,49 +365,49 @@ void N64_DriverInit (track_status *ptk_stat) // 80037DA8
 
 	patchesbase = (patches_header *)pmem;
 	pmem += (unsigned int)(ppgd->pat_grp_hdr.patches * sizeof(patches_header));
-	//pmem = ((unsigned int)pmem + 7) & ~7;	/* phrase align everything */
+	//pmem = ((unsigned int)(uintptr_t)pmem + 7) & ~7;	/* phrase align everything */
 #if _ALIGN8_ == 1
 	//force align to word boundary because previous size adjust
 	//may wind up with odd address
-	pmem += (unsigned int)pmem & 1;
-	pmem += (unsigned int)pmem & 2;
-	pmem += (unsigned int)pmem & 4;
+	pmem += (unsigned int)(uintptr_t)pmem & 1;
+	pmem += (unsigned int)(uintptr_t)pmem & 2;
+	pmem += (unsigned int)(uintptr_t)pmem & 4;
 #endif
     //PRINTF_D(WHITE,"patchesbase %d",(ppgd->pat_grp_hdr.patches));//588
 
 	patchmapsbase = (patchmaps_header *)pmem;
 	pmem += (unsigned int)(ppgd->pat_grp_hdr.patchmaps * sizeof(patchmaps_header));
-	//pmem = ((unsigned int)pmem + 7) & ~7;	/* phrase align everything */
+	//pmem = ((unsigned int)(uintptr_t)pmem + 7) & ~7;	/* phrase align everything */
 #if _ALIGN8_ == 1
 	//force align to word boundary because previous size adjust
 	//may wind up with odd address
-	pmem += (unsigned int)pmem & 1;
-	pmem += (unsigned int)pmem & 2;
-	pmem += (unsigned int)pmem & 4;
+	pmem += (unsigned int)(uintptr_t)pmem & 1;
+	pmem += (unsigned int)(uintptr_t)pmem & 2;
+	pmem += (unsigned int)(uintptr_t)pmem & 4;
 #endif
     //PRINTF_D(WHITE,"patchmapsbase %d",(ppgd->pat_grp_hdr.patchmaps));//10100
 
 	samplesbase = (patchinfo_header *)pmem;
 	pmem += (unsigned int)(ppgd->pat_grp_hdr.patchinfo * sizeof(patchinfo_header));
-	//pmem = ((unsigned int)pmem + 7) & ~7;	/* phrase align everything */
+	//pmem = ((unsigned int)(uintptr_t)pmem + 7) & ~7;	/* phrase align everything */
 #if _ALIGN8_ == 1
 	//force align to word boundary because previous size adjust
 	//may wind up with odd address
-	pmem += (unsigned int)pmem & 1;
-	pmem += (unsigned int)pmem & 2;
-	pmem += (unsigned int)pmem & 4;
+	pmem += (unsigned int)(uintptr_t)pmem & 1;
+	pmem += (unsigned int)(uintptr_t)pmem & 2;
+	pmem += (unsigned int)(uintptr_t)pmem & 4;
 #endif
     //PRINTF_D(WHITE,"samplesbase %d",(ppgd->pat_grp_hdr.patchinfo));//2976
 
 	drummapsbase = (char *)pmem;
 	pmem += (unsigned int)(ppgd->pat_grp_hdr.drummaps * sizeof(char *));
-	//pmem = ((unsigned int)pmem + 7) & ~7;	/* phrase align everything */
+	//pmem = ((unsigned int)(uintptr_t)pmem + 7) & ~7;	/* phrase align everything */
 #if _ALIGN8_ == 1
 	//force align to word boundary because previous size adjust
 	//may wind up with odd address
-	pmem += (unsigned int)pmem & 1;
-	pmem += (unsigned int)pmem & 2;
-	pmem += (unsigned int)pmem & 4;
+	pmem += (unsigned int)(uintptr_t)pmem & 1;
+	pmem += (unsigned int)(uintptr_t)pmem & 2;
+	pmem += (unsigned int)(uintptr_t)pmem & 4;
 #endif
     //PRINTF_D(WHITE,"drummapsbase %d",(ppgd->pat_grp_hdr.drummaps * sizeof(char *)));
 
@@ -475,8 +475,8 @@ void N64_DriverExit (track_status *ptk_stat) // 8003806C
 
 void N64_DriverEntry1 (track_status *ptk_stat) // 80038074
 {
-    static unsigned long	vn;		//800B69A0
-	static unsigned long	vi;		//800B69A4
+    static unsigned int	vn;		//800B69A0
+	static unsigned int	vi;		//800B69A4
 	static voice_status		*pvs;	//800B69A8
 
 	//printf("N64_DriverEntry1\n");
@@ -546,8 +546,8 @@ void N64_TrkOff(track_status *ptk_stat) // 800381BC
 
 void N64_TrkMute(track_status *ptk_stat) // 80038254
 {
-	static unsigned long	vn;		//800B69B0
-	static unsigned long	vi;		//800B69B4
+	static unsigned int	vn;		//800B69B0
+	static unsigned int	vi;		//800B69B4
 	static voice_status	    *pvs;	//800B69B8
 	static sequence_status	*pss;	//800B69BC
 
@@ -601,12 +601,12 @@ void N64_PatchMod(track_status *ptk_stat) // 8003841C
 
 void N64_PitchMod(track_status *ptk_stat) // 80038424
 {
-	static unsigned long	vn;				//800B69C4
-	static unsigned long	vi;				//800B69C8
+	static unsigned int	vn;				//800B69C4
+	static unsigned int	vi;				//800B69C8
 	static voice_status		*pvs;			//800B69CC
 	static short			thepitchmod;	//800B69D0
 	static f32				pitch;			//800B69D4
-	static unsigned long	adjpitch;		//800B69D8
+	static unsigned int	adjpitch;		//800B69D8
 
 	//PRINTF_D2(WHITE,0,7,"N64_PitchMod");
 
@@ -666,9 +666,9 @@ void N64_ModuMod(track_status *ptk_stat) // 800386D0
 
 void N64_VolumeMod(track_status *ptk_stat) // 800386D8
 {
-	static unsigned long	vn;		//800B69DC
-	static unsigned long	vi;		//800B69E0
-	static unsigned long	adjvol;				//800B69E4
+	static unsigned int	vn;		//800B69DC
+	static unsigned int	vi;		//800B69E0
+	static unsigned int	adjvol;				//800B69E4
 	static voice_status		*pvs;			//800B69E8
 	static unsigned char	thevolmod;			//800B69EC
 
@@ -717,8 +717,8 @@ void N64_VolumeMod(track_status *ptk_stat) // 800386D8
 
 void N64_PanMod(track_status *ptk_stat) // 800388FC
 {
-	static unsigned long	vn;			//800B69F0
-	static unsigned long	vi;			//800B69F4
+	static unsigned int	vn;			//800B69F0
+	static unsigned int	vi;			//800B69F4
 	static voice_status		*pvs;		//800B69F8
 	static short			adjpan;		//800B69FC
 	static unsigned char	thepanmod;	//800B69FE
@@ -911,12 +911,12 @@ void N64_voicerelease(voice_status *voice_stat) // 80038FBC
 	alSynSetVol(&alGlobals->drvr, &voice[voice_stat->refindx], 0, deltaTime);
 
 	voice_stat->flags = (voice_stat->flags | VOICE_RELEASE) & ~VOICE_DECAY;
-	voice_stat->pabstime = *pcurabstime + (unsigned long)voice_stat->patchmaps->release_time;
+	voice_stat->pabstime = *pcurabstime + (unsigned int)voice_stat->patchmaps->release_time;
 }
 
 void N64_voicedecay(voice_status *voice_stat) // 80039084
 {
-	static unsigned long	adjvol;	//800B6A1C
+	static unsigned int	adjvol;	//800B6A1C
 	static track_status		*pts;	//800B6A20
 
 	u32 volume;
@@ -951,12 +951,12 @@ void N64_voicenote(track_status *ptk_stat,
 	           patchmaps_header *patchmap, patchinfo_header *patchinfo,
 	           unsigned char keynum, unsigned char velnum) // 800391F8
 {
-	static unsigned long	vi;				//800B6A24
-	static unsigned long	found_one;		//800B6A28
+	static unsigned int	vi;				//800B6A24
+	static unsigned int	found_one;		//800B6A28
 	static voice_status		*pvs;			//800B6A2C
 	static voice_status		*pvsact;		//800B6A30
-	static unsigned long	lowprio;		//800B6A34
-	static unsigned long	lowtime;		//800B6A38
+	static unsigned int	lowprio;		//800B6A34
+	static unsigned int	lowtime;		//800B6A38
 
 
 	unsigned int pabstime_tmp;
@@ -1045,7 +1045,7 @@ void N64_voicenote(track_status *ptk_stat,
 
 void N64_NoteOn(track_status *ptk_stat) // 80039434
 {
-	static unsigned long	i;			//800B6A3C
+	static unsigned int	i;			//800B6A3C
 	static unsigned char	note;		//800B6A40
 	static unsigned char	vel;		//800B6A41
 	static unsigned char	mapcount;	//800B6A42
@@ -1081,7 +1081,7 @@ void N64_NoteOn(track_status *ptk_stat) // 80039434
 
 void N64_NoteOff(track_status *ptk_stat) // 800395B4
 {
-	static unsigned long	vi;		//800B6A50
+	static unsigned int	vi;		//800B6A50
 	static voice_status		*pvs;	//800B6A54
 
 	//PRINTF_D2(WHITE,0,7,"N64_NoteOff");

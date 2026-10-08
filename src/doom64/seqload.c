@@ -123,9 +123,9 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 #if _ALIGN8_ == 1
 		//force align to word boundary because previous size adjust
 		//may wind up with odd address
-		pmem += (unsigned int)pmem & 1;
-		pmem += (unsigned int)pmem & 2;
-		pmem += (unsigned int)pmem & 4;
+		pmem += (unsigned int)(uintptr_t)pmem & 1;
+		pmem += (unsigned int)(uintptr_t)pmem & 2;
+		pmem += (unsigned int)(uintptr_t)pmem & 4;
 #endif
 		dmem = pmem;
 		pmem += (unsigned int)psq_info->seq_hdr.trkinfolength;
@@ -190,8 +190,8 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 					//PRINTF_D2(WHITE,0,21,"data_size %d", ptrk_info->trk_hdr->data_size);
 					//WAIT();
 
-					ptrk_info->plabellist = (unsigned long *)dmem;
-					dmem += (ptrk_info->trk_hdr->labellist_count * sizeof(long));
+					ptrk_info->plabellist = (unsigned int *)dmem;
+					dmem += (ptrk_info->trk_hdr->labellist_count * sizeof(int));
 
 					ptrk_info->ptrk_data = (char *)dmem;
 					dmem += (ptrk_info->trk_hdr->data_size);
@@ -213,8 +213,8 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 					//printf("[0] labellist_count %d\n", ptrk_info->trk_hdr->labellist_count);
 					//printf("[0] data_size %d\n", ptrk_info->trk_hdr->data_size);
 
-					ptrk_info->plabellist = (unsigned long *)dmem;
-					dmem += (ptrk_info->trk_hdr->labellist_count * sizeof(long));
+					ptrk_info->plabellist = (unsigned int *)dmem;
+					dmem += (ptrk_info->trk_hdr->labellist_count * sizeof(int));
 
 					ptrk_info->ptrk_data = (char *)dmem;
 					dmem += (ptrk_info->trk_hdr->data_size);
@@ -226,8 +226,8 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 					//printf("[1] labellist_count %d\n", (ptrk_info + 1)->trk_hdr->labellist_count);
 					//printf("[1] data_size %d\n", (ptrk_info + 1)->trk_hdr->data_size);
 
-					(ptrk_info + 1)->plabellist = (unsigned long *)dmem;
-					dmem += ((ptrk_info + 1)->trk_hdr->labellist_count * sizeof(long));
+					(ptrk_info + 1)->plabellist = (unsigned int *)dmem;
+					dmem += ((ptrk_info + 1)->trk_hdr->labellist_count * sizeof(int));
 
 					(ptrk_info + 1)->ptrk_data = (char *)dmem;
 					dmem += ((ptrk_info + 1)->trk_hdr->data_size);
@@ -240,8 +240,8 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 					//printf("[2] labellist_count %d\n", (ptrk_info + 2)->trk_hdr->labellist_count);
 					//printf("[2] data_size %d\n", (ptrk_info + 2)->trk_hdr->data_size);
 
-					(ptrk_info + 2)->plabellist = (unsigned long *)dmem;
-					dmem += ((ptrk_info + 2)->trk_hdr->labellist_count * sizeof(long));
+					(ptrk_info + 2)->plabellist = (unsigned int *)dmem;
+					dmem += ((ptrk_info + 2)->trk_hdr->labellist_count * sizeof(int));
 
 					(ptrk_info + 2)->ptrk_data = (char *)dmem;
 					dmem += ((ptrk_info + 2)->trk_hdr->data_size);
@@ -253,8 +253,8 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 					//printf("[3] labellist_count %d\n", (ptrk_info + 3)->trk_hdr->labellist_count);
 					//printf("[3] data_size %d\n", (ptrk_info + 3)->trk_hdr->data_size);
 
-					(ptrk_info + 3)->plabellist = (unsigned long *)dmem;
-					dmem += ((ptrk_info + 3)->trk_hdr->labellist_count * sizeof(long));
+					(ptrk_info + 3)->plabellist = (unsigned int *)dmem;
+					dmem += ((ptrk_info + 3)->trk_hdr->labellist_count * sizeof(int));
 
 					(ptrk_info + 3)->ptrk_data = (char *)dmem;
 					dmem += ((ptrk_info + 3)->trk_hdr->data_size);

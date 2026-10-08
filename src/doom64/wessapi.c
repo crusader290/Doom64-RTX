@@ -44,7 +44,7 @@ static void err(int code) // 8002F400
 	}
 }
 
-static void zeroset(char *pdest, unsigned long size) // 8002F438
+static void zeroset(char *pdest, unsigned int size) // 8002F438
 {
 	while (size--) *pdest++ = 0;
 }
@@ -251,19 +251,19 @@ int wess_size_module(char *wmd_filename) // 8002F770
 	module_close(fp_wmd_file);
 
 	size = 8;//start Align 8
-	pm_stat->ppat_info->ppat_data = (char *)size;
+	pm_stat->ppat_info->ppat_data = ((char *)(uintptr_t)size);
 	size += pm_stat->pmod_info->mod_hdr.data_size;
 
-	pm_stat->pseqstattbl = (sequence_status *)size;
+	pm_stat->pseqstattbl = ((sequence_status *)(uintptr_t)size);
 	size += sizeof(*pm_stat->pseqstattbl) * wess_driver_sequences;
 
-	pm_stat->ptrkstattbl = (track_status *)size;
+	pm_stat->ptrkstattbl = ((track_status *)(uintptr_t)size);
 	size += sizeof(*pm_stat->ptrkstattbl) * wess_driver_tracks;
 
-	pm_stat->pvoicestattbl = (voice_status *)size;
+	pm_stat->pvoicestattbl = ((voice_status *)(uintptr_t)size);
 	size += sizeof(*pm_stat->pvoicestattbl) * pm_stat->voices_total;
 
-	pm_stat->pcalltable = (callback_status *)size;
+	pm_stat->pcalltable = ((callback_status *)(uintptr_t)size);
 	size += sizeof(*pm_stat->pcalltable) * wess_driver_callbacks;
 
 	pm_stat->max_trks_perseq = wess_driver_max_trks_per_seq;
@@ -299,7 +299,7 @@ int wess_size_module(char *wmd_filename) // 8002F770
 
 	for (i = 0; i < wess_driver_tracks; i++)
 	{
-		size += sizeof(long) * pm_stat->max_substack_pertrk;
+		size += sizeof(int) * pm_stat->max_substack_pertrk;
 	}
 
 #if _ALIGN4_ == 1
@@ -323,7 +323,7 @@ int wess_load_module(char *wmd_filename,
 	char max_tracks_inseq, max_voices_intrk, max_substack_intrk;
 	char *pdest;
 	char *pmem;
-	unsigned long patfpos, trkinfosize;
+	unsigned int patfpos, trkinfosize;
 	char *tempwmd;
 	int setting, flag, flag2;
 	int decomp_type;
@@ -472,9 +472,9 @@ int wess_load_module(char *wmd_filename,
 #if _ALIGN8_ == 1
 	//force align to word boundary because previous size adjust
 	//may wind up with odd address
-	pmem += (unsigned int)pmem & 1;
-	pmem += (unsigned int)pmem & 2;
-	pmem += (unsigned int)pmem & 4;
+	pmem += (unsigned int)(uintptr_t)pmem & 1;
+	pmem += (unsigned int)(uintptr_t)pmem & 2;
+	pmem += (unsigned int)(uintptr_t)pmem & 4;
 #endif
 
 	/*
@@ -585,8 +585,8 @@ int wess_load_module(char *wmd_filename,
 #if _ALIGN4_ == 1
 		//force align to word boundary because previous pmem adjust
 		//may wind up with odd address
-		pmem += (unsigned int)pmem & 1;
-		pmem += (unsigned int)pmem & 2;
+		pmem += (unsigned int)(uintptr_t)pmem & 1;
+		pmem += (unsigned int)(uintptr_t)pmem & 2;
 #endif
 
 		(pm_stat->pseqstattbl + i)->piters = (char *)pmem;
@@ -594,8 +594,8 @@ int wess_load_module(char *wmd_filename,
 #if _ALIGN4_ == 1
 		//force align to word boundary because previous pmem adjust
 		//may wind up with odd address
-		pmem += (unsigned int)pmem & 1;
-		pmem += (unsigned int)pmem & 2;
+		pmem += (unsigned int)(uintptr_t)pmem & 1;
+		pmem += (unsigned int)(uintptr_t)pmem & 2;
 #endif
 
 		j = pm_stat->max_trks_perseq;
@@ -604,8 +604,8 @@ int wess_load_module(char *wmd_filename,
 #if _ALIGN4_ == 1
 		//force align to word boundary because previous pmem adjust
 		//may wind up with odd address
-		pmem += (unsigned int)pmem & 1;
-		pmem += (unsigned int)pmem & 2;
+		pmem += (unsigned int)(uintptr_t)pmem & 1;
+		pmem += (unsigned int)(uintptr_t)pmem & 2;
 #endif
 
 		while (j--)
@@ -628,17 +628,17 @@ int wess_load_module(char *wmd_filename,
 	for (i = 0; i < wess_driver_tracks; i++)
 	{
 		(pm_stat->ptrkstattbl + i)->refindx = i;
-		(pm_stat->ptrkstattbl + i)->psubstack = (unsigned long *)pmem;
+		(pm_stat->ptrkstattbl + i)->psubstack = (unsigned int *)pmem;
 		/* (pm_stat->ptrkstattbl+i)->psp is set when sequence is triggered */
-		pmem += sizeof(long) * pm_stat->max_substack_pertrk;
-		(pm_stat->ptrkstattbl + i)->pstackend = (unsigned long *)pmem;
+		pmem += sizeof(int) * pm_stat->max_substack_pertrk;
+		(pm_stat->ptrkstattbl + i)->pstackend = (unsigned int *)pmem;
 	}
 
 #if _ALIGN4_ == 1
 	//force align to word boundary because previous pmem adjust
 	//may wind up with odd address
-	pmem += (unsigned int)pmem & 1;
-	pmem += (unsigned int)pmem & 2;
+	pmem += (unsigned int)(uintptr_t)pmem & 1;
+	pmem += (unsigned int)(uintptr_t)pmem & 2;
 #endif
 
 	CmdFuncArr[NoSound_ID][DriverInit]((track_status *)pm_stat);

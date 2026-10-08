@@ -84,9 +84,9 @@ extern void wess_set_error_callback( WessErrorCallbackProc errcall );
 
 typedef int (*WessDecompCallbackProc)( unsigned char decomp_type,
 				       char          *fileref,
-				       unsigned long file_offset,
+				       unsigned int file_offset,
 				       char          *ramdest,
-				       unsigned long uncompressed_size );
+				       unsigned int uncompressed_size );
 
 extern void wess_set_decomp_callback( WessDecompCallbackProc decompcall );
 
@@ -118,21 +118,21 @@ extern void wess_set_decomp_callback( WessDecompCallbackProc decompcall );
 #define TWEAK_MAX_SUBS_PER_TRK     (0x1L<< 13)
 
 typedef struct {
-                    unsigned long mask;
-                    unsigned long dma_buffers;        /* default is 24    */
-                    unsigned long dma_messages;       /* default is 32    */
-                    unsigned long dma_buffer_length;  /* default is 0x800 */
-                    unsigned long extra_samples;      /* default is 80    */
-                    unsigned long frame_lag;          /* default is 1     */
-                    unsigned long voices;             /* default is 24    */
-                    unsigned long updates;            /* default is 48    */
-                    unsigned long sequences;          /* default is 26    */
-                    unsigned long tracks;             /* default is 25    */
-                    unsigned long gates;              /* default is 0     */
-                    unsigned long iters;              /* default is 0     */
-                    unsigned long callbacks;          /* default is 0     */
-                    unsigned long max_trks_per_seq;   /* default is 16    */
-                    unsigned long max_subs_per_trk;   /* default is 0     */
+                    unsigned int mask;
+                    unsigned int dma_buffers;        /* default is 24    */
+                    unsigned int dma_messages;       /* default is 32    */
+                    unsigned int dma_buffer_length;  /* default is 0x800 */
+                    unsigned int extra_samples;      /* default is 80    */
+                    unsigned int frame_lag;          /* default is 1     */
+                    unsigned int voices;             /* default is 24    */
+                    unsigned int updates;            /* default is 48    */
+                    unsigned int sequences;          /* default is 26    */
+                    unsigned int tracks;             /* default is 25    */
+                    unsigned int gates;              /* default is 0     */
+                    unsigned int iters;              /* default is 0     */
+                    unsigned int callbacks;          /* default is 0     */
+                    unsigned int max_trks_per_seq;   /* default is 16    */
+                    unsigned int max_subs_per_trk;   /* default is 0     */
                } WessTweakAttr;
 
 extern void wess_set_tweaks(WessTweakAttr *attr);
@@ -322,7 +322,7 @@ extern char *wess_get_wmd_end (void);
 #define TRIGGER_REVERB   (0x1L<< 8)
 
 typedef struct  {
-                    unsigned long   mask;
+                    unsigned int   mask;
                     unsigned char   volume;   /* 0-127 */
                     unsigned char   pan;      /* 0-127, 64 center */
                     short           patch;    /* 0-32767 */
@@ -330,7 +330,7 @@ typedef struct  {
                     unsigned char   mutemode; /* 0-7 */
                     unsigned char   reverb;
                     unsigned short  tempo;
-                    unsigned long   timeppq;
+                    unsigned int   timeppq;
                 } TriggerPlayAttr;
 
     /* the basic sequence trigger call */
@@ -345,16 +345,16 @@ extern void wess_seq_trigger_special (int              seq_num,
     /* set your own type number to the sequence */
 
 extern void wess_seq_trigger_type         (int           seq_num,
-                                           unsigned long seq_type);
+                                           unsigned int seq_type);
 
     /* set your own type number to the sequence and
        override masked sequence parameters          */
 
 extern void wess_seq_trigger_type_special (int              seq_num,
-                                           unsigned long    seq_type,
+                                           unsigned int    seq_type,
                                            TriggerPlayAttr *attr);
 
-extern void wess_seq_update_type_special  (unsigned long    seq_type,
+extern void wess_seq_update_type_special  (unsigned int    seq_type,
                                            TriggerPlayAttr *attr);
 
     /*
@@ -378,7 +378,7 @@ extern int wess_seq_status (int sequence_number);
                   SEQUENCE_PLAYING for a sequence is this type is playing
     */
 
-extern int wess_seq_type_status (unsigned long sequence_type);
+extern int wess_seq_type_status (unsigned int sequence_type);
 
     /*
         routine: wess_seq_stop()
@@ -397,9 +397,9 @@ extern void wess_seq_stop_and_voiceramp (int sequence_number,int millisec);
           type by wess_seq_trigger_type
     */
 
-extern void wess_seq_stoptype (unsigned long sequence_type);
+extern void wess_seq_stoptype (unsigned int sequence_type);
 
-extern void wess_seq_stoptype_and_voiceramp (unsigned long sequence_type,int millisec);
+extern void wess_seq_stoptype_and_voiceramp (unsigned int sequence_type,int millisec);
 
     /*
         routine: wess_seq_stopall()

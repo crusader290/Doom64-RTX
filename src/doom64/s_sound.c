@@ -227,7 +227,7 @@ void S_StartSound(mobj_t *origin, int sound_id) // 80029970
 			}
 		}
 
-		wess_seq_trigger_type_special(sound_id, (unsigned long)origin, &attr);
+		wess_seq_trigger_type_special(sound_id, (unsigned int)origin, &attr);
 	}
 }
 

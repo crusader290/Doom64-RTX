@@ -174,7 +174,7 @@ int wess_handle_create_edit_space(char *memory_pointer, int data_size, int memor
 
 			//----------------------
 			pmem = (edt_mem + (ptrk_indxs_pos * _data_size));
-			ptk_stat->plabellist = (unsigned long *)pmem;
+			ptk_stat->plabellist = (unsigned int *)pmem;
 
 			for (k = 0; k < ptk_stat->labellist_max; k++)
 			{

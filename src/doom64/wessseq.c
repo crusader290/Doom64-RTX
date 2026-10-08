@@ -243,7 +243,7 @@ void Eng_TrkOff (track_status *ptk_stat) // 8003611C
 {
 	static sequence_status	*lpseq;	//800B6638
 	static char				*lpdest;//800B663C
-	static unsigned long	lj;		//800B6640
+	static unsigned int	lj;		//800B6640
 
 	//PRINTF_D2(WHITE,0,10,"Eng_TrkOff");
 
@@ -672,7 +672,7 @@ void Eng_SeqEnd (track_status *ptk_stat) // 80036E48
 	static track_status		*ptmp;		//800B66D0
 	static unsigned char	*lpdest;	//800B66D4
 	static unsigned char	li;			//800B66D8
-	static unsigned long	lj;			//800B66DC
+	static unsigned int	lj;			//800B66DC
 
 	//PRINTF_D2(WHITE,0,10,"Eng_SeqEnd");
 
