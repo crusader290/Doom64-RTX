@@ -62,6 +62,7 @@ set(D64_PORT_SOURCES
   src/port/rtlights.c
   src/port/log.c
   src/port/pc_options.c
+  src/port/interp.c
   src/gfx/gbi.c
 )
 if(D64_NULL_RENDERER)

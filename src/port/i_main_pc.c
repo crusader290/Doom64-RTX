@@ -28,6 +28,7 @@
 #include "rtlights.h"
 #include "r_local.h"
 #include "log.h"
+#include "interp.h"
 
 /* ------------------------------------------------------------------ */
 /* globals the game expects from i_main.c                             */
@@ -337,6 +338,8 @@ static void save_screenshot(void)
  * D64_QUIT_AT=<frame> exits, D64_PRESS="frame:button,..." taps pad buttons
  * (button = hex mask of the high 16 bits). */
 static unsigned frame_no;
+static unsigned subframe_no;
+static int in_subframe;    /* drawing an interpolated in-between frame */
 
 static int list_has(const char *list, unsigned v)
 {
@@ -409,6 +412,19 @@ extern int rndindex, prndindex, gametic, ticon;
 static void test_hooks(void)
 {
     const char *q = SDL_getenv("D64_QUIT_AT");
+    if (in_subframe)
+    {
+        /* in-between frames keep the main frame's number: shot_NNNN_k.bmp */
+        subframe_no++;
+        if (list_has(SDL_getenv("D64_SHOTS"), frame_no))
+        {
+            char name[64];
+            SDL_snprintf(name, sizeof(name), "shot_%04u_%u.bmp", frame_no, subframe_no);
+            save_screenshot_named(name);
+        }
+        return;
+    }
+    subframe_no = 0;
     frame_no++;
     if (SDL_getenv("D64_TRACE"))
     {
@@ -727,6 +743,70 @@ static void submit_frame(void)
     GBI_SetLights(NULL, 0); /* collected again by the next R_RenderPlayerView */
 }
 
+/* ------------------------------------------------------------------ */
+/* 60/120 fps: extra interpolated frames between 30 Hz game tics      */
+/* ------------------------------------------------------------------ */
+
+int I_PCInSubframe(void)
+{
+    return in_subframe;
+}
+
+static void draw_subframe(double frac)
+{
+    extern int gamevbls;
+    int saved_vbls = gamevbls, saved_vblsin = vblsinframe[0];
+
+    /* the drawer must not advance tic-based animations (fire sky, clouds,
+     * lightning) a second time */
+    gamevbls = gametic;
+    vblsinframe[0] = 0;
+    in_subframe = 1;
+    I_PCInterpBegin(frac);
+    I_PCCurrentDrawer();
+    I_PCInterpEnd();
+    in_subframe = 0;
+    gamevbls = saved_vbls;
+    vblsinframe[0] = saved_vblsin;
+}
+
+static void draw_subframes(void)
+{
+    Uint64 slot_end, period, next;
+    int n, k;
+
+    if (!I_PCInterpEnabled() || I_PCCurrentDrawer != P_Drawer || demoplayback)
+        return;
+    I_PCInterpEnd();
+
+    n = pc_config.fps / 30;
+    if (n < 2)
+        return;
+    if (SDL_getenv("D64_FIXED_TIMESTEP"))
+    {
+        for (k = 1; k < n; k++)
+            draw_subframe((double)k / (double)n);
+        return;
+    }
+
+    /* the next tic starts when two N64 vblanks have passed */
+    slot_end = time_base_ns + (Uint64)(drawsync2 + 2) * 1000000000ull / 60ull;
+    period = 1000000000ull / (Uint64)pc_config.fps;
+    next = SDL_GetTicksNS() + period;
+    while (next + period / 4 < slot_end)
+    {
+        Uint64 now = SDL_GetTicksNS();
+        if (now < next)
+            SDL_DelayPrecise(next - now);
+        pump_events();
+        draw_subframe(I_PCInterpTicFraction());
+        now = SDL_GetTicksNS();
+        next += period;
+        if (next < now)
+            next = now + period / 2; /* rendering is slower than the target: do not spiral */
+    }
+}
+
 void I_DrawFrame(void)
 {
     int index;
@@ -742,6 +822,8 @@ void I_DrawFrame(void)
         I_Error("I_DrawFrame: VTX Overflow by %d\n", index);
 
     submit_frame();
+    if (!in_subframe)
+        I_PCInterpEnd(); /* back to the real game state */
     {
         static Uint64 last_stats;
         static unsigned frames_since;
@@ -770,6 +852,10 @@ void I_DrawFrame(void)
     test_hooks();
     pump_events();
     I_PCAudioUpdate();
+
+    if (in_subframe)
+        return; /* nested draw for an interpolated frame: no pacing */
+    draw_subframes();
 
     /* wait for the next 30 Hz slot (two N64 vblanks) */
     for (; !SDL_getenv("D64_FIXED_TIMESTEP");)

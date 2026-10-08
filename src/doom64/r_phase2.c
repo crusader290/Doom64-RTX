@@ -247,6 +247,9 @@ void R_RenderEvilSky(void) // 80025738
 
     if (Skyfadeback)
     {
+#ifdef D64_PC
+        if (!I_PCInSubframe()) /* [PC] advance once per game frame */
+#endif
         Skyfadeback += 4;
 
         if (Skyfadeback > 255)

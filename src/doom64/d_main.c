@@ -2,6 +2,9 @@
 
 #include "i_main.h"
 #include "doomdef.h"
+#ifdef D64_PC
+#include "interp.h" /* [PC] */
+#endif
 #include "p_spec.h"
 #include "r_local.h"
 
@@ -144,6 +147,11 @@ int MiniLoop(void(*start)(void), void(*stop)(),
 	int		exit;
 	int		buttons;
 
+#ifdef D64_PC
+	void (*prev_drawer)(void) = I_PCCurrentDrawer; /* [PC] interpolation */
+	I_PCCurrentDrawer = drawer;
+#endif
+
 	gameaction = ga_nothing;
 	gamevbls = 0;
 	gametic = 0;
@@ -205,17 +213,30 @@ int MiniLoop(void(*start)(void), void(*stop)(),
 
         if (disabledrawing == false)
         {
+#ifdef D64_PC
+            I_PCInterpSnapshot(); /* [PC] remember the previous tic */
+#endif
             exit = ticker();
             if (exit != ga_nothing)
                 break;
 
+#ifdef D64_PC
+            I_PCInterpBegin(I_PCInterpTicFraction());
             drawer();
+            I_PCInterpEnd();
+#else
+            drawer();
+#endif
         }
 
 		gamevbls = gametic;
 	}
 
 	I_GetScreenGrab();
+
+#ifdef D64_PC
+	I_PCCurrentDrawer = prev_drawer;
+#endif
 
 	if(stop != NULL)
         stop(exit);

@@ -212,6 +212,11 @@ typedef struct mobj_s
 	latecall_t		latecall;		/* set in p_base if more work needed */
 
 	int             tid;            /* [D64] tid value */
+#ifdef D64_PC
+	fixed_t         pc_ox, pc_oy, pc_oz;   /* [PC] previous tic, for interpolation */
+	angle_t         pc_oangle;
+	unsigned        pc_ogen;
+#endif
 } mobj_t;
 
 /* each sector has a degenmobj_t in it's center for sound origin purposes */
@@ -478,6 +483,9 @@ typedef struct player_s
 	int         pc_jumptics;            /* [PC] jump cooldown */
 	fixed_t     pc_ads;                 /* [PC] aim-down-sights blend 0..FRACUNIT */
 	int         pc_buttons;             /* [PC] PCACT_* held this tic */
+	fixed_t     pc_oviewz;              /* [PC] previous tic, for interpolation */
+	fixed_t     pc_osx[NUMPSPRITES], pc_osy[NUMPSPRITES];
+	unsigned    pc_ogen;
 #endif
 } player_t;
 

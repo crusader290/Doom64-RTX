@@ -237,3 +237,23 @@ int I_PCWeaponKey(void)
     weapon_key = 0;
     return k;
 }
+
+/* What I_PCMouseTurn/I_PCMousePitch would return now, without consuming
+ * it (frame interpolation draws the view ahead of the game tic). */
+int I_PCPeekMouseTurn(void)
+{
+    float turn = -mouse_dx_accum * pc_config.mouse_sens * 2097152.0f;
+    if (turn > 2.0e9f) turn = 2.0e9f;
+    if (turn < -2.0e9f) turn = -2.0e9f;
+    return (int)turn;
+}
+
+int I_PCPeekMousePitch(void)
+{
+    float d = -mouse_dy_accum * pc_config.mouse_sens * 2097152.0f;
+    if (pc_config.invert_mouse)
+        d = -d;
+    if (d > 2.0e9f) d = 2.0e9f;
+    if (d < -2.0e9f) d = -2.0e9f;
+    return (int)d;
+}

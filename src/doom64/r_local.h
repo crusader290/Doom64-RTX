@@ -83,6 +83,10 @@ typedef	struct
 	void		*specialdata;		/* thinker_t for reversable actions */
 	VINT		linecount;
 	struct line_s	**lines;			/* [linecount] size */
+#ifdef D64_PC
+	fixed_t     pc_ofloor, pc_oceil;    /* [PC] previous tic, for interpolation */
+	unsigned    pc_ogen;
+#endif
 } sector_t;
 
 typedef struct
