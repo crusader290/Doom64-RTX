@@ -2,6 +2,9 @@
 
 #include "doomdef.h"
 #include "st_main.h"
+#ifdef D64_PC
+#include "config.h" /* [PC] */
+#endif
 #include "r_local.h"
 
 sbflash_t flashCards[6];    // 800A8180
@@ -367,6 +370,20 @@ void ST_Drawer (void) // 80029DC0
             ST_Message(8, (ammo*8)+8, buffer[ammo],0x00ff00ff);
         }
     }
+
+#ifdef D64_PC
+    /* [PC] crosshair and the F7 stats overlay */
+    if (pc_config.crosshair && player->playerstate == PST_LIVE && cameratarget == player->mo && !MenuCall)
+        ST_Message(156, 116, "+", 0xffffffa0);
+
+    if (pc_config.show_stats)
+    {
+        char lines[8][64];
+        int n = I_PCStatsLines(lines, 8);
+        for (ind = 0; ind < n; ind++)
+            ST_Message(4, 4 + ind * 9, lines[ind], 0x80ff80d0);
+    }
+#endif
 }
 
 #define ST_FONTWHSIZE 8

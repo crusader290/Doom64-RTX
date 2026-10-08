@@ -463,6 +463,37 @@ void I_PCToggleRaytracing(void)
     SDL_Log("Ray tracing %s", pc_config.raytracing ? "enabled" : "disabled");
 }
 
+/* F7 stats overlay text (drawn by ST_Drawer). */
+static double stats_fps;
+
+int I_PCStatsLines(char lines[][64], int max)
+{
+    const gbistats_t *st = GBI_Stats();
+    D64GfxStatus gs;
+    player_t *p = &players[0];
+    int n = 0;
+
+    d64gfx_status(&gs);
+    if (n < max)
+        SDL_snprintf(lines[n++], 64, "%.0f FPS  %s%s", stats_fps, gs.backend_name, gs.rt_enabled ? " RT" : "");
+    if (n < max)
+        SDL_snprintf(lines[n++], 64, "MAP %02d  SKILL %d  TIC %d", gamemap, gameskill + 1, gametic);
+    if (p->mo && n < max)
+        SDL_snprintf(lines[n++], 64, "X %d Y %d Z %d", p->mo->x >> FRACBITS, p->mo->y >> FRACBITS,
+                     p->mo->z >> FRACBITS);
+    if (p->mo && n < max)
+        SDL_snprintf(lines[n++], 64, "ANGLE %d PITCH %d", (int)((double)p->mo->angle * 360.0 / 4294967296.0),
+                     (int)((double)(int)p->pc_pitch * 360.0 / 4294967296.0));
+    if (p->mo && n < max)
+        SDL_snprintf(lines[n++], 64, "SECTOR %d  LIGHT %d", (int)(p->mo->subsector->sector - sectors),
+                     p->mo->subsector->sector->lightlevel);
+    if (n < max)
+        SDL_snprintf(lines[n++], 64, "DRAWS %u  VERTS %u  TEX %u", st->cmds, st->vertices, st->tex_uploads);
+    if (n < max)
+        SDL_snprintf(lines[n++], 64, "MOBJS %d  KILLS %d/%d", nummobjs_pc(), p->killcount, totalkills);
+    return n;
+}
+
 void I_PCSetFullscreen(int on)
 {
     CONFIG_SET(fullscreen, on ? 1 : 0);
@@ -728,6 +759,13 @@ void I_DrawFrame(void)
             last_stats = now;
             frames_since = 0;
         }
+    }
+    {
+        static Uint64 last_ns;
+        Uint64 now_ns = SDL_GetTicksNS();
+        if (last_ns && now_ns > last_ns)
+            stats_fps = stats_fps * 0.9 + 0.1 * (1e9 / (double)(now_ns - last_ns));
+        last_ns = now_ns;
     }
     test_hooks();
     pump_events();

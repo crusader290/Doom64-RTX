@@ -79,5 +79,6 @@ int  I_PCTakeDebugRequest(void);
 int  I_PCMousePitch(void);
 int  I_PCActions(void);
 int  I_PCWeaponKey(void);
+int  I_PCStatsLines(char lines[][64], int max);
 
 #endif
