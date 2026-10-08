@@ -131,6 +131,16 @@ message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
   README, LICENSE, RELEASE_NOTES.txt). Both smoke-tested from fresh extractions.
   To rebuild a release: build `build` (Linux Release) and `build-win` (MinGW), strip, copy
   SDL libs, `patchelf --set-rpath '$ORIGIN'`, archive as releases/doom64rtx-<ver>-<os>-x86_64.*
-- NEXT: RT light sources (rtlights.c), in-game RT verification, WESS audio port, MSVC fixes.
+- Widescreen (user request): Options > Display > Aspect Ratio. gbi.c keeps 2D in a centred
+  4:3 area of a virtual 426.7x240 screen (NDC x scaled by 320/vw), stretches full-width 2D
+  (sky, fades, clears, wipes) and SKY triangles, widens 3D (clip x scaled; RT proj too);
+  r_phase1.c scales lateral view coords by R_PCFovInvScale so BSP culling covers the wider
+  view. ABI v2: D64GfxFrame.virtual_width (viewport aspect + scissor units).
+- Logging (user request): src/port/log.c, on by default; crash handler with backtrace.
+- RT in game: works (lights from rtlights.c). KNOWN ISSUE: translucent world surfaces (e.g.
+  MAP01 doorway grate, BLEND+ALPHA_THRESH mid-texture) mostly disappear in RT mode even with
+  the depth test disabled -> investigate composite ordering / alpha.
+- Release 0.1.1 in releases/ via tools/make_release.sh.
+- NEXT (user): crash hunting (ASan/UBSan soak runs, long automated play), then WESS audio.
 - Container setup used: `apt-get install glslang-tools mingw-w64 wine64 wine patchelf libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.

@@ -86,6 +86,11 @@ pub unsafe extern "C" fn d64gfx_init(info: *const D64GfxInitInfo, err: *mut c_ch
         *g = None;
     }
     let window = Window(info.window);
+    // Route Rust panics into the game's log before the process aborts.
+    let hook_window = window;
+    std::panic::set_hook(Box::new(move |pi| {
+        hook_window.log(2, &format!("renderer panic: {pi}"));
+    }));
     let result: Result<Box<dyn Backend>, String> = match info.backend {
         BACKEND_VULKAN => vk::VkBackend::new(info, window).map(|b| Box::new(b) as Box<dyn Backend>),
         _ => gl_backend::GlBackend::new(info, window).map(|b| Box::new(b) as Box<dyn Backend>),
@@ -202,16 +207,15 @@ pub(crate) fn cstr_to_string(p: *const c_char) -> String {
     }
 }
 
-/// Where the 320x240 game image lands inside the drawable (4:3 pillarbox).
-pub(crate) fn game_viewport(w: u32, h: u32, stretch: bool) -> (i32, i32, u32, u32) {
-    if stretch {
-        return (0, 0, w, h);
-    }
-    let target_w = (h as u64 * 4 / 3) as u32;
+/// Where the game image (virtual_width x 240 game units) lands inside the
+/// drawable, letter/pillarboxed to keep its aspect.
+pub(crate) fn game_viewport(w: u32, h: u32, virtual_width: f32) -> (i32, i32, u32, u32) {
+    let aspect = virtual_width.max(320.0) as f64 / 240.0;
+    let target_w = (h as f64 * aspect).round() as u32;
     if target_w <= w {
         (((w - target_w) / 2) as i32, 0, target_w, h)
     } else {
-        let target_h = (w as u64 * 3 / 4) as u32;
+        let target_h = (w as f64 / aspect).round() as u32;
         (0, ((h - target_h) / 2) as i32, w, target_h)
     }
 }

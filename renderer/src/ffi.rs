@@ -3,7 +3,7 @@
 
 use std::ffi::{c_char, c_int, c_void};
 
-pub const D64GFX_API_VERSION: u32 = 1;
+pub const D64GFX_API_VERSION: u32 = 2;
 
 pub const BACKEND_VULKAN: u32 = 0;
 pub const BACKEND_OPENGL: u32 = 1;
@@ -110,9 +110,14 @@ pub struct D64GfxFrame {
     pub ambient_scale: f32,
     pub frame_index: u32,
     pub clear_color: [f32; 4],
+    pub virtual_width: f32,
 }
 
 impl D64GfxFrame {
+    /// Width of the game area in game units (320 = 4:3).
+    pub fn vwidth(&self) -> f32 {
+        if self.virtual_width >= 320.0 { self.virtual_width } else { 320.0 }
+    }
     pub fn vertices(&self) -> &[D64GfxVertex] {
         if self.vertices.is_null() || self.vertex_count == 0 {
             &[]
@@ -149,6 +154,8 @@ pub struct D64GfxStatus {
 pub struct Window(pub D64GfxWindow);
 
 unsafe impl Send for Window {}
+// The callbacks are plain C functions; the game uses them from one thread.
+unsafe impl Sync for Window {}
 
 impl Window {
     pub fn log(&self, level: i32, msg: &str) {

@@ -27,6 +27,7 @@
 #include "d64gfx.h"
 #include "rtlights.h"
 #include "r_local.h"
+#include "log.h"
 
 /* ------------------------------------------------------------------ */
 /* globals the game expects from i_main.c                             */
@@ -81,9 +82,10 @@ void I_PCFatal(const char *fmt, ...)
     va_start(ap, fmt);
     SDL_vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
-    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "%s", buf);
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "FATAL: %s", buf);
     if (!SDL_getenv("D64_HEADLESS"))
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Doom64-RTX", buf, window);
+    Log_Shutdown();
     exit(1);
 }
 
@@ -313,8 +315,8 @@ static void save_screenshot_named(const char *name)
     int w = 0, h = 0;
     SDL_Surface *s;
     SDL_GetWindowSizeInPixels(window, &w, &h);
-    /* the game area is 4:3; save it at the window's height */
-    w = h * 4 / 3;
+    /* save the game area (4:3 or 16:9) at the window's height */
+    w = (int)(h * GBI_VirtualWidth() / 240.0f);
     s = SDL_CreateSurface(w, h, SDL_PIXELFORMAT_ABGR8888);
     if (!s)
         return;
@@ -402,6 +404,7 @@ static void test_hooks(void)
                 st->cmds, st->vertices, st->tex_uploads);
         d64gfx_shutdown();
         destroy_window();
+        Log_Shutdown();
         SDL_Quit();
         exit(0);
     }
@@ -416,7 +419,7 @@ void I_PCToggleRaytracing(void)
         SDL_Log("Ray tracing is not supported by this renderer/GPU");
         return;
     }
-    pc_config.raytracing = !st.rt_enabled;
+    CONFIG_SET(raytracing, !st.rt_enabled);
     d64gfx_set_raytracing(pc_config.raytracing);
     Config_Save();
     SDL_Log("Ray tracing %s", pc_config.raytracing ? "enabled" : "disabled");
@@ -430,9 +433,11 @@ static void pump_events(void)
         switch (ev.type)
         {
         case SDL_EVENT_QUIT:
+            SDL_Log("quit requested");
             Config_Save();
             d64gfx_shutdown();
             destroy_window();
+            Log_Shutdown();
             SDL_Quit();
             exit(0);
             break;
@@ -452,7 +457,7 @@ static void pump_events(void)
             else if (ev.key.scancode == SDL_SCANCODE_F11 ||
                      (ev.key.scancode == SDL_SCANCODE_RETURN && (ev.key.mod & SDL_KMOD_ALT)))
             {
-                pc_config.fullscreen = !pc_config.fullscreen;
+                CONFIG_SET(fullscreen, !pc_config.fullscreen);
                 SDL_SetWindowFullscreen(window, pc_config.fullscreen ? true : false);
             }
             else if (ev.key.scancode == SDL_SCANCODE_F12)
@@ -463,6 +468,30 @@ static void pump_events(void)
         }
         IN_HandleEvent(&ev);
     }
+}
+
+/* ------------------------------------------------------------------ */
+/* widescreen (Options > Display > Aspect Ratio)                      */
+/* ------------------------------------------------------------------ */
+static void apply_aspect(void)
+{
+    float vwidth;
+    GBI_SetAspect(pc_config.aspect ? 16.0f / 9.0f : 4.0f / 3.0f);
+    vwidth = GBI_VirtualWidth();
+    R_PCFovInvScale = (int)(65536.0f * 320.0f / vwidth);
+}
+
+int I_PCGetWidescreen(void)
+{
+    return pc_config.aspect != 0;
+}
+
+void I_PCSetWidescreen(int on)
+{
+    CONFIG_SET(aspect, on ? 1 : 0);
+    apply_aspect();
+    Config_Save();
+    SDL_Log("aspect ratio set to %s", on ? "16:9" : "4:3");
 }
 
 /* ------------------------------------------------------------------ */
@@ -609,8 +638,8 @@ static void submit_frame(void)
     int w = 0, h = 0;
     SDL_GetWindowSizeInPixels(window, &w, &h);
     GBI_SetOutputSize(w, h);
-    RT_CollectLights();
     GBI_RunFrame(Gfx_base[vid_side]);
+    GBI_SetLights(NULL, 0); /* collected again by the next R_RenderPlayerView */
 }
 
 void I_DrawFrame(void)
@@ -628,6 +657,24 @@ void I_DrawFrame(void)
         I_Error("I_DrawFrame: VTX Overflow by %d\n", index);
 
     submit_frame();
+    {
+        static Uint64 last_stats;
+        static unsigned frames_since;
+        const gbistats_t *st = GBI_Stats();
+        Uint64 now = SDL_GetTicks();
+        frames_since++;
+        Log_SetCrashContext("map %d, gametic %d, frame cmds %u verts %u, demo %d", gamemap, gametic,
+                            st->cmds, st->vertices, demoplayback);
+        if (now - last_stats >= 60000)
+        {
+            if (last_stats)
+                SDL_Log("stats: %.1f fps, map %d, %u draw cmds, %u verts, %u texture uploads",
+                        frames_since * 1000.0 / (double)(now - last_stats), gamemap, st->cmds,
+                        st->vertices, st->tex_uploads);
+            last_stats = now;
+            frames_since = 0;
+        }
+    }
     test_hooks();
     pump_events();
     I_PCAudioUpdate();
@@ -786,7 +833,10 @@ int main(int argc, char **argv)
 
     Config_Defaults();
     Config_Load();
+    Config_Snapshot();
     Config_ParseArgs(argc, argv);
+    Log_Init(argc, argv);
+    apply_aspect();
 
     if (!ROM_Init(pc_config.rom, err, sizeof(err)))
         I_PCFatal("%s", err);

@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-#define D64GFX_API_VERSION 1
+#define D64GFX_API_VERSION 2
 
 typedef enum {
     D64GFX_BACKEND_VULKAN = 0,
@@ -153,6 +153,8 @@ typedef struct {
     float    ambient_scale;
     uint32_t frame_index;
     float    clear_color[4];
+    float    virtual_width;     /* game area width in game units (320 = 4:3, 426.7 = 16:9);
+                                   scissors are in these units, height is always 240 */
 } D64GfxFrame;
 
 typedef struct {

@@ -60,6 +60,7 @@ set(D64_PORT_SOURCES
   src/port/config.c
   src/port/gu.c
   src/port/rtlights.c
+  src/port/log.c
   src/gfx/gbi.c
 )
 if(D64_NULL_RENDERER)
@@ -131,7 +132,15 @@ target_include_directories(doom64rtx PRIVATE
   ${CMAKE_SOURCE_DIR}/src/port
   ${CMAKE_SOURCE_DIR}/src/gfx
   ${D64_GAME_DIR})
-target_compile_definitions(doom64rtx PRIVATE D64_PC=1 F3DEX_GBI=1 NDEBUG _FINALROM)
+set(D64_VERSION "0.1.1")
+find_package(Git QUIET)
+set(D64_GIT_HASH "unknown")
+if(GIT_FOUND)
+  execute_process(COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                  OUTPUT_VARIABLE D64_GIT_HASH OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+endif()
+target_compile_definitions(doom64rtx PRIVATE D64_PC=1 F3DEX_GBI=1 NDEBUG _FINALROM
+  D64_VERSION="${D64_VERSION}" D64_GIT_HASH="${D64_GIT_HASH}")
 target_link_libraries(doom64rtx PRIVATE SDL3::SDL3)
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")

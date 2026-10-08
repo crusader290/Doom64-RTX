@@ -19,20 +19,28 @@ typedef struct {
     int   fullscreen;
     int   width, height;     /* window size */
     int   vsync;
-    int   aspect;            /* 0 = 4:3 pillarbox, 1 = stretch */
+    int   aspect;            /* 0 = 4:3, 1 = 16:9 widescreen (Options > Display) */
     int   filter;            /* 0 = follow game (N64 bilinear), 1 = force nearest */
     int   brightness;        /* initial in-game brightness 0..100 (N64 default 0) */
     int   mouse;             /* mouse turning */
     float mouse_sens;
     int   gpu_index;         /* preferred Vulkan device index, -1 = auto */
     int   validation;        /* Vulkan validation layers */
+    int   log;               /* write doom64rtx.log (default on) */
 } pcconfig_t;
 
-extern pcconfig_t pc_config;
+extern pcconfig_t pc_config;   /* effective settings (file + command line) */
+extern pcconfig_t pc_config_file;  /* what doom64rtx.ini holds; Config_Save writes this */
+
+/* Change a setting at runtime and make it persistent. Command-line
+ * overrides are never written back to the ini. */
+#define CONFIG_SET(field, value) \
+    do { pc_config.field = (value); pc_config_file.field = pc_config.field; } while (0)
 
 void Config_Defaults(void);
 void Config_Load(void);
 void Config_Save(void);
+void Config_Snapshot(void);
 void Config_ParseArgs(int argc, char **argv);
 const char *Config_Path(void);
 

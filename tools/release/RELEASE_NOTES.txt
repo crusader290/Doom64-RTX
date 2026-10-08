@@ -1,0 +1,18 @@
+Doom64-RTX @VERSION@ (preview), commit @COMMIT@
+
+No game data is included. Put your own Doom 64 ROM (.z64, .n64 or .v64; USA, USA Rev 1,
+Europe or Japan) next to the executable or in the folder you start it from.
+
+Working: ROM auto-detection, game, menus, saves (Controller Pak file), Vulkan renderer,
+OpenGL fallback (automatic if Vulkan fails), keyboard/mouse/gamepad,
+4:3 / 16:9 (Options > Display > Aspect Ratio), log file with crash reports.
+Preview: ray traced world (F10 or raytracing = 1; needs a GPU with VK_KHR_ray_query).
+Not yet: sound and music (silent).
+
+If something goes wrong, send doom64rtx.log (next to doom64rtx.ini: the program folder
+for this portable package, otherwise %APPDATA%\Doom64RTX\Doom64RTX on Windows or
+~/.local/share/Doom64RTX/Doom64RTX on Linux). doom64rtx.old.log is the previous run.
+
+Keys: F10 ray tracing, F11 fullscreen, F12 screenshot. See README.md.
+Linux build needs glibc 2.39+ (built on Ubuntu 24.04); libSDL3 is bundled.
+Windows build: x86-64, MinGW-w64; SDL3.dll is bundled.

@@ -166,6 +166,12 @@ boolean R_CheckBBox(fixed_t bspcoord[4]) // 80024170
     vy1 = FixedMul(viewcos, x1 - viewx) + FixedMul(viewsin, y1 - viewy);
     vx2 = FixedMul(viewsin, x2 - viewx) - FixedMul(viewcos, y2 - viewy);
     vy2 = FixedMul(viewcos, x2 - viewx) + FixedMul(viewsin, y2 - viewy);
+#ifdef D64_PC
+    /* [PC] widescreen: narrow lateral coords so the 90 degree clip planes
+     * and the 320 column occlusion buffer cover the wider view */
+    vx1 = FixedMul(vx1, R_PCFovInvScale);
+    vx2 = FixedMul(vx2, R_PCFovInvScale);
+#endif
 
     if ((vx1 < -vy1) && (vx2 < -vy2))
         return false;
@@ -276,6 +282,9 @@ void R_AddLine(seg_t *line) // 80024604
 	{
         x1 = FixedMul(viewsin, (vrt->x - viewx)) - FixedMul(viewcos,(vrt->y - viewy));
         y1 = FixedMul(viewcos, (vrt->x - viewx)) + FixedMul(viewsin,(vrt->y - viewy));
+#ifdef D64_PC
+        x1 = FixedMul(x1, R_PCFovInvScale); /* [PC] widescreen */
+#endif
 
         vrt->vx = x1;
         vrt->vy = y1;
@@ -293,6 +302,9 @@ void R_AddLine(seg_t *line) // 80024604
 	{
         x2 = FixedMul(viewsin, (vrt2->x - viewx)) - FixedMul(viewcos,(vrt2->y - viewy));
         y2 = FixedMul(viewcos, (vrt2->x - viewx)) + FixedMul(viewsin,(vrt2->y - viewy));
+#ifdef D64_PC
+        x2 = FixedMul(x2, R_PCFovInvScale); /* [PC] widescreen */
+#endif
 
         vrt2->vx = x2;
         vrt2->vy = y2;

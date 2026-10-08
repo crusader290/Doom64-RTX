@@ -2,6 +2,10 @@
 
 #include "doomdef.h"
 #include "r_local.h"
+#ifdef D64_PC
+#include "rtlights.h"
+fixed_t R_PCFovInvScale = FRACUNIT; /* [PC] 320 / virtual screen width (widescreen) */
+#endif
 
 /*===================================== */
 
@@ -167,6 +171,10 @@ void R_RenderPlayerView(void) // 80023448
 	viewangle = cameratarget->angle + quakeviewx;
 	viewcos = finecosine[viewangle >> ANGLETOFINESHIFT];
 	viewsin = finesine[viewangle >> ANGLETOFINESHIFT];
+
+#ifdef D64_PC
+	RT_CollectLights(); /* [PC] emitters for the ray traced renderer */
+#endif
 
 	// Phase 1
 	R_BSP();

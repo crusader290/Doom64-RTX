@@ -246,7 +246,7 @@ impl Backend for GlBackend {
         let (w, h) = self.window.drawable_size();
         unsafe {
             self.ensure_fbo(w, h);
-            let rect = game_viewport(w, h, false);
+            let rect = game_viewport(w, h, frame.vwidth());
             self.game_rect = rect;
             let gl = &self.gl;
             let fbo = self.fbo.as_ref().unwrap();
@@ -277,7 +277,8 @@ impl Backend for GlBackend {
             gl.uniform_1_i32(self.uniforms.tex0.as_ref(), 0);
             gl.uniform_1_i32(self.uniforms.tex1.as_ref(), 1);
 
-            let sx = vw as f32 / 320.0;
+            let gw = frame.vwidth();
+            let sx = vw as f32 / gw;
             let sy = vh as f32 / 240.0;
             let mut blend_on = None;
             for c in frame.cmds() {
@@ -296,7 +297,7 @@ impl Backend for GlBackend {
                 }
                 // scissor in game pixels -> framebuffer pixels (bottom-left origin)
                 let x0 = vx + (c.scissor[0].max(0) as f32 * sx) as i32;
-                let x1 = vx + (c.scissor[2].min(320) as f32 * sx).ceil() as i32;
+                let x1 = vx + ((c.scissor[2] as f32).min(gw) * sx).ceil() as i32;
                 let y0 = (c.scissor[1].max(0) as f32 * sy) as i32;
                 let y1 = (c.scissor[3].min(240) as f32 * sy).ceil() as i32;
                 gl.scissor(x0, vy_gl + vh as i32 - y1, (x1 - x0).max(0), (y1 - y0).max(0));

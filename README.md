@@ -24,8 +24,8 @@ Preview builds are in [`releases/`](releases/):
 
 | File | Platform |
 |---|---|
-| `doom64rtx-0.1.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
-| `doom64rtx-0.1.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
+| `doom64rtx-0.1.1-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
+| `doom64rtx-0.1.1-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
 
 Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 `.github/workflows/build.yml` are built the same way.
@@ -42,6 +42,8 @@ Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 | Sound and music (WESS / N64 synth) | in progress (silent for now) |
 | Windows build (MinGW-w64) | working (tested under Wine: OpenGL and Vulkan) |
 | Saves (Controller Pak emulation) | working, needs more testing |
+| 4:3 / 16:9 (Options › Display › Aspect Ratio) | working: wider field of view, HUD and menus keep their proportions |
+| Log file + crash reports | working, on by default |
 
 See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
 [PORT_MANIFEST.md](PORT_MANIFEST.md) for per-file status.
@@ -62,6 +64,8 @@ See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
 | `-vulkan` / `-gl` | choose the renderer (Vulkan falls back to OpenGL automatically) |
 | `-rt` / `-nort` | ray tracing on / off |
 | `-fullscreen` / `-window` | display mode |
+| `-widescreen` | 16:9 for this run |
+| `-nolog` | do not write doom64rtx.log |
 | `-set <name> <value>` | set any ini setting for this run |
 
 ### Keys
@@ -93,6 +97,9 @@ preference directory (`%APPDATA%\Doom64RTX\Doom64RTX\` or `~/.local/share/Doom64
 ```ini
 renderer = vulkan        # vulkan | opengl
 raytracing = 0           # 1 = ray traced world (also toggled with F10)
+widescreen = 0           # 1 = 16:9 (also in Options > Display > Aspect Ratio)
+brightness = 50          # starting value of the game's Brightness option (0..100)
+log = 1                  # write doom64rtx.log
 rt_spp = 1               # rays per pixel for AO / bounce light
 rt_bounces = 1
 rt_denoise = 1
@@ -108,6 +115,14 @@ validation = 0           # Vulkan validation layers
 ```
 
 Controller Pak saves are stored as `controller.pak` in the preference directory.
+Settings changed in game (F10, F11, Aspect Ratio) are saved; command-line options are not.
+
+### Logs and crash reports
+
+Every run writes `doom64rtx.log` next to `doom64rtx.ini` (the previous run is kept as
+`doom64rtx.old.log`): system info, settings, ROM, renderer and GPU, map loads, warnings,
+renderer errors, a stats line every minute, and on a crash the signal or exception with a
+backtrace and what the game was doing. Please attach it when reporting a problem.
 
 ## Building
 

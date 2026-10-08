@@ -14,6 +14,10 @@ void GBI_RunFrame(Gfx *dl);
 /* Output size in pixels, used to size expanded lines. */
 void GBI_SetOutputSize(int w, int h);
 
+/* Display aspect (4/3 or 16/9). 2D stays 4:3 and centred; 3D widens. */
+void GBI_SetAspect(float aspect);
+float GBI_VirtualWidth(void);
+
 /* Drop every cached texture (renderer reset). */
 void GBI_FlushTextureCache(void);
 

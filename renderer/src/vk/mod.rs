@@ -108,6 +108,7 @@ pub struct VkBackend {
     rt_enabled: bool,
     rt_params: RtParams,
     swapchain_dirty: bool,
+    virtual_width: f32,
 }
 
 fn vkerr(what: &str) -> impl Fn(vk::Result) -> String + '_ {
@@ -396,6 +397,7 @@ impl VkBackend {
             rt_enabled: false,
             rt_params: RtParams::default(),
             swapchain_dirty: false,
+            virtual_width: 320.0,
         };
         me.create_swapchain()?;
         me.white = me.texture_create(1, 1, &[255, 255, 255, 255]);
@@ -646,7 +648,7 @@ impl VkBackend {
             .map_err(vkerr("framebuffer"))?;
         self.scene_layout = vk::ImageLayout::UNDEFINED;
         self.swapchain_dirty = false;
-        self.game_rect = game_viewport(extent.width, extent.height, false);
+        self.game_rect = game_viewport(extent.width, extent.height, self.virtual_width);
         Ok(())
     }
 
@@ -749,6 +751,10 @@ impl VkBackend {
         let (ww, wh) = self.window.drawable_size();
         if self.swapchain_dirty || ww != self.sc_extent.width || wh != self.sc_extent.height {
             self.create_swapchain()?;
+        }
+        if frame.vwidth() != self.virtual_width {
+            self.virtual_width = frame.vwidth();
+            self.game_rect = game_viewport(self.sc_extent.width, self.sc_extent.height, self.virtual_width);
         }
         let fi = self.frame_idx;
         let d = self.core.device.clone();
@@ -857,7 +863,8 @@ impl VkBackend {
             d.cmd_bind_vertex_buffers(cmd, 0, &[self.frames[fi].vbuf.buffer], &[0]);
         }
 
-        let sx = vw as f32 / 320.0;
+        let gw = frame.vwidth();
+        let sx = vw as f32 / gw;
         let sy = vh as f32 / 240.0;
         let mut bound: Option<usize> = None;
         let mut composited = false;
@@ -887,7 +894,7 @@ impl VkBackend {
                 bound = Some(pi);
             }
             let x0 = vx + (c.scissor[0].max(0) as f32 * sx) as i32;
-            let x1 = vx + (c.scissor[2].min(320) as f32 * sx).ceil() as i32;
+            let x1 = vx + ((c.scissor[2] as f32).min(gw) * sx).ceil() as i32;
             let y0 = vy + (c.scissor[1].max(0) as f32 * sy) as i32;
             let y1 = vy + (c.scissor[3].min(240) as f32 * sy).ceil() as i32;
             let sc = vk::Rect2D {

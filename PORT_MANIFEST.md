@@ -11,12 +11,13 @@ Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verific
 | d64pc.h | ✅ | libc, BE16/BE32, virtual ROM bases, FPU no-ops, prototypes |
 | os.c | ✅ | message queues, osPiStartDma -> ROM_Read, ucode identities |
 | rom.c/.h | ✅ | ROM scan of cwd + exe dir (.z64/.n64/.v64, any byte order), region table, extracted-file fallback |
-| config.c/.h | 🟡 | doom64rtx.ini (exe dir, else pref dir) + command line; `brightness` seeds the game option |
+| config.c/.h | 🟡 | doom64rtx.ini (exe dir, else pref dir) + command line; `brightness`, `widescreen`, `log`; CONFIG_SET persists runtime changes, command-line overrides are never saved |
 | input.c/.h | 🟡 | keyboard/mouse/SDL gamepad -> N64 pad word; mouse turning hook in p_user.c |
 | pak.c | 🟡 | Controller Pak notes in `<prefdir>/controller.pak` |
 | i_main_pc.c | ✅ | SDL3 window, Vulkan->GL fallback, 30 Hz pacing, wipes via read-back, F10 RT toggle, F11 fullscreen, F12 screenshot, test hooks |
 | gu.c | ✅ | guFrustum/guMtxF2L |
-| rtlights.c | 🔧 | stub; collecting emitters for RT is the next task |
+| rtlights.c | 🟡 | point lights from FF_FULLBRIGHT things, flames/lamps/candles, muzzle flash; collected inside R_RenderPlayerView |
+| log.c/.h | ✅ | doom64rtx.log (+ .old.log), SDL log capture, crash handler (signals + backtrace / SEH + stack), crash context, Rust panic hook |
 | s_sound_stub.c | ✅ | silent sound API while WESS is ported |
 
 ## Graphics (src/gfx, renderer/)
@@ -49,6 +50,9 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | m_password.c | 🟡 | N64 byte order for password words (compatible passwords) |
 | f_main.c, m_main.c, r_phase1/2/3.c, st_main.c | ✅ | BE16() on asset header fields |
 | p_user.c | 🟡 | mouse turning hook |
+| m_main.c (Display menu) | 🟡 | [PC] Aspect Ratio 4:3/16:9 item |
+| r_phase1.c, r_main.c | 🟡 | [PC] R_PCFovInvScale widens BSP culling for 16:9; RT_CollectLights hook |
+| g_game.c | 🟡 | [PC] map load logging |
 | g_game.c, r_local.h | ✅ | extern fixes |
 | wess*.c, seqload*.c, n64cmd.c, s_sound.c, funqueue.c | ⬜ | not built yet (D64_WITH_AUDIO=OFF) |
 
@@ -59,4 +63,5 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | cmake/mingw-w64-x86_64.cmake | ✅ | Windows cross toolchain (Rust target x86_64-pc-windows-gnu) |
 | .github/workflows/build.yml | 🟡 | Linux, Windows (MinGW cross), MSVC (experimental, continue-on-error) |
 | tools/compile_shaders.sh | ✅ | GLSL -> SPIR-V (checked in under renderer/shaders/spv) |
-| releases/ | ✅ | 0.1.0 preview archives (Linux tar.gz, Windows zip) |
+| releases/ | ✅ | 0.1.1 preview archives (Linux tar.gz, Windows zip) |
+| tools/make_release.sh, tools/release/ | ✅ | packaging script + ini/notes templates |

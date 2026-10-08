@@ -81,6 +81,7 @@ char *ControlText[] =   //8007517C
 #define M_TXT48 "COLORS"     // [GEC] NEW CHEAT CODE
 #define M_TXT49 "FULL BRIGHT"   // [GEC] NEW CHEAT CODE
 #define M_TXT50 "FILTER"   // [GEC] NEW CHEAT CODE
+#define M_TXT51 "Aspect Ratio:" // [PC] 4:3 / 16:9
 
 char *MenuText[] =   // 8005ABA0
 {
@@ -94,7 +95,8 @@ char *MenuText[] =   // 8005ABA0
     M_TXT35, M_TXT36, M_TXT37, M_TXT38, M_TXT39,
     M_TXT40, M_TXT41, M_TXT42, M_TXT43, M_TXT44,
     M_TXT45, M_TXT46, M_TXT47,
-    M_TXT48, M_TXT49, M_TXT50  // [GEC] NEW
+    M_TXT48, M_TXT49, M_TXT50,  // [GEC] NEW
+    M_TXT51                     // [PC]
 };
 
 menuitem_t Menu_Title[2] = // 8005A978
@@ -144,14 +146,16 @@ menuitem_t Menu_ControlStick[3] = // 8005AA38
     {  6, 102, 150},    // Return
 };
 
-menuitem_t Menu_Display[6] = // 8005AA5C
+#define DISPLAY_ITEMS 7 /* [PC] +Aspect Ratio */
+menuitem_t Menu_Display[DISPLAY_ITEMS] = // 8005AA5C
 {
     {  9, 102, 60 },    // Brightness
     { 32, 102, 100},    // Center Display
     { 33, 102, 120},    // Messages
     { 34, 102, 140},    // Status Bar
-    { 13, 102, 160},    // Default Display
-    {  6, 102, 180},    // Return
+    { 51, 102, 160},    // [PC] Aspect Ratio
+    { 13, 102, 180},    // Default Display
+    {  6, 102, 200},    // Return
 };
 
 menuitem_t Menu_Game[4] = // 8005AAA4
@@ -736,7 +740,7 @@ int M_MenuTicker(void) // 80007E0C
                         M_SaveMenuData();
 
                         MenuItem = Menu_Display;
-                        itemlines = 6;
+                        itemlines = DISPLAY_ITEMS; /* [PC] */
                         MenuCall = M_DisplayDrawer;
                         cursorpos = 0;
 
@@ -1295,6 +1299,14 @@ int M_MenuTicker(void) // 80007E0C
                     }
                     break;
 
+                case 51: // [PC] Aspect Ratio
+                    if (truebuttons)
+                    {
+                        S_StartSound(NULL, sfx_switch2);
+                        I_PCSetWidescreen(!I_PCGetWidescreen());
+                    }
+                    break;
+
                 case 35: // LOCK MONSTERS
                     /* Not available in the release code */
                     /*
@@ -1694,9 +1706,18 @@ void M_DisplayDrawer(void) // 80009884
 
     item = Menu_Display;
 
-    for(i = 0; i < 6; i++)
+    for(i = 0; i < DISPLAY_ITEMS; i++) /* [PC] */
     {
         casepos = item->casepos;
+
+        if (casepos == 51) // [PC] Aspect Ratio:
+        {
+            text = I_PCGetWidescreen() ? "16:9" : "4:3";
+            ST_DrawString(item->x + 140, item->y, text, text_alpha | 0xc0000000);
+            ST_DrawString(item->x, item->y, MenuText[casepos], text_alpha | 0xc0000000);
+            item++;
+            continue;
+        }
 
         if (casepos == 33) // Messages:
         {

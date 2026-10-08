@@ -80,6 +80,13 @@ static int cur_cmd_valid;
 
 static int out_w = 1280, out_h = 960;
 
+/* Widescreen: the game's 320x240 space becomes a centred 4:3 area inside a
+ * virtual screen vw units wide. 2D (HUD, menus, weapon) keeps its aspect;
+ * the 3D world widens its field of view; full-width 2D (sky, fades, clears)
+ * and the sky stretch to the full width. */
+static float vw = 320.0f;
+static float ndc_xscale = 1.0f;   /* 320 / vw */
+
 static int   have_camera;
 static float cam_mv[4][4];
 static float cam_inv[4][4];
@@ -715,6 +722,20 @@ static void begin_draw(uint32_t extra_flags, int textured, int tile_index)
     memcpy(c.blend, rdp.blend, 4);
     c.prim_lod_frac = rdp.prim_lod_frac;
     memcpy(c.scissor, rdp.scissor, sizeof(c.scissor));
+    if (vw != 320.0f)
+    {
+        float off = (vw - 320.0f) * 0.5f;
+        if (c.scissor[0] <= 0 && c.scissor[2] >= 320)
+        {
+            c.scissor[0] = 0;
+            c.scissor[2] = (int16_t)(vw + 0.999f);
+        }
+        else
+        {
+            c.scissor[0] = (int16_t)(c.scissor[0] + off);
+            c.scissor[2] = (int16_t)(c.scissor[2] + off + 0.999f);
+        }
+    }
 
     if (textured)
     {
@@ -849,6 +870,8 @@ static void draw_triangle(int i0, int i1, int i2)
         float c[4];
         memcpy(c, v[k]->clip, sizeof(c));
         viewport_adjust(c);
+        if (!(extra & D64GFX_CMD_SKY))
+            c[0] *= ndc_xscale;
         if (world && have_camera)
         {
             const float *e = v[k]->eye;
@@ -860,9 +883,9 @@ static void draw_triangle(int i0, int i1, int i2)
     }
 }
 
-static void screen_to_clip(float x, float y, float c[4])
+static void screen_to_clip(float x, float y, float c[4], int full_width)
 {
-    c[0] = x / 160.0f - 1.0f;
+    c[0] = (x / 160.0f - 1.0f) * (full_width ? 1.0f : ndc_xscale);
     c[1] = 1.0f - y / 120.0f;
     c[2] = 0.0f;
     c[3] = 1.0f;
@@ -876,10 +899,11 @@ static void emit_quad_screen(float x0, float y0, float x1, float y1,
     float st[4][2];
     int order[6] = { 0, 1, 2, 0, 2, 3 };
     int i;
-    screen_to_clip(x0, y0, c[0]);
-    screen_to_clip(x1, y0, c[1]);
-    screen_to_clip(x1, y1, c[2]);
-    screen_to_clip(x0, y1, c[3]);
+    int full = (x0 <= 0.5f && x1 >= 319.5f); /* full width: stretch in widescreen */
+    screen_to_clip(x0, y0, c[0], full);
+    screen_to_clip(x1, y0, c[1], full);
+    screen_to_clip(x1, y1, c[2], full);
+    screen_to_clip(x0, y1, c[3], full);
     if (!flip)
     {
         st[0][0] = s0; st[0][1] = t0;
@@ -1002,6 +1026,8 @@ static void do_line3d(int i0, int i1)
     memcpy(cb, b->clip, sizeof(cb));
     viewport_adjust(ca);
     viewport_adjust(cb);
+    ca[0] *= ndc_xscale;
+    cb[0] *= ndc_xscale;
     if (ca[3] <= 0.0f || cb[3] <= 0.0f)
         return; /* the automap never puts line ends behind the eye */
     ax = ca[0] / ca[3]; ay = ca[1] / ca[3];
@@ -1358,6 +1384,21 @@ void GBI_SetOutputSize(int w, int h)
     }
 }
 
+void GBI_SetAspect(float aspect)
+{
+    if (aspect < 1.0f)
+        aspect = 4.0f / 3.0f;
+    vw = 240.0f * aspect;
+    if (vw < 320.0f)
+        vw = 320.0f;
+    ndc_xscale = 320.0f / vw;
+}
+
+float GBI_VirtualWidth(void)
+{
+    return vw;
+}
+
 void GBI_SetLights(const D64GfxLight *lights, uint32_t count)
 {
     frame_lights = lights;
@@ -1411,7 +1452,7 @@ void GBI_RunFrame(Gfx *dl)
             for (j = 0; j < 4; j++)
             {
                 frame.view[i * 4 + j] = cam_mv[i][j];
-                frame.proj[i * 4 + j] = rsp.proj[i][j];
+                frame.proj[i * 4 + j] = rsp.proj[i][j] * (j == 0 ? ndc_xscale : 1.0f);
             }
         frame.cam_pos[0] = cam_inv[3][0];
         frame.cam_pos[1] = cam_inv[3][1];
@@ -1424,6 +1465,7 @@ void GBI_RunFrame(Gfx *dl)
     frame.fog_near = world_fog_near;
     frame.ambient_scale = 1.0f;
     frame.frame_index = frame_counter;
+    frame.virtual_width = vw;
 
     stats.cmds = out_cn;
     stats.vertices = out_vn;

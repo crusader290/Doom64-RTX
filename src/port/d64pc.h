@@ -60,7 +60,13 @@ void G_PlayerFinishLevel(int player);
 /* PC platform services (src/port) */
 void I_PCFatal(const char *fmt, ...);
 int  I_PCMouseTurn(void);
+int  I_PCGetWidescreen(void);
+void I_PCSetWidescreen(int on);
+extern int R_PCFovInvScale; /* fixed_t, r_main.c */
 void I_PCAudioUpdate(void);
+int  nummobjs_pc(void);
+/* logging for game code (goes to doom64rtx.log) */
+void I_PCLog(const char *fmt, ...);
 void I_PCToggleRaytracing(void);
 
 #endif

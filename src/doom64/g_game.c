@@ -1,6 +1,7 @@
 /* G_game.c  */
 
 #include "doomdef.h"
+#include "r_local.h"
 #include "p_local.h"
 
 void G_PlayerReborn (int player);
@@ -44,7 +45,13 @@ void G_DoLoadLevel (void) // 80004530
     if (((gameaction == 7) || (gameaction == 4)) || (players[0].playerstate == PST_DEAD))
         players[0].playerstate = PST_REBORN;
 
+#ifdef D64_PC
+	I_PCLog("loading map %d (skill %d)%s", gamemap, (int)gameskill, demoplayback ? " [demo]" : ""); /* [PC] */
+#endif
 	P_SetupLevel(gamemap, gameskill);
+#ifdef D64_PC
+	I_PCLog("map %d loaded: %d sectors, %d lines, %d things", gamemap, numsectors, numlines, nummobjs_pc()); /* [PC] */
+#endif
 	gameaction = ga_nothing;
 }
 

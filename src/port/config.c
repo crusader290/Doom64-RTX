@@ -10,6 +10,7 @@
 #include "config.h"
 
 pcconfig_t pc_config;
+pcconfig_t pc_config_file;
 static char config_path[1024];
 
 void Config_Defaults(void)
@@ -29,6 +30,7 @@ void Config_Defaults(void)
     pc_config.brightness = 50;
     pc_config.mouse_sens = 1.0f;
     pc_config.gpu_index = -1;
+    pc_config.log = 1;
 }
 
 typedef enum { CV_INT, CV_FLOAT, CV_STR, CV_RENDERER } cvtype_t;
@@ -47,16 +49,30 @@ static const cvar_t cvars[] = {
     { "width",          CV_INT,      &pc_config.width, 0 },
     { "height",         CV_INT,      &pc_config.height, 0 },
     { "vsync",          CV_INT,      &pc_config.vsync, 0 },
-    { "aspect",         CV_INT,      &pc_config.aspect, 0 },
+    { "widescreen",     CV_INT,      &pc_config.aspect, 0 },
+    { "aspect",         CV_INT,      &pc_config.aspect, 0 },   /* old name */
     { "filter",         CV_INT,      &pc_config.filter, 0 },
     { "brightness",     CV_INT,      &pc_config.brightness, 0 },
     { "mouse",          CV_INT,      &pc_config.mouse, 0 },
     { "mouse_sens",     CV_FLOAT,    &pc_config.mouse_sens, 0 },
     { "gpu_index",      CV_INT,      &pc_config.gpu_index, 0 },
     { "validation",     CV_INT,      &pc_config.validation, 0 },
+    { "log",            CV_INT,      &pc_config.log, 0 },
 };
 
+static void set_cvar_in(pcconfig_t *cfg, const char *key, const char *val);
 static void set_cvar(const char *key, const char *val)
+{
+    set_cvar_in(&pc_config, key, val);
+}
+
+/* cvar pointers refer to pc_config; translate to another config struct */
+static void *field_in(pcconfig_t *cfg, void *ptr)
+{
+    return (char *)cfg + ((char *)ptr - (char *)&pc_config);
+}
+
+static void set_cvar_in(pcconfig_t *cfg, const char *key, const char *val)
 {
     size_t i;
     for (i = 0; i < sizeof(cvars) / sizeof(cvars[0]); i++)
@@ -66,11 +82,11 @@ static void set_cvar(const char *key, const char *val)
             continue;
         switch (c->type)
         {
-        case CV_INT:   *(int *)c->ptr = atoi(val); break;
-        case CV_FLOAT: *(float *)c->ptr = (float)atof(val); break;
-        case CV_STR:   SDL_strlcpy((char *)c->ptr, val, c->len); break;
+        case CV_INT:   *(int *)field_in(cfg, c->ptr) = atoi(val); break;
+        case CV_FLOAT: *(float *)field_in(cfg, c->ptr) = (float)atof(val); break;
+        case CV_STR:   SDL_strlcpy((char *)field_in(cfg, c->ptr), val, c->len); break;
         case CV_RENDERER:
-            *(int *)c->ptr = (!SDL_strcasecmp(val, "opengl") || !SDL_strcasecmp(val, "gl"))
+            *(int *)field_in(cfg, c->ptr) = (!SDL_strcasecmp(val, "opengl") || !SDL_strcasecmp(val, "gl"))
                                  ? RENDERER_OPENGL : RENDERER_VULKAN;
             break;
         }
@@ -134,6 +150,12 @@ void Config_Load(void)
     fclose(f);
 }
 
+/* called once after Config_Load, before command-line overrides */
+void Config_Snapshot(void)
+{
+    pc_config_file = pc_config;
+}
+
 void Config_Save(void)
 {
     size_t i;
@@ -147,13 +169,16 @@ void Config_Save(void)
     for (i = 0; i < sizeof(cvars) / sizeof(cvars[0]); i++)
     {
         const cvar_t *c = &cvars[i];
+        if (!SDL_strcmp(c->name, "aspect"))
+            continue; /* old alias of widescreen */
         switch (c->type)
         {
-        case CV_INT:   fprintf(f, "%s = %d\n", c->name, *(int *)c->ptr); break;
-        case CV_FLOAT: fprintf(f, "%s = %g\n", c->name, *(float *)c->ptr); break;
-        case CV_STR:   fprintf(f, "%s = %s\n", c->name, (char *)c->ptr); break;
+        case CV_INT:   fprintf(f, "%s = %d\n", c->name, *(int *)field_in(&pc_config_file, c->ptr)); break;
+        case CV_FLOAT: fprintf(f, "%s = %g\n", c->name, *(float *)field_in(&pc_config_file, c->ptr)); break;
+        case CV_STR:   fprintf(f, "%s = %s\n", c->name, (char *)field_in(&pc_config_file, c->ptr)); break;
         case CV_RENDERER:
-            fprintf(f, "%s = %s\n", c->name, *(int *)c->ptr == RENDERER_OPENGL ? "opengl" : "vulkan");
+            fprintf(f, "%s = %s\n", c->name,
+                    *(int *)field_in(&pc_config_file, c->ptr) == RENDERER_OPENGL ? "opengl" : "vulkan");
             break;
         }
     }
@@ -173,6 +198,8 @@ void Config_ParseArgs(int argc, char **argv)
         else if (!SDL_strcmp(a, "-nort"))    pc_config.raytracing = 0;
         else if (!SDL_strcmp(a, "-fullscreen")) pc_config.fullscreen = 1;
         else if (!SDL_strcmp(a, "-window"))  pc_config.fullscreen = 0;
+        else if (!SDL_strcmp(a, "-nolog"))   pc_config.log = 0;
+        else if (!SDL_strcmp(a, "-widescreen")) pc_config.aspect = 1;
         else if (!SDL_strcmp(a, "-set") && i + 2 < argc) { set_cvar(argv[i + 1], argv[i + 2]); i += 2; }
     }
 }
