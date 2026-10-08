@@ -1,0 +1,82 @@
+# PROJECT_CONTEXT — Doom64-RTX
+
+Handoff log for any agent or human picking this up. **Update it every session.** The newest
+entries go at the top of the *Session log*.
+
+## Goal (from the user)
+1. Take the Doom 64 reverse-engineering source (https://github.com/Erick194/DOOM64-RE, GPLv3)
+   and **compile it as a native PC program**.
+2. Platform layer: **SDL3** (window, input, audio, timing).
+3. Renderers: **Vulkan** (primary) with **ray tracing**, plus an **OpenGL fallback**.
+4. Ray tracing approach: use https://github.com/jlrouzies-fr/doom64-rt as the *reference* for
+   what to light and how (real emitters instead of baked light, sector-light driven lighting,
+   denoise/accumulate). That project is GZDoom-RT + RTGL1 on Retribution; we do not share
+   code with it, we take ideas.
+5. Targets: **x86-64 Windows and Linux**.
+6. **ROM detection**: the game scans its working directory for a Doom 64 ROM
+   (`.z64/.n64/.v64`), fixes the byte order, and pulls WAD/WMD/WSD/WDD out of it in memory.
+7. Keep `PROJECT_CONTEXT.md` (this file) and `PORT_MANIFEST.md` (per-file port status) logged.
+
+## Repo layout
+```
+src/doom64/     Original DOOM64-RE game sources (modified for PC; every change is
+                marked with a `// [PC]` comment)
+src/port/       Platform layer: libultra shim (ultra64.h + os*), SDL3 main loop, input,
+                audio output, ROM loader/detector, config
+src/gfx/        N64 display list (F3DEX GBI) interpreter + render backends
+                (gl = OpenGL 3.3 fallback, vk = Vulkan raster, vkrt = Vulkan ray tracing)
+src/gfx/shaders GLSL sources; compiled SPIR-V is committed as headers (see below)
+tools/          dm64ex.c — Erick194's ROM extractor (reference for ROM offsets)
+.github/        CI: Linux (gcc) and Windows (MinGW cross + MSVC) builds
+```
+
+## Key facts / discoveries
+- **DOOM64-RE is N64-native**: it renders by building F3DEX display lists (`gSP*`/`gDP*`
+  macros into `GFX1`), vertices (`VTX1`) and fixed-point matrices (`MTX1`) that the RSP reads
+  *later*. The vertex data is often written **after** `gSPVertex` is emitted, so the display
+  list can only be interpreted once the frame is complete (`I_DrawFrame`). Our interpreter
+  runs there.
+- We **do not** use Nintendo's SDK headers (`ultra64.h`, `gbi.h`). `src/port/ultra64.h` is a
+  clean-room shim that defines the types and the GBI macros in our own encoding:
+  `Gfx = { u32 w0; uintptr_t w1; }` so pointers survive on 64-bit.
+- **64-bit hazards** in the RE code: `(int)ptr` arithmetic (e.g. `(int)GFX1 - (int)GFX2` in
+  `I_CheckGFX`), `(u32)` casts of ROM symbols, `long` assumed 32-bit (LLP64 vs LP64!).
+  Fix pattern: pointer differences / `intptr_t`.
+- **Endianness**: N64 is big-endian. The WAD *directory and map lumps* are little-endian
+  (the RE uses `LittleShort`/`LongSwap` to read them on N64) → on PC those become identity.
+  Texture/palette data are fed raw to the RDP, which reads memory big-endian → the GBI
+  interpreter reads texel memory as big-endian bytes. CPU-written words that the RDP reads
+  (e.g. `*(int*)VTX1[i].v.cn = color`) are native-endian on PC; the interpreter decodes `cn`
+  accordingly.
+- **Matrices**: game writes N64 `Mtx` directly (s15.16 split: words 0–7 integer halves, 8–15
+  fraction halves). The projection is `R_ProjectionMatrix` loaded in `p_tick.c`.
+- **ROM data offsets** (from tools/dm64ex.c), index = region:
+  | region | detect | WAD off/size | WMD | WSD | WDD |
+  |---|---|---|---|---|---|
+  | 0 USA     | hdr[0x3E]='E', hdr[0x10]=0xA8 | 0x63D10 / 0x5D18B0 | 0x6355C0 / 0xB9E0 | 0x640FA0 / 0x142F8 | 0x6552A0 / 0x1716C4 |
+  | 1 EUR     | hdr[0x3E]='P'                 | 0x63F60 / 0x5D6CDC | 0x63AC40          | 0x646620          | 0x65A920 |
+  | 2 JAP     | hdr[0x3E]='J'                 | 0x64580 / 0x5D8478 | 0x63CA00          | 0x6483E0          | 0x65C6E0 |
+  | 3 USA r1  | hdr[0x3E]='E', hdr[0x10]=0x42 | 0x63DC0 / 0x5D301C | 0x636DE0          | 0x6427C0          | 0x656AC0 |
+  The user supplied *Doom 64 (USA) (Rev 1).z64*, sha1 `6fb0ce9c75bbe54b6e1ede337652b0221e5f2aad`
+  (NOT in the repo — never commit ROMs).
+- Reference RT project (doom64-rt) lessons worth keeping: painted/baked light must become real
+  emitters; sector light colours drive lighting; sprites need special handling (flat normals,
+  shadow proxies); temporal accumulation + denoise is mandatory at 1 spp; archived settings
+  that engine code writes become "a diary" — don't persist runtime-modified settings.
+
+## Build
+See README.md. Short version:
+```
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+./build/doom64rtx        # with a Doom 64 ROM in the working directory
+```
+Windows cross-compile from Linux: `cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake`.
+
+## Session log
+### 2026-10-08 — session 1 (restarted several times; earlier attempts left nothing pushed)
+- Lesson: **commit + push early and often**; previous workers were restarted and lost all work.
+- Imported DOOM64-RE sources (commit 6931e678a0b2958be1b49598f2fe60712c6596e1) into src/doom64.
+- Reference doom64-rt at 750c1d84f87546de38fe8ad774da59ff6a606ed0.
+- Container setup used: `apt-get install glslang-tools mingw-w64 libvulkan-dev libx11-dev
+  libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.

@@ -1,0 +1,23 @@
+# Never commit game data / ROMs (copyrighted)
+*.z64
+*.n64
+*.v64
+*.rom
+DOOM64.WAD
+DOOM64.WMD
+DOOM64.WSD
+DOOM64.WDD
+*.wad
+*.WAD
+# build output
+/build*/
+/out/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+compile_commands.json
+.vscode/
+.idea/
