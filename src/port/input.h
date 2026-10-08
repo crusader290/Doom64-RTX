@@ -12,4 +12,9 @@ void IN_HandleEvent(const SDL_Event *ev);
 void IN_SetGrab(SDL_Window *window, int grab);
 int  IN_ReadPad(void);
 
+#ifndef PCACT_JUMP
+#define PCACT_JUMP 1
+#define PCACT_ADS  2
+#endif
+
 #endif

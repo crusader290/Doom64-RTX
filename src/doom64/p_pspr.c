@@ -2,6 +2,9 @@
 
 #include "doomdef.h"
 #include "p_local.h"
+#ifdef D64_PC
+#include "config.h" /* [PC] */
+#endif
 void P_Thrust (player_t *player, angle_t angle, fixed_t move); /* [PC] */
 
 #define	LOWERSPEED		FRACUNIT*7
@@ -834,7 +837,25 @@ void P_BulletSlope(mobj_t*	mo) // 8001BF88
 			bulletslope = P_AimLineAttack(mo, an, 0, 16 * 64 * FRACUNIT);
 		}
 	}
+#ifdef D64_PC
+	/* [PC] mouse look: shoot where the player looks unless autoaim found a target */
+	if (P_PCFreeAim(mo) && (!pc_config.autoaim || !linetarget))
+		bulletslope = P_PCAimSlope(mo);
+#endif
 }
+
+#ifdef D64_PC
+boolean P_PCFreeAim(mobj_t *mo)
+{
+	return mo && mo->player && pc_config.mouselook && !demoplayback && !demorecording;
+}
+
+fixed_t P_PCAimSlope(mobj_t *mo)
+{
+	int idx = (mo->player->pc_pitch >> ANGLETOFINESHIFT) & FINEMASK;
+	return FixedDiv(finesine[idx], finecosine[idx]);
+}
+#endif
 
 /*
 ===============
@@ -1327,6 +1348,10 @@ void A_FireLaser(player_t *player, pspdef_t *psp) // 8001CAC0
     for(i = 0; i < lasercount; i++)
     {
         slopez = P_AimLineAttack(mobj, angleoffs, LASERAIMHEIGHT, LASERRANGE);
+#ifdef D64_PC
+        if (P_PCFreeAim(mobj) && (!pc_config.autoaim || !linetarget))
+            slopez = P_PCAimSlope(mobj); /* [PC] mouse look */
+#endif
 
         if(aimfrac)
             laserfrac = (aimfrac << (FRACBITS - 4)) - (4 << FRACBITS);

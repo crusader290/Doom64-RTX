@@ -3,6 +3,9 @@
 #include "doomdef.h"
 #include "p_local.h"
 #include "st_main.h"
+#ifdef D64_PC
+#include "config.h" /* [PC] */
+#endif
 
 #define MAXMOCKTIME     1800
 int deathmocktics; // 800A56A0
@@ -278,6 +281,10 @@ void P_BuildMove (player_t *player) // 80022154
     player->forwardmove = player->sidemove = player->angleturn = 0;
 
 	speed = (buttons & cbutton->BT_SPEED) > 0;
+#ifdef D64_PC
+	if (pc_config.always_run && !demoplayback && !demorecording)
+		speed = !speed; /* [PC] run key walks */
+#endif
 	sensitivity = 0;
 
 	/*  */
@@ -376,9 +383,33 @@ void P_BuildMove (player_t *player) // 80022154
 	}
 
 #ifdef D64_PC
-	/* [PC] mouse turning, accumulated since the previous tic */
-	if (!demoplayback)
+	/* [PC] mouse turning/looking, accumulated since the previous tic, plus
+	 * jump, aim-down-sights and direct weapon keys. Demos stay classic. */
+	player->pc_buttons = 0;
+	if (!demoplayback && !demorecording)
+	{
+		int wkey;
+
 		player->angleturn += I_PCMouseTurn();
+		if (pc_config.mouselook)
+		{
+			int p = (int)player->pc_pitch + I_PCMousePitch();
+			if (p > PC_MAXPITCH)
+				p = PC_MAXPITCH;
+			if (p < -PC_MAXPITCH)
+				p = -PC_MAXPITCH;
+			player->pc_pitch = (angle_t)p;
+		}
+		else
+		{
+			I_PCMousePitch();
+			player->pc_pitch = 0;
+		}
+		player->pc_buttons = I_PCActions();
+		wkey = I_PCWeaponKey();
+		if (wkey)
+			P_PCSelectWeapon(player, wkey);
+	}
 #endif
 
 	/* */
@@ -415,6 +446,48 @@ void P_BuildMove (player_t *player) // 80022154
 =
 ==================
 */
+
+#ifdef D64_PC
+/*
+ * [PC] Number keys pick weapons like PC Doom: 1 fist/chainsaw, 2 pistol,
+ * 3 shotgun/super shotgun, 4 chaingun, 5 rocket launcher, 6 plasma rifle,
+ * 7 BFG, 8 unmaker. Pressing a shared key again toggles between its pair.
+ */
+static boolean P_PCCanUse(player_t *player, weapontype_t w)
+{
+	if (!player->weaponowned[w])
+		return false;
+	if (weaponinfo[w].ammo != am_noammo && player->ammo[weaponinfo[w].ammo] <= 0)
+		return false;
+	return true;
+}
+
+void P_PCSelectWeapon(player_t *player, int key)
+{
+	static const weapontype_t slots[8][2] = {
+		{ wp_chainsaw, wp_fist }, { wp_pistol, wp_nochange }, { wp_supershotgun, wp_shotgun },
+		{ wp_chaingun, wp_nochange }, { wp_missile, wp_nochange }, { wp_plasma, wp_nochange },
+		{ wp_bfg, wp_nochange }, { wp_laser, wp_nochange } };
+	weapontype_t cur, pick = wp_nochange;
+	int i;
+
+	if (key < 1 || key > 8 || player->playerstate != PST_LIVE)
+		return;
+	cur = player->pendingweapon != wp_nochange ? player->pendingweapon : player->readyweapon;
+
+	/* prefer the slot's other weapon when the current one is already in it */
+	for (i = 0; i < 2; i++)
+	{
+		weapontype_t w = slots[key - 1][i];
+		if (w == wp_nochange || !P_PCCanUse(player, w))
+			continue;
+		if (pick == wp_nochange || (pick == cur && w != cur))
+			pick = w;
+	}
+	if (pick != wp_nochange && pick != cur)
+		player->pendingweapon = pick;
+}
+#endif
 
 void P_Thrust (player_t *player, angle_t angle, fixed_t move) // 800225BC
 {
@@ -515,6 +588,19 @@ void P_CalcHeight (player_t *player) // 80022670
 void P_MovePlayer (player_t *player) // 8002282C
 {
 	player->mo->angle += vblsinframe[0] * player->angleturn;
+
+#ifdef D64_PC
+	/* [PC] jumping */
+	if (player->pc_jumptics > 0)
+		player->pc_jumptics--;
+	if ((player->pc_buttons & PCACT_JUMP) && pc_config.jump && player->onground &&
+		!player->pc_jumptics && !(player->mo->flags & MF_NOCLIP))
+	{
+		player->mo->momz = PC_JUMPSPEED;
+		player->onground = false;
+		player->pc_jumptics = 18;
+	}
+#endif
 
 	if(player->onground)
     {

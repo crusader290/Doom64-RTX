@@ -473,6 +473,12 @@ typedef struct player_s
 
 	int			turnheld;				/* for accelerative turning */
 	int         onground;               /* [d64] */
+#ifdef D64_PC
+	angle_t     pc_pitch;               /* [PC] mouse look, signed BAM */
+	int         pc_jumptics;            /* [PC] jump cooldown */
+	fixed_t     pc_ads;                 /* [PC] aim-down-sights blend 0..FRACUNIT */
+	int         pc_buttons;             /* [PC] PCACT_* held this tic */
+#endif
 } player_t;
 
 #define CF_NOCLIP       1       // no use
@@ -823,6 +829,9 @@ void M_SaveMenuData(void); // 80007B2C
 void M_RestoreMenuData(boolean alpha_in); // 80007BB8
 void M_MenuGameDrawer(void); // 80007C48
 int M_MenuTicker(void); // 80007E0C
+#ifdef D64_PC
+int M_PCOptionsPage(int page); /* [PC] */
+#endif
 void M_MenuClearCall(void); // 80008E6C
 
 void M_MenuTitleDrawer(void); // 80008E7C

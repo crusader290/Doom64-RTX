@@ -2,6 +2,9 @@
 
 #include "doomdef.h"
 #include "p_local.h"
+#ifdef D64_PC
+#include "config.h" /* [PC] */
+#endif
 #include "sounds.h"
 
 void G_PlayerReborn (int player);
@@ -519,6 +522,14 @@ void P_SpawnPlayerMissile (mobj_t *source, mobjtype_t type) // 80019668
 			slope = 0;
 		}
 	}
+#ifdef D64_PC
+	/* [PC] mouse look: fire along the view pitch unless autoaim locked on */
+	if (P_PCFreeAim(source) && (!pc_config.autoaim || !linetarget))
+	{
+		an = source->angle;
+		slope = P_PCAimSlope(source);
+	}
+#endif
 
 	x = source->x;
 	y = source->y;

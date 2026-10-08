@@ -3,6 +3,9 @@
 #include "doomdef.h"
 #include "r_local.h"
 #include "st_main.h"
+#ifdef D64_PC
+#include "pc_options.h" /* [PC] */
+#endif
 
 //intermission
 int DrawerStatus;
@@ -82,6 +85,10 @@ char *ControlText[] =   //8007517C
 #define M_TXT49 "FULL BRIGHT"   // [GEC] NEW CHEAT CODE
 #define M_TXT50 "FILTER"   // [GEC] NEW CHEAT CODE
 #define M_TXT51 "Aspect Ratio:" // [PC] 4:3 / 16:9
+#define M_TXT52 "Graphics"      // [PC]
+#define M_TXT53 "Gameplay"      // [PC]
+#define M_TXT54 "Save Game"     // [PC]
+#define M_TXT55 "Load Game"     // [PC]
 
 char *MenuText[] =   // 8005ABA0
 {
@@ -96,7 +103,8 @@ char *MenuText[] =   // 8005ABA0
     M_TXT40, M_TXT41, M_TXT42, M_TXT43, M_TXT44,
     M_TXT45, M_TXT46, M_TXT47,
     M_TXT48, M_TXT49, M_TXT50,  // [GEC] NEW
-    M_TXT51                     // [PC]
+    M_TXT51, M_TXT52, M_TXT53,  // [PC]
+    M_TXT54, M_TXT55            // [PC]
 };
 
 menuitem_t Menu_Title[2] = // 8005A978
@@ -121,6 +129,21 @@ menuitem_t Menu_Skill[4] = // 8005A990
     #endif // ENABLE_NIGHTMARE
 };
 
+#ifdef D64_PC
+#define OPTIONS_ITEMS 8 /* [PC] +Graphics, +Gameplay */
+menuitem_t Menu_Options[OPTIONS_ITEMS] = // 8005A9C0
+{
+    {  0, 102, 50 },    // Control Pad
+    { 41, 102, 68 },    // Control Stick
+    {  1, 102, 86 },    // Volume
+    {  2, 102, 104},    // Display
+    { 52, 102, 122},    // [PC] Graphics
+    { 53, 102, 140},    // [PC] Gameplay
+    {  3, 102, 158},    // Password
+    {  6, 102, 176},    // Return
+};
+#else
+#define OPTIONS_ITEMS 6
 menuitem_t Menu_Options[6] = // 8005A9C0
 {
     {  0, 102, 60 },    // Control Pad
@@ -130,6 +153,7 @@ menuitem_t Menu_Options[6] = // 8005A9C0
     {  3, 102, 140},    // Password
     {  6, 102, 160},    // Return
 };
+#endif
 
 menuitem_t Menu_Volume[4] = // 8005AA08
 {
@@ -615,6 +639,114 @@ extern mapthing_t *spawnlist;   // 800A5D74
 extern int spawncount;          // 800A5D78
 extern int gobalcheats; // [GEC]
 
+#ifdef D64_PC
+/*
+ * [PC] Generic option pages (Graphics, Gameplay, Debug). The items live in
+ * src/port/pc_options.c; left/right change a value, confirm cycles it or
+ * runs an action, Start/B go back.
+ */
+#define PCPAGE_ROWS 9
+static int pc_page;
+
+static int M_PCPageTicker(void)
+{
+    unsigned int buttons, oldbuttons, pressed;
+    int count, dir, ret;
+
+    if ((gamevbls < gametic) && ((gametic & 3) == 0))
+        MenuAnimationTic = MenuAnimationTic + 1 & 7;
+
+    count = PCOpt_Count(pc_page);
+    buttons = M_ButtonResponder(ticbuttons[0]);
+    oldbuttons = M_ButtonResponder(oldticbuttons[0]);
+    pressed = buttons & ~oldbuttons;
+
+    if (!(buttons & (PAD_UP|PAD_DOWN)))
+        m_vframe1 = 0;
+    else
+    {
+        m_vframe1 = m_vframe1 - vblsinframe[0];
+        if (m_vframe1 <= 0)
+        {
+            m_vframe1 = 0xf;
+            if (buttons & PAD_DOWN)
+                cursorpos = (cursorpos + 1) % count;
+            else
+                cursorpos = (cursorpos + count - 1) % count;
+            if (cursorpos < linepos)
+                linepos = cursorpos;
+            if (cursorpos >= linepos + PCPAGE_ROWS)
+                linepos = cursorpos - PCPAGE_ROWS + 1;
+            S_StartSound(NULL, sfx_switch1);
+        }
+    }
+
+    if (pressed & (PAD_START|PAD_B))
+    {
+        S_StartSound(NULL, sfx_pistol);
+        return ga_exit;
+    }
+
+    if (pressed & (PAD_LEFT|PAD_RIGHT|PAD_A|PAD_Z_TRIG|PAD_R_TRIG|PAD_L_TRIG|ALL_CBUTTONS))
+    {
+        dir = (pressed & PAD_LEFT) ? -1 : (pressed & PAD_RIGHT) ? 1 : 0;
+        if (dir != 0 && PCOpt_IsAction(pc_page, cursorpos))
+            return ga_nothing;
+        S_StartSound(NULL, sfx_switch2);
+        ret = PCOpt_Change(pc_page, cursorpos, dir);
+        if (ret != 0)
+            return ret;
+    }
+    return ga_nothing;
+}
+
+static void M_PCPageDrawer(void)
+{
+    char buf[32];
+    const char *val;
+    int i, y, count;
+
+    ST_DrawString(-1, 20, (char *)PCOpt_Title(pc_page), text_alpha | 0xc0000000);
+
+    count = PCOpt_Count(pc_page);
+    for (i = linepos; i < count && i < linepos + PCPAGE_ROWS; i++)
+    {
+        y = 46 + (i - linepos) * 18;
+        ST_DrawString(52, y, (char *)PCOpt_Label(pc_page, i), text_alpha | 0xc0000000);
+        val = PCOpt_Value(pc_page, i, buf, sizeof(buf));
+        if (val)
+            ST_DrawString(214, y, (char *)val, text_alpha | 0xc0000000);
+    }
+
+    if (linepos > 0)
+        ST_DrawString(-1, 32, "- more -", text_alpha | 0xffffff00);
+    if (linepos + PCPAGE_ROWS < count)
+        ST_DrawString(-1, 210, "- more -", text_alpha | 0xffffff00);
+
+    ST_DrawSymbol(52 - 37, 46 + (cursorpos - linepos) * 18 - 9, MenuAnimationTic + 70, text_alpha | 0xffffff00);
+}
+
+int M_PCOptionsPage(int page)
+{
+    int exit;
+
+    S_StartSound(NULL, sfx_pistol);
+    M_SaveMenuData();
+
+    pc_page = page;
+    MenuCall = M_PCPageDrawer;
+    cursorpos = 0;
+    linepos = 0;
+
+    exit = MiniLoop(M_FadeInStart, M_FadeOutStart, M_PCPageTicker, M_MenuGameDrawer);
+    M_RestoreMenuData((exit == ga_exit));
+
+    if (exit == ga_exit)
+        return ga_nothing;
+    return exit;
+}
+#endif
+
 int M_MenuTicker(void) // 80007E0C
 {
     unsigned int buttons, oldbuttons;
@@ -961,7 +1093,7 @@ int M_MenuTicker(void) // 80007E0C
                         M_SaveMenuData();
 
                         MenuItem = Menu_Options;
-                        itemlines = 6;
+                        itemlines = OPTIONS_ITEMS; /* [PC] */
                         MenuCall = M_MenuTitleDrawer;
                         cursorpos = 0;
 
@@ -1305,6 +1437,16 @@ int M_MenuTicker(void) // 80007E0C
                         S_StartSound(NULL, sfx_switch2);
                         I_PCSetWidescreen(!I_PCGetWidescreen());
                     }
+                    break;
+
+                case 52: // [PC] Graphics
+                    if (truebuttons)
+                        return M_PCOptionsPage(PCPAGE_GRAPHICS);
+                    break;
+
+                case 53: // [PC] Gameplay
+                    if (truebuttons)
+                        return M_PCOptionsPage(PCPAGE_GAMEPLAY);
                     break;
 
                 case 35: // LOCK MONSTERS

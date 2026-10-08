@@ -7,12 +7,15 @@
  *
  * Default keyboard layout targets the game's "Default 1" control setup:
  *   W/S or Up/Down  forward/back     Left/Right   turn
- *   A/D             strafe (L/R)     Mouse        turn
- *   Ctrl, LMB       fire (Z)         E, Space, RMB use (C-right)
+ *   A/D             strafe (L/R)     Mouse        turn / look
+ *   Ctrl, LMB       fire (Z)         E, MMB       use (C-right)
  *   Shift           run (C-left)     Alt          strafe modifier (C-down)
  *   Tab             automap (C-up)   Q / wheel down  previous weapon (A)
- *   wheel up, 1-0   next weapon (B)  Enter        menu confirm (A)
+ *   wheel up        next weapon (B)  Enter        menu confirm (A)
  *   Esc             start/menu       Backspace    menu back (B)
+ * PC-only actions (not part of the pad word, read by the game directly):
+ *   Space           jump             RMB          aim down sights
+ *   1-8             select weapon    mouse Y      look up/down
  *
  * Doom64-RTX PC port, GPLv3.
  */
@@ -38,7 +41,6 @@ static const keybind_t keybinds[] = {
     { SDL_SCANCODE_LCTRL,     CONT_G },
     { SDL_SCANCODE_RCTRL,     CONT_G },
     { SDL_SCANCODE_E,         CONT_F },
-    { SDL_SCANCODE_SPACE,     CONT_F },
     { SDL_SCANCODE_LSHIFT,    CONT_C },
     { SDL_SCANCODE_RSHIFT,    CONT_C },
     { SDL_SCANCODE_LALT,      CONT_D },
@@ -52,6 +54,8 @@ static const keybind_t keybinds[] = {
 
 static SDL_Gamepad *gamepad;
 static float mouse_dx_accum;
+static float mouse_dy_accum;
+static int weapon_key;
 static int wheel_pulse_up, wheel_pulse_down;
 static uint16_t mouse_buttons;
 static int input_grab;
@@ -84,19 +88,25 @@ void IN_HandleEvent(const SDL_Event *ev)
     {
     case SDL_EVENT_MOUSE_MOTION:
         if (input_grab)
+        {
             mouse_dx_accum += ev->motion.xrel;
+            mouse_dy_accum += ev->motion.yrel;
+        }
         break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
     {
         uint16_t b = 0;
         if (ev->button.button == SDL_BUTTON_LEFT) b = CONT_G;
-        else if (ev->button.button == SDL_BUTTON_RIGHT) b = CONT_F;
-        else if (ev->button.button == SDL_BUTTON_MIDDLE) b = CONT_C;
+        else if (ev->button.button == SDL_BUTTON_MIDDLE) b = CONT_F;
         if (ev->type == SDL_EVENT_MOUSE_BUTTON_DOWN) mouse_buttons |= b;
         else mouse_buttons &= (uint16_t)~b;
         break;
     }
+    case SDL_EVENT_KEY_DOWN:
+        if (!ev->key.repeat && ev->key.scancode >= SDL_SCANCODE_1 && ev->key.scancode <= SDL_SCANCODE_9)
+            weapon_key = ev->key.scancode - SDL_SCANCODE_1 + 1;
+        break;
     case SDL_EVENT_MOUSE_WHEEL:
         if (ev->wheel.y > 0) wheel_pulse_up = 2;
         else if (ev->wheel.y < 0) wheel_pulse_down = 2;
@@ -158,14 +168,16 @@ int IN_ReadPad(void)
         if (SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT)) buttons |= CONT_LEFT;
         if (SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT)) buttons |= CONT_RIGHT;
         if (SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) > 8000) buttons |= CONT_G;
-        if (SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER) > 8000) buttons |= CONT_D;
         sx = stick_from_axis(SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTX));
         sy = -stick_from_axis(SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFTY));
         /* right stick turns like a mouse */
         {
             float rx = (float)SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_RIGHTX) / 32767.0f;
+            float ry = (float)SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_RIGHTY) / 32767.0f;
             if (fabsf(rx) > 0.15f)
                 mouse_dx_accum += rx * 18.0f;
+            if (fabsf(ry) > 0.15f)
+                mouse_dy_accum += ry * 10.0f;
         }
     }
 
@@ -180,4 +192,48 @@ int I_PCMouseTurn(void)
     if (turn > 2.0e9f) turn = 2.0e9f;
     if (turn < -2.0e9f) turn = -2.0e9f;
     return (int)turn;
+}
+
+/* Vertical look since the last call, as a BAM pitch delta (up = positive). */
+int I_PCMousePitch(void)
+{
+    extern int I_PCTestLook(void);
+    float d = -mouse_dy_accum * pc_config.mouse_sens * 2097152.0f;
+    mouse_dy_accum = 0.0f;
+    if (pc_config.invert_mouse)
+        d = -d;
+    d += (float)I_PCTestLook();
+    if (d > 2.0e9f) d = 2.0e9f;
+    if (d < -2.0e9f) d = -2.0e9f;
+    return (int)d;
+}
+
+/* PC-only actions held right now (PCACT_*). */
+int I_PCActions(void)
+{
+    const bool *keys = SDL_GetKeyboardState(NULL);
+    SDL_MouseButtonFlags mb = SDL_GetMouseState(NULL, NULL);
+    extern int I_PCTestActions(void);
+    int a = I_PCTestActions();
+
+    if (keys[SDL_SCANCODE_SPACE])
+        a |= PCACT_JUMP;
+    if (input_grab && (mb & SDL_BUTTON_RMASK))
+        a |= PCACT_ADS;
+    if (gamepad)
+    {
+        if (SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK))
+            a |= PCACT_JUMP;
+        if (SDL_GetGamepadAxis(gamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER) > 8000)
+            a |= PCACT_ADS;
+    }
+    return a;
+}
+
+/* Number key pressed since the last call (1..9), or 0. */
+int I_PCWeaponKey(void)
+{
+    int k = weapon_key;
+    weapon_key = 0;
+    return k;
 }

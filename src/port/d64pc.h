@@ -63,10 +63,21 @@ int  I_PCMouseTurn(void);
 int  I_PCGetWidescreen(void);
 void I_PCSetWidescreen(int on);
 extern int R_PCFovInvScale; /* fixed_t, r_main.c */
+extern int R_PCFovInvScaleBase;
 void I_PCAudioUpdate(void);
 int  nummobjs_pc(void);
 /* logging for game code (goes to doom64rtx.log) */
 void I_PCLog(const char *fmt, ...);
 void I_PCToggleRaytracing(void);
+void I_PCSetFullscreen(int on);
+int  I_PCTakeDebugRequest(void);
+/* [PC] modern controls (src/port/input.c) */
+#ifndef PCACT_JUMP
+#define PCACT_JUMP 1
+#define PCACT_ADS  2
+#endif
+int  I_PCMousePitch(void);
+int  I_PCActions(void);
+int  I_PCWeaponKey(void);
 
 #endif

@@ -5,6 +5,7 @@
 #ifdef D64_PC
 #include "rtlights.h"
 fixed_t R_PCFovInvScale = FRACUNIT; /* [PC] 320 / virtual screen width (widescreen) */
+fixed_t R_PCFovInvScaleBase = FRACUNIT; /* [PC] same before the mouse-look widening */
 #endif
 
 /*===================================== */
@@ -156,7 +157,12 @@ void R_RenderPlayerView(void) // 80023448
     if (cameratarget == players[0].mo)
     {
         viewz = players[0].viewz;
+#ifdef D64_PC
+        /* [PC] mouse look (positive = up) */
+        pitch = (players[0].recoilpitch + players[0].pc_pitch) >> ANGLETOFINESHIFT;
+#else
         pitch = players[0].recoilpitch >> ANGLETOFINESHIFT;
+#endif
     }
     else
     {
@@ -174,6 +180,22 @@ void R_RenderPlayerView(void) // 80023448
 
 #ifdef D64_PC
 	RT_CollectLights(); /* [PC] emitters for the ray traced renderer */
+	{
+		/* [PC] looking up/down shows more to the sides at the screen's top
+		 * or bottom edge: widen the horizontal BSP culling to match */
+		int a = (int)(pitch << ANGLETOFINESHIFT);
+		fixed_t s, cs, f;
+		if (a < 0)
+			a = -a;
+		s = finesine[((angle_t)a >> ANGLETOFINESHIFT) & FINEMASK];
+		cs = finecosine[((angle_t)a >> ANGLETOFINESHIFT) & FINEMASK];
+		f = cs - FixedMul(s, 0xC000);
+		if (f < 0x1800)
+			f = 0x1800;
+		if (f > FRACUNIT)
+			f = FRACUNIT;
+		R_PCFovInvScale = FixedMul(R_PCFovInvScaleBase, f);
+	}
 #endif
 
 	// Phase 1

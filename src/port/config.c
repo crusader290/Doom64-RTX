@@ -29,6 +29,12 @@ void Config_Defaults(void)
     pc_config.mouse = 1;
     pc_config.brightness = 50;
     pc_config.sound = 1;
+    pc_config.fps = 30;
+    pc_config.mouselook = 1;
+    pc_config.autoaim = 1;
+    pc_config.crosshair = 1;
+    pc_config.jump = 1;
+    pc_config.weapon_bob = 100;
     pc_config.audio_rate = 44100;
     pc_config.mouse_sens = 1.0f;
     pc_config.gpu_index = -1;
@@ -62,6 +68,15 @@ static const cvar_t cvars[] = {
     { "log",            CV_INT,      &pc_config.log, 0 },
     { "sound",          CV_INT,      &pc_config.sound, 0 },
     { "audio_rate",     CV_INT,      &pc_config.audio_rate, 0 },
+    { "fps",            CV_INT,      &pc_config.fps, 0 },
+    { "mouselook",      CV_INT,      &pc_config.mouselook, 0 },
+    { "invert_mouse",   CV_INT,      &pc_config.invert_mouse, 0 },
+    { "always_run",     CV_INT,      &pc_config.always_run, 0 },
+    { "autoaim",        CV_INT,      &pc_config.autoaim, 0 },
+    { "crosshair",      CV_INT,      &pc_config.crosshair, 0 },
+    { "jump",           CV_INT,      &pc_config.jump, 0 },
+    { "weapon_bob",     CV_INT,      &pc_config.weapon_bob, 0 },
+    { "show_stats",     CV_INT,      &pc_config.show_stats, 0 },
 };
 
 static void set_cvar_in(pcconfig_t *cfg, const char *key, const char *val);

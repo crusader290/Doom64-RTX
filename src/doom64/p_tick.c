@@ -1,5 +1,8 @@
 #include "doomdef.h"
 #include "p_local.h"
+#ifdef D64_PC
+#include "pc_options.h" /* [PC] */
+#endif
 #include "st_main.h"
 
 boolean		gamepaused = true; // 800A6270
@@ -155,6 +158,32 @@ void P_CheckCheats (void) // 8002187C
 
 	if (!gamepaused)
     {
+#ifdef D64_PC
+        /* [PC] F7 opens the debug page straight from the game */
+        if (I_PCTakeDebugRequest() && !demoplayback)
+        {
+            gamepaused = true;
+            S_PauseSound();
+            lastticon = ticon;
+            MenuCall = M_MenuTitleDrawer;
+            MenuItem = Menu_Game;
+            cursorpos = 0;
+            itemlines = FeaturesUnlocked ? 4 : 3;
+            MenuIdx = 0;
+            text_alpha = 255;
+            MenuAnimationTic = 0;
+
+            exit = M_PCOptionsPage(PCPAGE_DEBUG);
+            M_MenuClearCall();
+            if (exit == ga_warped)
+                gameaction = ga_warped;
+            gamepaused = false;
+            S_ResumeSound();
+            ticon = lastticon;
+            ticsinframe = lastticon >> 2;
+            return;
+        }
+#endif
         if ((buttons & PAD_START) && !(oldticbuttons[0] & PAD_START))
         {
             gamepaused = true;

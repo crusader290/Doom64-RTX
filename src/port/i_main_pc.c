@@ -350,10 +350,10 @@ static int list_has(const char *list, unsigned v)
     return 0;
 }
 
-static int test_pad_buttons(void)
+static unsigned test_env_mask(const char *env, int shift)
 {
-    const char *p = SDL_getenv("D64_PRESS");
-    int pad = 0;
+    const char *p = SDL_getenv(env);
+    unsigned pad = 0;
     while (p && *p)
     {
         char *end;
@@ -365,12 +365,44 @@ static int test_pad_buttons(void)
             if (*end == '/')
                 len = (unsigned)SDL_strtoul(end + 1, &end, 10);
             if (frame_no >= f && frame_no < f + len)
-                pad |= (int)(mask << 16);
+                pad |= mask << shift;
         }
         p = SDL_strchr(p, ',');
         if (p) p++;
     }
     return pad;
+}
+
+static int test_pad_buttons(void)
+{
+    return (int)test_env_mask("D64_PRESS", 16);
+}
+
+/* D64_PCACT="frame:mask[/len],..." holds PC actions (1 jump, 2 ADS);
+ * D64_LOOK="frame:degrees,..." adds mouse-look pitch once at that frame. */
+int I_PCTestActions(void)
+{
+    return (int)test_env_mask("D64_PCACT", 0);
+}
+
+int I_PCTestLook(void)
+{
+    const char *p = SDL_getenv("D64_LOOK");
+    int bam = 0;
+    static unsigned last_frame;
+    if (frame_no == last_frame)
+        return 0;
+    last_frame = frame_no;
+    while (p && *p)
+    {
+        char *end;
+        unsigned f = (unsigned)SDL_strtoul(p, &end, 10);
+        if (*end == ':' && frame_no == f)
+            bam += (int)(SDL_strtod(end + 1, &end) * (double)0xb60b61);
+        p = SDL_strchr(p, ',');
+        if (p) p++;
+    }
+    return bam;
 }
 
 extern int rndindex, prndindex, gametic, ticon;
@@ -431,6 +463,23 @@ void I_PCToggleRaytracing(void)
     SDL_Log("Ray tracing %s", pc_config.raytracing ? "enabled" : "disabled");
 }
 
+void I_PCSetFullscreen(int on)
+{
+    CONFIG_SET(fullscreen, on ? 1 : 0);
+    SDL_SetWindowFullscreen(window, pc_config.fullscreen ? true : false);
+    Config_Save();
+}
+
+static int debug_request;
+
+/* F7: the game polls this once per tic and opens the debug page. */
+int I_PCTakeDebugRequest(void)
+{
+    int r = debug_request;
+    debug_request = 0;
+    return r;
+}
+
 static void pump_events(void)
 {
     SDL_Event ev;
@@ -460,12 +509,11 @@ static void pump_events(void)
                 break;
             if (ev.key.scancode == SDL_SCANCODE_F10)
                 I_PCToggleRaytracing();
+            else if (ev.key.scancode == SDL_SCANCODE_F7)
+                debug_request = 1;
             else if (ev.key.scancode == SDL_SCANCODE_F11 ||
                      (ev.key.scancode == SDL_SCANCODE_RETURN && (ev.key.mod & SDL_KMOD_ALT)))
-            {
-                CONFIG_SET(fullscreen, !pc_config.fullscreen);
-                SDL_SetWindowFullscreen(window, pc_config.fullscreen ? true : false);
-            }
+                I_PCSetFullscreen(!pc_config.fullscreen);
             else if (ev.key.scancode == SDL_SCANCODE_F12)
                 save_screenshot();
             break;
@@ -484,7 +532,7 @@ static void apply_aspect(void)
     float vwidth;
     GBI_SetAspect(pc_config.aspect ? 16.0f / 9.0f : 4.0f / 3.0f);
     vwidth = GBI_VirtualWidth();
-    R_PCFovInvScale = (int)(65536.0f * 320.0f / vwidth);
+    R_PCFovInvScale = R_PCFovInvScaleBase = (int)(65536.0f * 320.0f / vwidth);
 }
 
 int I_PCGetWidescreen(void)

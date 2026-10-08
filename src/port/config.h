@@ -28,6 +28,15 @@ typedef struct {
     int   validation;        /* Vulkan validation layers */
     int   log;               /* write doom64rtx.log (default on) */
     int   sound;             /* 1 = sound and music (WESS synth) */
+    int   fps;               /* frame rate cap: 30 (N64), 60 or 120 (interpolated) */
+    int   mouselook;         /* free look with the mouse (pitch) */
+    int   invert_mouse;      /* invert vertical mouse look */
+    int   always_run;
+    int   autoaim;           /* vertical autoaim (classic Doom aim assist) */
+    int   crosshair;
+    int   jump;              /* allow jumping */
+    int   weapon_bob;        /* 0..100 % of the N64 weapon bob */
+    int   show_stats;        /* F7 debug overlay: fps / position */
     int   audio_rate;        /* synth output rate in Hz (N64: 22050) */
 } pcconfig_t;
 

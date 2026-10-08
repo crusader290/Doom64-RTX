@@ -16,6 +16,14 @@
 #define	MAXHEALTH			100
 #define	VIEWHEIGHT			(56*FRACUNIT) //  D64 change to 41
 
+#ifdef D64_PC
+#define PC_MAXPITCH   (ANG45 + (ANG45 / 9))   /* [PC] mouse look limit, 50 degrees */
+#define PC_JUMPSPEED  (8*FRACUNIT)           /* [PC] ~32 units high */
+void P_PCSelectWeapon(player_t *player, int key);
+fixed_t P_PCAimSlope(mobj_t *mo);             /* tan(pitch) for free aim */
+boolean P_PCFreeAim(mobj_t *mo);              /* player shot uses its pitch */
+#endif
+
 /* mapblocks are used to check movement against lines and things */
 #define MAPBLOCKUNITS	128
 #define	MAPBLOCKSIZE	(MAPBLOCKUNITS*FRACUNIT)
