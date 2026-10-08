@@ -39,7 +39,7 @@ Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 | OpenGL 3.3 renderer | working |
 | Vulkan raster renderer | working |
 | Vulkan ray traced world | preview (F10); light sources from game objects in progress |
-| Sound and music (WESS / N64 synth) | in progress (silent for now) |
+| Sound and music (WESS + software N64 synth) | working (music, effects, reverb) |
 | Windows build (MinGW-w64) | working (tested under Wine: OpenGL and Vulkan) |
 | Saves (Controller Pak emulation) | working, needs more testing |
 | 4:3 / 16:9 (Options › Display › Aspect Ratio) | working: wider field of view, HUD and menus keep their proportions |
@@ -66,6 +66,7 @@ See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
 | `-fullscreen` / `-window` | display mode |
 | `-widescreen` | 16:9 for this run |
 | `-nolog` | do not write doom64rtx.log |
+| `-nosound` | no sound output |
 | `-set <name> <value>` | set any ini setting for this run |
 
 ### Keys
@@ -100,6 +101,8 @@ raytracing = 0           # 1 = ray traced world (also toggled with F10)
 widescreen = 0           # 1 = 16:9 (also in Options > Display > Aspect Ratio)
 brightness = 50          # starting value of the game's Brightness option (0..100)
 log = 1                  # write doom64rtx.log
+sound = 1                # sound and music
+audio_rate = 44100       # synth output rate (the N64 used 22050)
 rt_spp = 1               # rays per pixel for AO / bounce light
 rt_bounces = 1
 rt_denoise = 1
@@ -166,7 +169,7 @@ Copy `SDL3.dll` next to `doom64rtx.exe`.
 
 | Option | Default | Meaning |
 |---|---|---|
-| `D64_WITH_AUDIO` | OFF | build the WESS sound system (being ported) |
+| `D64_WITH_AUDIO` | ON | build the WESS sound system (OFF = silent stub) |
 | `D64_NULL_RENDERER` | OFF | headless renderer for tests (no Rust needed) |
 | `D64_FETCH_SDL3` | ON | download SDL3 if it is not installed |
 

@@ -142,5 +142,24 @@ message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
   the depth test disabled -> investigate composite ordering / alpha.
 - Release 0.1.1 in releases/ via tools/make_release.sh.
 - NEXT (user): crash hunting (ASan/UBSan soak runs, long automated play), then WESS audio.
+
+### Session 2 — audio (WESS) and gameplay modernisation
+- Sound works: WESS + src/port/n64synth.c (clean-room alSyn*). Music and SFX verified by
+  rendering to WAV (`D64_WAVOUT=file.wav`, deterministic with `D64_FIXED_TIMESTEP=1`,
+  1/30 s per frame) and looking at spectrograms; Windows (Wine) output RMS identical.
+  `D64_DUMPSAMPLES=<dir>` writes all 124 bank samples (VADPCM decode checked visually).
+- Data formats (all big-endian): WMD = module_header(32) + patch_group_header(24) + patch
+  bank: patches(4 B each) | patchmaps(20) | patchinfo(24: base, len, type, flags, pad,
+  pitch(!), loopindex, unused) | drummaps(4) | loopinfo(8) | raw loops(16) | ADPCM loops(48,
+  state[16]) | ADPCM books(264, one per sample index). Sections 8-byte aligned relative to
+  the bank start. WSD = module_header + table of 16-byte records (seq_header 12 + pointer)
+  then per-sequence track blocks (track_header 20, labels u32[], event bytes; event
+  parameters are little-endian byte pairs). WDD = raw sample data (offsets from patchinfo).
+- WESS needs **unsigned char** (`*lpdest != 0xFF` track tests) -> `-funsigned-char` on the
+  audio sources only; with signed char it crashed in queue_wess_seq_stopall on map change.
+- Threading: synth + sequencer run in the SDL audio callback; s_sound.c wrappers lock the
+  same mutex, wess_disable/enable are no-ops (wesssys_disable_ints).
+- Not emulated exactly: N64 exponential envelope ramps (linear here), 22050 Hz output
+  (default audio_rate=44100, pitch ratios scale automatically), reverb params approximated.
 - Container setup used: `apt-get install glslang-tools mingw-w64 wine64 wine patchelf libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.

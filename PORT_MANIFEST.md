@@ -6,7 +6,7 @@ Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verific
 | File | Status | Notes |
 |---|---|---|
 | include/ultra64.h | ✅ | clean-room libultra types + GBI macros; `Gfx.w1` is `uintptr_t` |
-| include/libaudio.h | 🟡 | types for WESS; implementation pending (task: audio) |
+| include/libaudio.h | ✅ | alSyn*/ALHeap/ALPlayer API surface WESS uses (implemented by n64synth.c) |
 | include/PR/*.h, ultratypes.h | ✅ | include shims |
 | d64pc.h | ✅ | libc, BE16/BE32, virtual ROM bases, FPU no-ops, prototypes |
 | os.c | ✅ | message queues, osPiStartDma -> ROM_Read, ucode identities |
@@ -18,7 +18,9 @@ Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verific
 | gu.c | ✅ | guFrustum/guMtxF2L |
 | rtlights.c | 🟡 | point lights from FF_FULLBRIGHT things, flames/lamps/candles, muzzle flash; collected inside R_RenderPlayerView |
 | log.c/.h | ✅ | doom64rtx.log (+ .old.log), SDL log capture, crash handler (signals + backtrace / SEH + stack), crash context, Rust panic hook |
-| s_sound_stub.c | ✅ | silent sound API while WESS is ported |
+| n64synth.c/.h | 🟡 | software N64 synth: VADPCM/raw16 voices, loops (ADPCM state restore), linear-interp resampling, equal-power pan + reverb send, linear volume ramps (vol² curve), big-room style reverb, sample-accurate player callbacks (WESS 120 Hz tick) |
+| audio_pc.c | 🟡 | replaces audio.c: wess_init, ROM reads, WDD bank pointer, SDL3 audio stream (audio thread) + I_PCAudioLock; D64_WAVOUT / D64_DUMPSAMPLES hooks |
+| s_sound_stub.c | ✅ | silent sound API, only for -DD64_WITH_AUDIO=OFF |
 
 ## Graphics (src/gfx, renderer/)
 | File | Status | Notes |
@@ -54,7 +56,9 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | r_phase1.c, r_main.c | 🟡 | [PC] R_PCFovInvScale widens BSP culling for 16:9; RT_CollectLights hook |
 | g_game.c | 🟡 | [PC] map load logging |
 | g_game.c, r_local.h | ✅ | extern fixes |
-| wess*.c, seqload*.c, n64cmd.c, s_sound.c, funqueue.c | ⬜ | not built yet (D64_WITH_AUDIO=OFF) |
+| wess*.c, seqload*.c, funqueue.c | 🟡 | built with `-funsigned-char` (original toolchain); long->int; uintptr_t casts; [PC] prototypes; WMD/WSD headers byte-swapped (wessapi.c, seqload.c); WSD sequence table rebuilt with native records; track headers + label lists swapped while loading; CalcPartsPerInt in C |
+| n64cmd.c | 🟡 | [PC] N64_PCDriverInit: swaps the patch bank and builds a native sample table (file records 24 bytes); WDD read from the ROM image; reverb controller -> alSynSetFXMix |
+| s_sound.c, audio_heap.c | 🟡 | [PC] entry points take the audio lock; 1 MB audio heap; pointer casts |
 
 ## Build / packaging
 | File | Status | Notes |
