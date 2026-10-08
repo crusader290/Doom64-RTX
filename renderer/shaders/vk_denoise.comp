@@ -1,3 +1,52 @@
 #version 460
+// Edge-aware filter of the accumulated RT lighting, then resolve:
+//   colour = albedo * lighting, with Doom 64's fog applied on top.
+#extension GL_GOOGLE_include_directive : require
 layout(local_size_x = 8, local_size_y = 8) in;
-void main() {}
+
+#include "rt_common.glsl"
+
+layout(set = 0, binding = 0, rgba16f) uniform readonly image2D lighting_in;
+layout(set = 0, binding = 1, rgba8) uniform readonly image2D albedo_in;
+layout(set = 0, binding = 2, rgba16f) uniform readonly image2D nd_in;
+layout(set = 0, binding = 3, rgba8) uniform writeonly image2D color_out;
+
+void main()
+{
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 dims = ivec2(u.dims.xy);
+    if (px.x >= dims.x || px.y >= dims.y)
+        return;
+    vec4 alb = imageLoad(albedo_in, px);
+    if (alb.a <= 0.0)
+    {
+        imageStore(color_out, px, vec4(0.0));
+        return;
+    }
+    vec4 nd = imageLoad(nd_in, px);
+    vec3 n = nd.xyz * 2.0 - 1.0;
+    float d = nd.w;
+    vec3 sum = vec3(0.0);
+    float wsum = 0.0;
+    int radius = u.params2.y > 0.5 ? 2 : 0;
+    for (int y = -radius; y <= radius; y++)
+    {
+        for (int x = -radius; x <= radius; x++)
+        {
+            ivec2 q = clamp(px + ivec2(x, y), ivec2(0), dims - 1);
+            vec4 nq = imageLoad(nd_in, q);
+            if (nq.w <= 0.0)
+                continue;
+            float wn = pow(max(dot(n, nq.xyz * 2.0 - 1.0), 0.0), 16.0);
+            float wd = exp(-abs(nq.w - d) / (0.02 * d + 1.0));
+            float ws = exp(-float(x * x + y * y) / 4.0);
+            float w = wn * wd * ws;
+            sum += imageLoad(lighting_in, q).rgb * w;
+            wsum += w;
+        }
+    }
+    vec3 lighting = wsum > 0.0 ? sum / wsum : imageLoad(lighting_in, px).rgb;
+    vec3 c = clamp(alb.rgb * lighting, 0.0, 1.0);
+    c = mix(c, u.fog_color.rgb, clamp(alb.a, 0.0, 1.0));
+    imageStore(color_out, px, vec4(c, 1.0));
+}

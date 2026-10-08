@@ -26,6 +26,7 @@
 #include "gbi.h"
 #include "d64gfx.h"
 #include "rtlights.h"
+#include "r_local.h"
 
 /* ------------------------------------------------------------------ */
 /* globals the game expects from i_main.c                             */
@@ -370,10 +371,19 @@ static int test_pad_buttons(void)
     return pad;
 }
 
+extern int rndindex, prndindex, gametic, ticon;
 static void test_hooks(void)
 {
     const char *q = SDL_getenv("D64_QUIT_AT");
     frame_no++;
+    if (SDL_getenv("D64_TRACE"))
+    {
+        mobj_t *mo = players[0].mo;
+        printf("TRACE %u gt=%d ticon=%d r=%d p=%d mo=%d,%d,%d cam=%d,%d\n", frame_no, gametic, ticon,
+               rndindex, prndindex, mo ? mo->x : 0, mo ? mo->y : 0, mo ? mo->z : 0,
+               cameratarget ? cameratarget->x : 0, cameratarget ? cameratarget->y : 0);
+        fflush(stdout);
+    }
     if (list_has(SDL_getenv("D64_SHOTS"), frame_no))
     {
         char name[64];

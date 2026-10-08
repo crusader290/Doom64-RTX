@@ -1,3 +1,258 @@
 #version 460
+// Ray traced Doom 64 world (VK_KHR_ray_query).
+//
+// Lighting model (see docs/raytracing.md):
+//   albedo   = the original N64 combiner evaluated with shade = white
+//   base     = the vertex shade colour (Doom 64's sector light), kept as art direction
+//   lighting = base * (1 - ao) + bounce * gi + sum(shadowed dynamic lights)
+// The lighting is accumulated over frames (reprojected), the filter pass
+// (vk_denoise.comp) smooths it and multiplies the albedo back in.
+#extension GL_EXT_ray_query : require
+#extension GL_EXT_nonuniform_qualifier : require
+#extension GL_GOOGLE_include_directive : require
+
 layout(local_size_x = 8, local_size_y = 8) in;
-void main() {}
+
+#include "rt_common.glsl"
+
+layout(set = 0, binding = 0) uniform accelerationStructureEXT tlas;
+layout(std430, set = 0, binding = 1) readonly buffer Verts { RtVertex verts[]; };
+layout(std430, set = 0, binding = 2) readonly buffer Mats { Material mats[]; };
+layout(std430, set = 0, binding = 3) readonly buffer Lights { Light lights[]; };
+layout(set = 0, binding = 5) uniform texture2D textures[];
+layout(set = 0, binding = 6) uniform sampler samplers[18];
+layout(set = 0, binding = 7, rgba16f) uniform readonly image2D hist_in;
+layout(set = 0, binding = 8, rgba16f) uniform writeonly image2D hist_out;
+layout(set = 0, binding = 9, rgba8) uniform writeonly image2D albedo_out;
+layout(set = 0, binding = 10, rgba16f) uniform writeonly image2D nd_out;
+layout(set = 0, binding = 11, r32f) uniform writeonly image2D depth_out;
+
+#include "combiner.glsl"
+
+struct Surface {
+    vec3 pos;
+    vec3 normal;
+    vec2 uv;
+    vec4 shade;
+    vec4 albedo;
+    uint mat;
+};
+
+uint tri_base(uint geom, uint prim)
+{
+    return (geom == 0u ? prim : prim + u.counts.x) * 3u;
+}
+
+vec4 unpack_color(uint c)
+{
+    return vec4(float((c >> 24) & 255u), float((c >> 16) & 255u), float((c >> 8) & 255u), float(c & 255u)) / 255.0;
+}
+
+// Evaluates the N64 pixel pipeline with shade = white to get the surface colour.
+bool material_albedo(uint mi, vec2 uv, float fogf, out vec4 albedo)
+{
+    Material m = mats[mi];
+    vec4 t0 = vec4(1.0);
+    if (m.tex != 0xffffffffu)
+    {
+        vec2 tsz = vec2(textureSize(sampler2D(textures[nonuniformEXT(m.tex)], samplers[m.smp]), 0));
+        vec2 suv = uv;
+        if ((m.flags & F_FILTER) != 0u)
+            suv += 0.5 / tsz;
+        t0 = textureLod(sampler2D(textures[nonuniformEXT(m.tex)], samplers[m.smp]), suv, 0.0);
+    }
+    uint flags = m.flags & ~F_FOG;
+    return n64_pixel(m.cc, flags, m.colors.x, m.colors.y, m.colors.z, m.colors.w, m.plod,
+                     t0, t0, vec4(1.0, 1.0, 1.0, fogf), albedo);
+}
+
+Surface fetch_surface(uint geom, uint prim, vec2 bary)
+{
+    uint b = tri_base(geom, prim);
+    RtVertex a = verts[b], c1 = verts[b + 1u], c2 = verts[b + 2u];
+    vec3 w = vec3(1.0 - bary.x - bary.y, bary.x, bary.y);
+    Surface s;
+    vec3 p0 = vec3(a.x, a.y, a.z), p1 = vec3(c1.x, c1.y, c1.z), p2 = vec3(c2.x, c2.y, c2.z);
+    s.pos = p0 * w.x + p1 * w.y + p2 * w.z;
+    s.normal = normalize(cross(p1 - p0, p2 - p0));
+    s.uv = vec2(a.u, a.v) * w.x + vec2(c1.u, c1.v) * w.y + vec2(c2.u, c2.v) * w.z;
+    s.shade = unpack_color(a.color) * w.x + unpack_color(c1.color) * w.y + unpack_color(c2.color) * w.z;
+    s.mat = a.mat;
+    if (!material_albedo(s.mat, s.uv, s.shade.a, s.albedo))
+        s.albedo = vec4(0.0);
+    return s;
+}
+
+// Alpha test for non-opaque candidates (sprites, grates).
+bool candidate_passes(rayQueryEXT rq)
+{
+    uint geom = rayQueryGetIntersectionGeometryIndexEXT(rq, false);
+    uint prim = rayQueryGetIntersectionPrimitiveIndexEXT(rq, false);
+    vec2 bary = rayQueryGetIntersectionBarycentricsEXT(rq, false);
+    uint b = tri_base(geom, prim);
+    RtVertex a = verts[b], c1 = verts[b + 1u], c2 = verts[b + 2u];
+    vec3 w = vec3(1.0 - bary.x - bary.y, bary.x, bary.y);
+    vec2 uv = vec2(a.u, a.v) * w.x + vec2(c1.u, c1.v) * w.y + vec2(c2.u, c2.v) * w.z;
+    vec4 alb;
+    return material_albedo(a.mat, uv, 0.0, alb);
+}
+
+bool trace(vec3 o, vec3 d, float tmin, float tmax, out uint geom, out uint prim, out vec2 bary, out float t)
+{
+    rayQueryEXT rq;
+    rayQueryInitializeEXT(rq, tlas, gl_RayFlagsNoneEXT, 0xFF, o, tmin, d, tmax);
+    while (rayQueryProceedEXT(rq))
+    {
+        if (rayQueryGetIntersectionTypeEXT(rq, false) == gl_RayQueryCandidateIntersectionTriangleEXT)
+        {
+            if (candidate_passes(rq))
+                rayQueryConfirmIntersectionEXT(rq);
+        }
+    }
+    if (rayQueryGetIntersectionTypeEXT(rq, true) == gl_RayQueryCommittedIntersectionNoneEXT)
+        return false;
+    geom = rayQueryGetIntersectionGeometryIndexEXT(rq, true);
+    prim = rayQueryGetIntersectionPrimitiveIndexEXT(rq, true);
+    bary = rayQueryGetIntersectionBarycentricsEXT(rq, true);
+    t = rayQueryGetIntersectionTEXT(rq, true);
+    return true;
+}
+
+bool occluded(vec3 o, vec3 d, float tmax)
+{
+    rayQueryEXT rq;
+    rayQueryInitializeEXT(rq, tlas, gl_RayFlagsNoneEXT, 0xFF, o, 0.0, d, tmax);
+    while (rayQueryProceedEXT(rq))
+    {
+        if (rayQueryGetIntersectionTypeEXT(rq, false) == gl_RayQueryCandidateIntersectionTriangleEXT)
+        {
+            if (candidate_passes(rq))
+                rayQueryConfirmIntersectionEXT(rq);
+        }
+    }
+    return rayQueryGetIntersectionTypeEXT(rq, true) != gl_RayQueryCommittedIntersectionNoneEXT;
+}
+
+vec3 cosine_dir(vec3 n, inout uint rng)
+{
+    float r1 = rand01(rng), r2 = rand01(rng);
+    float phi = 6.2831853 * r1;
+    float r = sqrt(r2);
+    vec3 t = normalize(abs(n.z) < 0.999 ? cross(n, vec3(0, 0, 1)) : cross(n, vec3(1, 0, 0)));
+    vec3 bt = cross(n, t);
+    return normalize(t * (r * cos(phi)) + bt * (r * sin(phi)) + n * sqrt(max(0.0, 1.0 - r2)));
+}
+
+void main()
+{
+    ivec2 px = ivec2(gl_GlobalInvocationID.xy);
+    if (px.x >= int(u.dims.x) || px.y >= int(u.dims.y))
+        return;
+
+    vec2 ndc = (vec2(px) + 0.5) / vec2(u.dims.xy) * 2.0 - 1.0;
+    ndc.y = -ndc.y; // image row 0 is the top of the screen
+    vec4 e = u.inv_proj * vec4(ndc, 1.0, 1.0);
+    vec3 dir_eye = normalize(e.xyz / e.w);
+    vec3 dir = normalize((u.inv_view * vec4(dir_eye, 0.0)).xyz);
+    vec3 org = u.cam_pos.xyz;
+
+    uint geom, prim;
+    vec2 bary;
+    float t;
+    if (!trace(org, dir, 0.5, 100000.0, geom, prim, bary, t))
+    {
+        imageStore(albedo_out, px, vec4(0.0));
+        imageStore(hist_out, px, vec4(0.0, 0.0, 0.0, -1.0));
+        imageStore(nd_out, px, vec4(0.0, 0.0, 0.0, -1.0));
+        imageStore(depth_out, px, vec4(1.0));
+        return;
+    }
+
+    Surface s = fetch_surface(geom, prim, bary);
+    vec3 n = s.normal;
+    if (dot(n, dir) > 0.0)
+        n = -n;
+    vec3 p = org + dir * t;
+    vec3 po = p + n * 0.25;
+
+    uint rng = uint(px.x) * 1973u + uint(px.y) * 9277u + u.dims.z * 26699u;
+    rng = pcg(rng);
+
+    // --- ambient occlusion + one bounce of the baked sector light -------------
+    float ao_dist = u.params.w;
+    float occ = 0.0;
+    vec3 bounce = vec3(0.0);
+    uint spp = max(u.counts.w, 1u);
+    for (uint i = 0u; i < spp; i++)
+    {
+        vec3 d = cosine_dir(n, rng);
+        uint g2, p2;
+        vec2 b2;
+        float t2;
+        if (trace(po, d, 0.0, ao_dist * 4.0, g2, p2, b2, t2))
+        {
+            if (t2 < ao_dist)
+                occ += 1.0 - t2 / ao_dist;
+            Surface h = fetch_surface(g2, p2, b2);
+            bounce += h.albedo.rgb * h.shade.rgb;
+        }
+    }
+    occ /= float(spp);
+    bounce /= float(spp);
+
+    // --- dynamic lights with shadow rays ----------------------------------------
+    vec3 direct = vec3(0.0);
+    uint shadow_budget = 8u;
+    for (uint li = 0u; li < u.dims.w && shadow_budget > 0u; li++)
+    {
+        Light L = lights[li];
+        vec3 lv = L.pos_radius.xyz - p;
+        float dist = length(lv);
+        float radius = L.pos_radius.w;
+        if (dist >= radius || dist < 1e-3)
+            continue;
+        vec3 ldir = lv / dist;
+        float ndl = dot(n, ldir);
+        if (ndl <= 0.0)
+            continue;
+        float att = 1.0 - dist / radius;
+        att *= att;
+        vec3 c = L.color_intensity.rgb * L.color_intensity.w * ndl * att;
+        if (max(c.r, max(c.g, c.b)) < 0.004)
+            continue;
+        shadow_budget--;
+        if (!occluded(po, ldir, dist - 1.0))
+            direct += c;
+    }
+
+    vec3 base = s.shade.rgb;
+    vec3 lighting = base * (1.0 - u.params.x * occ) + bounce * u.params.y * 0.5 + direct * u.params.z;
+
+    // --- temporal accumulation ---------------------------------------------------
+    float lin = t;
+    if (u.counts.z != 0u)
+    {
+        vec4 pc = u.prev_viewproj * vec4(p, 1.0);
+        if (pc.w > 0.0)
+        {
+            vec2 puv = pc.xy / pc.w * 0.5 + 0.5;
+            puv.y = 1.0 - puv.y;
+            ivec2 pp = ivec2(puv * vec2(u.dims.xy));
+            if (all(greaterThanEqual(pp, ivec2(0))) && all(lessThan(pp, ivec2(u.dims.xy))))
+            {
+                vec4 h = imageLoad(hist_in, pp);
+                float prev_lin = length(p - u.prev_cam.xyz);
+                if (h.a > 0.0 && abs(h.a - prev_lin) < 0.05 * prev_lin + 2.0)
+                    lighting = mix(h.rgb, lighting, u.params2.x);
+            }
+        }
+    }
+
+    vec4 clip = u.proj * (u.view * vec4(p, 1.0));
+    float depth = clamp((clip.z / clip.w + 1.0) * 0.5, 0.0, 1.0);
+
+    imageStore(hist_out, px, vec4(lighting, lin));
+    imageStore(albedo_out, px, vec4(s.albedo.rgb, max(s.shade.a, 1.0 / 255.0)));
+    imageStore(nd_out, px, vec4(n * 0.5 + 0.5, lin));
+    imageStore(depth_out, px, vec4(depth));
+}

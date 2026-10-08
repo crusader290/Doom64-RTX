@@ -143,6 +143,16 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     -Wno-unknown-pragmas -Wno-multichar
     -Werror=int-to-pointer-cast -Werror=pointer-to-int-cast -Werror=implicit-function-declaration
     -Werror=return-type -Werror=incompatible-pointer-types)
+  # The reconstructed code reads some locals before writing them (see
+  # PROJECT_CONTEXT.md, "determinism"); zero them so behaviour is identical
+  # on every run and every renderer.
+  include(CheckCCompilerFlag)
+  check_c_compiler_flag(-ftrivial-auto-var-init=zero D64_HAVE_AUTOVAR_INIT)
+  if(D64_HAVE_AUTOVAR_INIT)
+    target_compile_options(doom64rtx PRIVATE -ftrivial-auto-var-init=zero)
+  else()
+    message(WARNING "compiler lacks -ftrivial-auto-var-init=zero; demos may desync")
+  endif()
   if(NOT WIN32)
     target_link_libraries(doom64rtx PRIVATE m)
   endif()

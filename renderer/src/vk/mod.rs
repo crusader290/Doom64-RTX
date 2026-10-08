@@ -248,7 +248,10 @@ impl VkBackend {
                 enable_exts.push(khr::acceleration_structure::NAME.as_ptr());
                 enable_exts.push(khr::ray_query::NAME.as_ptr());
                 enable_exts.push(khr::deferred_host_operations::NAME.as_ptr());
-                if q12.runtime_descriptor_array == 0 || q12.shader_sampled_image_array_non_uniform_indexing == 0 {
+                if q12.runtime_descriptor_array == 0
+                    || q12.shader_sampled_image_array_non_uniform_indexing == 0
+                    || q12.descriptor_binding_partially_bound == 0
+                {
                     rt_supported = false;
                 }
             }
@@ -818,7 +821,7 @@ impl VkBackend {
                 let res = rtr.record(self, cmd, frame, vw, vh);
                 self.rt = Some(rtr);
                 match res {
-                    Ok(()) => rt_ready = true,
+                    Ok(traced) => rt_ready = traced,
                     Err(e) => {
                         self.window.log(2, &format!("ray tracing disabled: {e}"));
                         self.rt_enabled = false;
@@ -974,9 +977,6 @@ impl Backend for VkBackend {
             (self.textures.len() - 1) as u32
         };
         self.pending.push(PendingUpload { id, w, h, data: rgba.to_vec() });
-        if let Some(rt) = self.rt.as_mut() {
-            rt.texture_created(id, w, h, rgba);
-        }
         id
     }
 
@@ -993,9 +993,6 @@ impl Backend for VkBackend {
         self.frames[fi].dead_images.push(tex.image);
         self.frames[fi].dead_sets.extend(tex.sets);
         self.free_ids.push(id);
-        if let Some(rt) = self.rt.as_mut() {
-            rt.texture_destroyed(id);
-        }
     }
 
     fn render(&mut self, frame: &D64GfxFrame) {
@@ -1006,6 +1003,9 @@ impl Backend for VkBackend {
     }
 
     fn set_raytracing(&mut self, on: bool) {
+        if let Some(r) = self.rt.as_mut() {
+            r.reset_history();
+        }
         if !on {
             self.rt_enabled = false;
             return;

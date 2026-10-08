@@ -34,6 +34,7 @@ layout(std140, set = 0, binding = 4) uniform RtUniforms {
     uvec4 counts;    // opaque tris, alpha tris, history valid, spp
     vec4 params;     // ao strength, gi strength, light scale, ao distance
     vec4 params2;    // temporal alpha, denoise on, sun on, bounces
+    vec4 prev_cam;   // previous frame camera position
 } u;
 
 uint pcg(inout uint state)

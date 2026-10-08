@@ -105,8 +105,14 @@ message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
   (docs/img/gl_title_demo.png).
 - Milestone: Vulkan raster backend (ash) works on lavapipe; with `D64_FIXED_TIMESTEP=1` its
   frame 100 is pixel-identical to the GL backend.
-- OPEN ISSUE: game logic is not deterministic between runs even with D64_FIXED_TIMESTEP=1
-  (frames diverge between ~100 and ~200, during the title map). Suspect an uninitialised
-  read or a 64-bit struct-size assumption in game code; matters for demo sync. Not a renderer bug.
+- FIXED: game logic was not deterministic between runs. Cause: the reconstructed code reads
+  uninitialised locals (gcc -Wmaybe-uninitialized lists ~25, e.g. p_enemy.c, p_pspr.c,
+  r_phase3.c); stack garbage differed per run (ASLR) and per renderer, changing how often
+  P_Random was called. Fix: build game code with `-ftrivial-auto-var-init=zero`.
+  Verified with `D64_TRACE=1` (per-frame gametic/P_Random/camera trace): GL, GL, Vulkan
+  identical over 600 frames. MSVC has no equivalent flag -> prefer GCC/Clang/MinGW, or fix
+  the individual locals (TODO).
+- Milestone: Vulkan ray traced world (renderer/src/vk/rt.rs + shaders vk_rt.comp,
+  vk_denoise.comp, vk_composite.frag) runs on lavapipe and composites correctly.
 - Container setup used: `apt-get install glslang-tools mingw-w64 libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.
