@@ -518,6 +518,14 @@ void I_PCSetFullscreen(int on)
 }
 
 static int debug_request;
+static int quick_request; /* 1 = quicksave, 2 = quickload */
+
+int I_PCTakeQuickRequest(void)
+{
+    int r = quick_request;
+    quick_request = 0;
+    return r;
+}
 
 /* F7: the game polls this once per tic and opens the debug page. */
 int I_PCTakeDebugRequest(void)
@@ -558,6 +566,10 @@ static void pump_events(void)
                 I_PCToggleRaytracing();
             else if (ev.key.scancode == SDL_SCANCODE_F7)
                 debug_request = 1;
+            else if (ev.key.scancode == SDL_SCANCODE_F5)
+                quick_request = 1;
+            else if (ev.key.scancode == SDL_SCANCODE_F9)
+                quick_request = 2;
             else if (ev.key.scancode == SDL_SCANCODE_F11 ||
                      (ev.key.scancode == SDL_SCANCODE_RETURN && (ev.key.mod & SDL_KMOD_ALT)))
                 I_PCSetFullscreen(!pc_config.fullscreen);

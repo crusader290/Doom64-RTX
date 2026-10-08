@@ -14,6 +14,7 @@
 #include "config.h"
 #include "d64gfx.h"
 #include "pc_options.h"
+#include "savegame.h"
 
 extern mobj_t mobjhead;
 extern mapthing_t *spawnlist;
@@ -312,6 +313,46 @@ static int dbg_change(int i, int dir)
     return 0;
 }
 
+/* ---- Save / Load ----------------------------------------------------------- */
+
+static const char *slot_label(int i)
+{
+    static char l[PC_SAVE_SLOTS][16];
+    if (i == PC_QUICK_SLOT)
+        return "Quick";
+    SDL_snprintf(l[i], sizeof(l[i]), "Slot %d", i + 1);
+    return l[i];
+}
+
+static const char *slot_value(int i, char *buf, int len)
+{
+    if (!G_PCSaveSlotInfo(i, buf, len))
+        return "Empty";
+    return buf;
+}
+
+static int save_change(int i, int dir)
+{
+    if (dir != 0)
+        return 0;
+    if (G_PCSaveGame(i))
+    {
+        players[0].message = "Game saved.";
+        players[0].messagetic = MSGTICS;
+        return ga_exit;
+    }
+    return 0;
+}
+
+static int load_change(int i, int dir)
+{
+    if (dir != 0)
+        return 0;
+    if (G_PCLoadGame(i))
+        return ga_warped;
+    return 0;
+}
+
 /* ---- page table ---------------------------------------------------------- */
 
 int PCOpt_Count(int page)
@@ -321,6 +362,8 @@ int PCOpt_Count(int page)
     case PCPAGE_GRAPHICS: return G_COUNT;
     case PCPAGE_GAMEPLAY: return P_COUNT;
     case PCPAGE_DEBUG: return D_COUNT;
+    case PCPAGE_SAVE:
+    case PCPAGE_LOAD: return PC_SAVE_SLOTS;
     }
     return 0;
 }
@@ -332,6 +375,8 @@ const char *PCOpt_Title(int page)
     case PCPAGE_GRAPHICS: return "Graphics";
     case PCPAGE_GAMEPLAY: return "Gameplay";
     case PCPAGE_DEBUG: return "Debug";
+    case PCPAGE_SAVE: return "Save Game";
+    case PCPAGE_LOAD: return "Load Game";
     }
     return "";
 }
@@ -345,6 +390,8 @@ const char *PCOpt_Label(int page, int i)
     case PCPAGE_GRAPHICS: return gfx_label(i);
     case PCPAGE_GAMEPLAY: return play_label(i);
     case PCPAGE_DEBUG: return dbg_label(i);
+    case PCPAGE_SAVE:
+    case PCPAGE_LOAD: return slot_label(i);
     }
     return "";
 }
@@ -358,6 +405,8 @@ const char *PCOpt_Value(int page, int i, char *buf, int len)
     case PCPAGE_GRAPHICS: return gfx_value(i, buf, len);
     case PCPAGE_GAMEPLAY: return play_value(i, buf, len);
     case PCPAGE_DEBUG: return dbg_value(i, buf, len);
+    case PCPAGE_SAVE:
+    case PCPAGE_LOAD: return slot_value(i, buf, len);
     }
     return NULL;
 }
@@ -371,6 +420,8 @@ int PCOpt_Change(int page, int i, int dir)
     case PCPAGE_GRAPHICS: return gfx_change(i, dir);
     case PCPAGE_GAMEPLAY: return play_change(i, dir);
     case PCPAGE_DEBUG: return dbg_change(i, dir);
+    case PCPAGE_SAVE: return save_change(i, dir);
+    case PCPAGE_LOAD: return load_change(i, dir);
     }
     return 0;
 }
@@ -378,5 +429,12 @@ int PCOpt_Change(int page, int i, int dir)
 /* Items that only act on confirm (no left/right cycling). */
 int PCOpt_IsAction(int page, int i)
 {
+    if (page == PCPAGE_SAVE || page == PCPAGE_LOAD)
+        return 1;
     return page == PCPAGE_DEBUG && (i == D_GIVE || i == D_KILL || i == D_NEXTMAP);
+}
+
+int PCOpt_ValueX(int page)
+{
+    return (page == PCPAGE_SAVE || page == PCPAGE_LOAD) ? 140 : 214;
 }

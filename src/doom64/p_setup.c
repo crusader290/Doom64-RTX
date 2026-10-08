@@ -35,6 +35,9 @@ light_t     *lights;        // 800A5E9C
 maplights_t *maplights;     // 800A5EA4
 
 int         nummacros;      // 800A5F00
+#ifdef D64_PC
+int         pc_macro_total; /* [PC] macro_t entries in the macro block */
+#endif
 macro_t     **macros;       // 800A5EA0
 
 short		*blockmaplump;			//80077EEC /* offsets in blockmap are from here */
@@ -636,6 +639,9 @@ void P_LoadMacros(void) // 8001E478
     macroData = (byte *)Z_Malloc(((nummacros + specialCount) * sizeof(macro_t)) + headerSize, PU_LEVEL, 0);
     macros = (macro_t**)macroData;
     pMacro = (macro_t*)(macroData + headerSize);
+#ifdef D64_PC
+    pc_macro_total = nummacros + specialCount; /* [PC] for savegames */
+#endif
 
     for(i = 0; i < nummacros; i++)
     {

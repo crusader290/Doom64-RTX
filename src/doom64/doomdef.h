@@ -789,7 +789,11 @@ typedef struct
 } menudata_t;
 
 extern menudata_t MenuData[8];      // 800A54F0
-extern menuitem_t Menu_Game[4];     // 8005AAA4
+#ifdef D64_PC
+extern menuitem_t Menu_Game[6];
+#else
+extern menuitem_t Menu_Game[4];
+#endif     // 8005AAA4
 extern int MenuAnimationTic;        // 800a5570
 extern int cursorpos;               // 800A5574
 extern int m_vframe1;               // 800A5578

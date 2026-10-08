@@ -107,11 +107,22 @@ char *MenuText[] =   // 8005ABA0
     M_TXT54, M_TXT55            // [PC]
 };
 
+#ifdef D64_PC
+#define TITLE_ITEMS 3 /* [PC] +Load Game */
+menuitem_t Menu_Title[TITLE_ITEMS] = // 8005A978
+{
+    { 14, 115, 180 },   // New Game
+    { 55, 115, 200 },   // [PC] Load Game
+	{ 11, 115, 220 },   // Options
+};
+#else
+#define TITLE_ITEMS 2
 menuitem_t Menu_Title[2] = // 8005A978
 {
     { 14, 115, 190 },   // New Game
 	{ 11, 115, 210 },   // Options
 };
+#endif
 
 #if ENABLE_NIGHTMARE == 1
 menuitem_t Menu_Skill[5] = // 8005A990
@@ -182,6 +193,17 @@ menuitem_t Menu_Display[DISPLAY_ITEMS] = // 8005AA5C
     {  6, 102, 200},    // Return
 };
 
+#ifdef D64_PC
+menuitem_t Menu_Game[6] = // 8005AAA4
+{
+    { 11, 122, 60 },    // Options
+    { 54, 122, 80 },    // [PC] Save Game
+    { 55, 122, 100},    // [PC] Load Game
+    {  4, 122, 120},    // Main Menu
+    {  5, 122, 140},    // Restart Level
+    { 22, 122, 160},    // Features
+};
+#else
 menuitem_t Menu_Game[4] = // 8005AAA4
 {
     { 11, 122, 80 },    // Options
@@ -189,6 +211,7 @@ menuitem_t Menu_Game[4] = // 8005AAA4
     {  5, 122, 120},    // Restart Level
     { 22, 122, 140},    // Features
 };
+#endif
 
 menuitem_t Menu_Quit[2] = // 8005AAD4
 {
@@ -367,7 +390,7 @@ int M_RunTitle(void) // 80007630
     MenuItem = Menu_Title;
     MenuCall = M_MenuTitleDrawer;
     text_alpha = 0;
-    itemlines = 2;
+    itemlines = TITLE_ITEMS; /* [PC] */
     cursorpos = 0;
     last_ticon = 0;
 
@@ -715,7 +738,7 @@ static void M_PCPageDrawer(void)
         ST_DrawString(52, y, (char *)PCOpt_Label(pc_page, i), text_alpha | 0xc0000000);
         val = PCOpt_Value(pc_page, i, buf, sizeof(buf));
         if (val)
-            ST_DrawString(214, y, (char *)val, text_alpha | 0xc0000000);
+            ST_DrawString(PCOpt_ValueX(pc_page), y, (char *)val, text_alpha | 0xc0000000);
     }
 
     if (linepos > 0)
@@ -1447,6 +1470,16 @@ int M_MenuTicker(void) // 80007E0C
                 case 53: // [PC] Gameplay
                     if (truebuttons)
                         return M_PCOptionsPage(PCPAGE_GAMEPLAY);
+                    break;
+
+                case 54: // [PC] Save Game
+                    if (truebuttons)
+                        return M_PCOptionsPage(PCPAGE_SAVE);
+                    break;
+
+                case 55: // [PC] Load Game
+                    if (truebuttons)
+                        return M_PCOptionsPage(PCPAGE_LOAD);
                     break;
 
                 case 35: // LOCK MONSTERS

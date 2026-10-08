@@ -2,6 +2,7 @@
 #include "p_local.h"
 #ifdef D64_PC
 #include "pc_options.h" /* [PC] */
+#include "savegame.h"
 #endif
 #include "st_main.h"
 
@@ -159,6 +160,27 @@ void P_CheckCheats (void) // 8002187C
 	if (!gamepaused)
     {
 #ifdef D64_PC
+        /* [PC] F5 quicksave, F9 quickload */
+        switch (I_PCTakeQuickRequest())
+        {
+        case 1:
+            if (!demoplayback && G_PCSaveGame(PC_QUICK_SLOT))
+            {
+                players[0].message = "Quicksaved.";
+                players[0].messagetic = MSGTICS;
+            }
+            break;
+        case 2:
+            if (!demoplayback && G_PCLoadGame(PC_QUICK_SLOT))
+            {
+                gameaction = ga_warped;
+                return;
+            }
+            players[0].message = "No quicksave.";
+            players[0].messagetic = MSGTICS;
+            break;
+        }
+
         /* [PC] F7 opens the debug page straight from the game */
         if (I_PCTakeDebugRequest() && !demoplayback)
         {
@@ -168,7 +190,7 @@ void P_CheckCheats (void) // 8002187C
             MenuCall = M_MenuTitleDrawer;
             MenuItem = Menu_Game;
             cursorpos = 0;
-            itemlines = FeaturesUnlocked ? 4 : 3;
+            itemlines = FeaturesUnlocked ? 6 : 5;
             MenuIdx = 0;
             text_alpha = 255;
             MenuAnimationTic = 0;
@@ -196,10 +218,14 @@ void P_CheckCheats (void) // 8002187C
             MenuItem = Menu_Game;
             cursorpos = 0;
 
+#ifdef D64_PC
+            itemlines = FeaturesUnlocked ? 6 : 5; /* [PC] +Save Game, +Load Game */
+#else
             if (FeaturesUnlocked == false)
                 itemlines = 3;
             else
                 itemlines = 4;  // Enable cheat menu
+#endif
 
             MenuIdx = 0;
             text_alpha = 255;
@@ -369,6 +395,12 @@ void P_Start (void) // 80021C50
 
     MusicID = MapInfo[gamemap].MusicSeq-92;
     S_StartMusic(MapInfo[gamemap].MusicSeq);
+
+#ifdef D64_PC
+    /* [PC] a Load Game from the menu reloads the map, then its saved state */
+    if (G_PCLoadPending())
+        G_PCApplyPendingLoad();
+#endif
 }
 
 void P_Stop (int exit) // 80021D58

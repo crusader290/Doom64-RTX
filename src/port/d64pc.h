@@ -71,6 +71,7 @@ void I_PCLog(const char *fmt, ...);
 void I_PCToggleRaytracing(void);
 void I_PCSetFullscreen(int on);
 int  I_PCTakeDebugRequest(void);
+int  I_PCTakeQuickRequest(void);
 /* [PC] modern controls (src/port/input.c) */
 #ifndef PCACT_JUMP
 #define PCACT_JUMP 1
