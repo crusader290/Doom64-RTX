@@ -3,6 +3,7 @@
 #include "doomdef.h"
 #include "p_local.h"
 #include "r_local.h"
+void P_AddSectorSpecial(sector_t *sec); /* [PC] */
 
 /*
 ==============================================================================

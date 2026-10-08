@@ -468,8 +468,8 @@ void R_AddSprite(subsector_t *sub) // 80024A98
             {
                 if (thing->flags & (MF_CORPSE|MF_SHOOTABLE))
                 {
-                    x = ((((spriteN64_t*)data)->width >> 1) * viewsin);
-                    y = ((((spriteN64_t*)data)->width >> 1) * viewcos);
+                    x = ((BE16(((spriteN64_t*)data)->width) >> 1) * viewsin);
+                    y = ((BE16(((spriteN64_t*)data)->width) >> 1) * viewcos);
 
                     pSub = R_PointInSubsector((thing->x - x), (thing->y + y));
                     if ((pSub->drawindex) && (pSub->drawindex < sub->drawindex)) {

@@ -442,8 +442,8 @@ void R_RenderWall(seg_t *seg, int flags, int texture, int topHeight, int bottomH
             //data = W_CacheLumpNum(texture >> 4, PU_CACHE, dec_jag); // error decomp mode
             data = W_CacheLumpNum(texture >> 4, PU_CACHE, dec_d64); /* [GEC] FIXED */
 
-            wshift = ((textureN64_t*)data)->wshift;
-            hshift = ((textureN64_t*)data)->hshift;
+            wshift = BE16(((textureN64_t*)data)->wshift);
+            hshift = BE16(((textureN64_t*)data)->hshift);
 
             src = data + sizeof(textureN64_t);
 
@@ -539,8 +539,8 @@ void R_RenderSwitch(seg_t *seg, int texture, int topOffset, int color) // 800276
         //data = W_CacheLumpNum(firsttex + texture, PU_CACHE, dec_jag); // error decomp mode
         data = W_CacheLumpNum(firsttex + texture, PU_CACHE, dec_d64); /* [GEC] FIXED */
 
-        wshift = ((textureN64_t*)data)->wshift;
-        hshift = ((textureN64_t*)data)->hshift;
+        wshift = BE16(((textureN64_t*)data)->wshift);
+        hshift = BE16(((textureN64_t*)data)->hshift);
 
         src = data + sizeof(textureN64_t);
 
@@ -890,11 +890,11 @@ void R_RenderThings(subsector_t *sub) // 80028248
 
             data = W_CacheLumpNum(lump, PU_CACHE, dec_jag);
 
-            compressed = ((spriteN64_t*)data)->compressed;
-            tileh = ((spriteN64_t*)data)->tileheight;
-            width = ((spriteN64_t*)data)->width;
-            height = ((spriteN64_t*)data)->height;
-            tiles = ((spriteN64_t*)data)->tiles << 1;
+            compressed = BE16(((spriteN64_t*)data)->compressed);
+            tileh = BE16(((spriteN64_t*)data)->tileheight);
+            width = BE16(((spriteN64_t*)data)->width);
+            height = BE16(((spriteN64_t*)data)->height);
+            tiles = BE16(((spriteN64_t*)data)->tiles) << 1;
 
             spos = width;
             tpos = 0;
@@ -903,21 +903,21 @@ void R_RenderThings(subsector_t *sub) // 80028248
 
             if (flip)
             {
-                xx = thing->x + (((spriteN64_t*)data)->xoffs * viewsin);
+                xx = thing->x + (BE16(((spriteN64_t*)data)->xoffs) * viewsin);
                 xpos1 = (xx - (width * viewsin)) >> 16;
                 xpos2 = (xx) >> 16;
 
-                yy = thing->y - (((spriteN64_t*)data)->xoffs * viewcos);
+                yy = thing->y - (BE16(((spriteN64_t*)data)->xoffs) * viewcos);
                 zpos1 = -(yy + (width * viewcos)) >> 16;
                 zpos2 = -(yy) >> 16;
             }
             else
             {
-                xx = thing->x - (((spriteN64_t*)data)->xoffs * viewsin);
+                xx = thing->x - (BE16(((spriteN64_t*)data)->xoffs) * viewsin);
                 xpos2 = (xx + (width * viewsin)) >> 16;
                 xpos1 = (xx) >> 16;
 
-                yy = thing->y + (((spriteN64_t*)data)->xoffs * viewcos);
+                yy = thing->y + (BE16(((spriteN64_t*)data)->xoffs) * viewcos);
                 zpos2 = -(yy - (width * viewcos)) >> 16;
                 zpos1 = -(yy) >> 16;
             }
@@ -928,17 +928,17 @@ void R_RenderThings(subsector_t *sub) // 80028248
 
             if (compressed < 0)
             {
-                width = ((spriteN64_t*)data)->width + 7 & ~7;
+                width = BE16(((spriteN64_t*)data)->width) + 7 & ~7;
                 tilew = tileh * width;
 
-                if (((spriteN64_t*)data)->cmpsize & 1)
+                if (BE16(((spriteN64_t*)data)->cmpsize) & 1)
                 {
-                    paldata = W_CacheLumpNum((lump - (((spriteN64_t*)data)->cmpsize >> 1)) +
+                    paldata = W_CacheLumpNum((lump - (BE16(((spriteN64_t*)data)->cmpsize) >> 1)) +
                                              thing->info->palette, PU_CACHE, dec_jag) + 8;
                 }
                 else
                 {
-                    paldata = (src + ((spriteN64_t*)data)->cmpsize);
+                    paldata = (src + BE16(((spriteN64_t*)data)->cmpsize));
                 }
 
                 // Load Palette Data (256 colors)
@@ -954,7 +954,7 @@ void R_RenderThings(subsector_t *sub) // 80028248
             }
             else
             {
-                width = ((spriteN64_t*)data)->width + 15 & ~15;
+                width = BE16(((spriteN64_t*)data)->width) + 15 & ~15;
                 tilew = tileh * width;
 
                 if (tilew < 0) {
@@ -964,7 +964,7 @@ void R_RenderThings(subsector_t *sub) // 80028248
                 tilew >>= 1;
 
                 // Load Palette Data (16 colors)
-                gDPSetTextureImage(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_16b , 1, (src + ((spriteN64_t*)data)->cmpsize));
+                gDPSetTextureImage(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_16b , 1, (src + BE16(((spriteN64_t*)data)->cmpsize)));
 
                 gDPTileSync(GFX1++);
                 gDPSetTile(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_4b, 0, 256, G_TX_LOADTILE, 0, 0, 0, 0, 0, 0, 0);
@@ -975,7 +975,7 @@ void R_RenderThings(subsector_t *sub) // 80028248
                 gDPPipeSync(GFX1++);
             }
 
-            ypos = (thing->z >> 16) + ((spriteN64_t*)data)->yoffs;
+            ypos = (thing->z >> 16) + BE16(((spriteN64_t*)data)->yoffs);
 
             VTX1[0].v.ob[0] = xpos1;
             VTX1[0].v.ob[1] = ypos;
@@ -1185,16 +1185,16 @@ void R_RenderPSprites(void) // 80028f20
             data = W_CacheLumpNum(lump, PU_CACHE, dec_jag);
 
             tilecnt = 0;
-            tiles = ((spriteN64_t*)data)->tiles;
-            width = ((spriteN64_t*)data)->width;
-            tileh = ((spriteN64_t*)data)->tileheight;
+            tiles = BE16(((spriteN64_t*)data)->tiles);
+            width = BE16(((spriteN64_t*)data)->width);
+            tileh = BE16(((spriteN64_t*)data)->tileheight);
             width2 = width + 7 & ~7;
             tilew = tileh * width2;
-            height = ((spriteN64_t*)data)->height;
+            height = BE16(((spriteN64_t*)data)->height);
             src = data + sizeof(spriteN64_t);
 
-            x = (((psp->sx >> 16) - ((spriteN64_t*)data)->xoffs) + 160) << 2;
-            y = (((psp->sy >> 16) - ((spriteN64_t*)data)->yoffs) + 239) << 2;
+            x = (((psp->sx >> 16) - BE16(((spriteN64_t*)data)->xoffs)) + 160) << 2;
+            y = (((psp->sy >> 16) - BE16(((spriteN64_t*)data)->yoffs)) + 239) << 2;
             if (viewplayer->onground)
             {
                 x += (quakeviewx >> 20);
@@ -1226,19 +1226,19 @@ void R_RenderPSprites(void) // 80028f20
             {
                 palloaded = true;
 
-                if (((spriteN64_t*)data)->cmpsize & 1)
+                if (BE16(((spriteN64_t*)data)->cmpsize) & 1)
                 {
                 /* Loads the palette from the first frame of the animation,  */
                 /* which uses an odd number to get to the lump */
-                    paldata = W_CacheLumpNum((lump - (((spriteN64_t*)data)->cmpsize >> 1)),
+                    paldata = W_CacheLumpNum((lump - (BE16(((spriteN64_t*)data)->cmpsize) >> 1)),
                                              PU_CACHE, dec_jag);
 
-                    paldata += (((spriteN64_t*)paldata)->cmpsize + sizeof(spriteN64_t));
+                    paldata += (BE16(((spriteN64_t*)paldata)->cmpsize) + sizeof(spriteN64_t));
                 }
                 else
                 {
                 /* Loads the palette if it is included in the image data */
-                    paldata = (src + ((spriteN64_t*)data)->cmpsize);
+                    paldata = (src + BE16(((spriteN64_t*)data)->cmpsize));
                 }
 
                 /* Load Palette Data (256 colors) */

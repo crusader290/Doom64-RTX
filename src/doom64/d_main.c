@@ -189,7 +189,7 @@ int MiniLoop(void(*start)(void), void(*stop)(),
                 *demobuffer++ = buttons;
             }
 
-            if ((buttons & PAD_START) || ((((int)demobuffer - (int)demo_p) >> 2) >= 4000))
+            if ((buttons & PAD_START) || ((int)(((intptr_t)demobuffer - (intptr_t)demo_p) >> 2) >= 4000) /* [PC] */)
             {
                 exit = ga_exitdemo;
                 break;

@@ -630,7 +630,7 @@ int F_Ticker(void) // 80003258
 					casttics = TICRATE;
 
                 /* sound hacks.... */
-                st = ((int)caststate - (int)states) / sizeof(state_t);
+                st = (int)(caststate - states); /* [PC] */
                 switch (st)
                 {
                     case S_007: // S_PLAY_ATK2
@@ -859,13 +859,13 @@ void BufferedDrawSprite(int type, state_t *state, int rotframe, int color, int x
 
     data = W_CacheLumpNum(lump, PU_CACHE, dec_jag);
 
-    compressed = ((spriteN64_t*)data)->compressed;
-    tileh = ((spriteN64_t*)data)->tileheight;
-    width = ((spriteN64_t*)data)->width;
-    height = ((spriteN64_t*)data)->height;
-    tiles = ((spriteN64_t*)data)->tiles;
-    xoffs = ((spriteN64_t*)data)->xoffs;
-    yoffs = ((spriteN64_t*)data)->yoffs;
+    compressed = BE16(((spriteN64_t*)data)->compressed);
+    tileh = BE16(((spriteN64_t*)data)->tileheight);
+    width = BE16(((spriteN64_t*)data)->width);
+    height = BE16(((spriteN64_t*)data)->height);
+    tiles = BE16(((spriteN64_t*)data)->tiles);
+    xoffs = BE16(((spriteN64_t*)data)->xoffs);
+    yoffs = BE16(((spriteN64_t*)data)->yoffs);
 
     src = data + sizeof(spriteN64_t);
 
@@ -874,14 +874,14 @@ void BufferedDrawSprite(int type, state_t *state, int rotframe, int color, int x
         width2 = width + 7 & ~7;
         tilew = tileh * width2;
 
-        if (((spriteN64_t*)data)->cmpsize & 1)
+        if (BE16(((spriteN64_t*)data)->cmpsize) & 1)
         {
             paldata = W_CacheLumpNum(((mobjinfo[type].palette + lump) -
-                                    (((spriteN64_t*)data)->cmpsize >> 1)), PU_CACHE, dec_jag) + 8;
+                                    (BE16(((spriteN64_t*)data)->cmpsize) >> 1)), PU_CACHE, dec_jag) + 8;
         }
         else
         {
-            paldata = (src + ((spriteN64_t*)data)->cmpsize);
+            paldata = (src + BE16(((spriteN64_t*)data)->cmpsize));
         }
 
         /* Load Palette Data (256 colors) */
@@ -907,7 +907,7 @@ void BufferedDrawSprite(int type, state_t *state, int rotframe, int color, int x
         tilew >>= 1;
 
         /* Load Palette Data (16 colors) */
-        gDPSetTextureImage(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_16b , 1, (src + ((spriteN64_t*)data)->cmpsize));
+        gDPSetTextureImage(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_16b , 1, (src + BE16(((spriteN64_t*)data)->cmpsize)));
 
         gDPTileSync(GFX1++);
         gDPSetTile(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_4b, 0, 256, G_TX_LOADTILE, 0, 0, 0, 0, 0, 0, 0);

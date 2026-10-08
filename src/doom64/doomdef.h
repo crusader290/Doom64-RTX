@@ -9,6 +9,10 @@
 #include <assert.h>
 #include <libaudio.h>
 
+#ifdef D64_PC
+#include "d64pc.h" /* [PC] host compatibility: libc, endian helpers, prototypes */
+#endif
+
 /* TEST DEBUG */
 #include "graph.h"
 
@@ -58,7 +62,9 @@ extern u32 cfb[2][SCREEN_WD*SCREEN_HT]; // 8036A000
 #define	NULL	0
 #endif
 
+#ifndef D64_PC /* [PC] host vsprintf is used instead (see d64pc.h) */
 int D_vsprintf(char *string, const char *format, int *argptr);
+#endif
 
 /* c_convert.c  */
 void LightGetHSV(int r,int g,int b,int *h,int *s,int *v); // 800020BC

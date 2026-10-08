@@ -47,7 +47,7 @@ void D_memset(void *dest, int val, int count) // 80001A20
 
 	/* round up to nearest word */
 	p = dest;
-	while ((int)p & WORDMASK)
+	while ((intptr_t)p & WORDMASK) /* [PC] */
 	{
 		if (--count < 0)
             return;
@@ -87,7 +87,7 @@ void D_memcpy(void *dest, void *src, int count) // 80001ACC
 	ld = (int *)dest;
 	ls = (int *)src;
 
-	if ((((int)ld | (int)ls | count) & 7))
+	if ((((intptr_t)ld | (intptr_t)ls | count) & 7)) /* [PC] */
     {
         d = (byte *)dest;
         s = (byte *)src;

@@ -36,7 +36,9 @@ static byte         *mapfileptr;			//800B2238 psxdoom/doom64
 /*=========*/
 
 extern OSMesgQueue romcopy_msgque;
+#ifndef D64_PC /* [PC] ROM segments are virtual addresses from d64pc.h */
 extern char _doom64_wadSegmentRomStart[], _doom64_wadSegmentRomEnd[];
+#endif
 
 /*
 ============================================================================
@@ -64,7 +66,7 @@ void W_Init (void) // 8002BEC0
 	osInvalDCache((void *)wadfileptr, sizeof(wadinfo_t));
 
 	osPiStartDma(&romio_msgbuf, OS_MESG_PRI_NORMAL, OS_READ,
-              (u32)_doom64_wadSegmentRomStart,
+              (u32)(uintptr_t)_doom64_wadSegmentRomStart /* [PC] */,
               (void *)wadfileptr, sizeof(wadinfo_t), &romcopy_msgque);
 
     osRecvMesg(&romcopy_msgque, NULL, OS_MESG_BLOCK);
@@ -82,7 +84,7 @@ void W_Init (void) // 8002BEC0
 	infotableofs = LONGSWAP(wadfileptr->infotableofs);
 
 	osPiStartDma(&romio_msgbuf, OS_MESG_PRI_NORMAL, OS_READ,
-              (u32)_doom64_wadSegmentRomStart + infotableofs,
+              (u32)(uintptr_t)_doom64_wadSegmentRomStart /* [PC] */ + infotableofs,
               (void *)lumpinfo, numlumps * sizeof(lumpinfo_t), &romcopy_msgque);
 
     osRecvMesg(&romcopy_msgque, NULL, OS_MESG_BLOCK);
@@ -106,7 +108,7 @@ void W_Init (void) // 8002BEC0
     }
 
     lumpcache = (lumpcache_t *) Z_Malloc(numlumps * sizeof(lumpcache_t), PU_STATIC, 0);
-    D_memset(lumpcache, NULL, numlumps * sizeof(lumpcache_t));
+    D_memset(lumpcache, 0, numlumps * sizeof(lumpcache_t)); /* [PC] */
     Z_Free(wadfileptr);
 }
 
@@ -232,7 +234,7 @@ void W_ReadLump (int lump, void *dest, decodetype dectype) // 8002C260
 			osInvalDCache((void *)input, lumpsize);
 
             osPiStartDma(&romio_msgbuf, OS_MESG_PRI_NORMAL, OS_READ,
-                      (u32)_doom64_wadSegmentRomStart + l->filepos,
+                      (u32)(uintptr_t)_doom64_wadSegmentRomStart /* [PC] */ + l->filepos,
                       (void *)input, lumpsize, &romcopy_msgque);
 
             osRecvMesg(&romcopy_msgque, NULL, OS_MESG_BLOCK);
@@ -255,7 +257,7 @@ void W_ReadLump (int lump, void *dest, decodetype dectype) // 8002C260
 	osInvalDCache((void *)dest, lumpsize);
 
 	osPiStartDma(&romio_msgbuf, OS_MESG_PRI_NORMAL, OS_READ,
-              (u32)_doom64_wadSegmentRomStart + l->filepos,
+              (u32)(uintptr_t)_doom64_wadSegmentRomStart /* [PC] */ + l->filepos,
               (void *)dest, lumpsize, &romcopy_msgque);
 
 	osRecvMesg(&romcopy_msgque, NULL, OS_MESG_BLOCK);
@@ -344,7 +346,7 @@ void W_OpenMapWad(int mapnum) // 8002C5B0
     name[2] = 'P';
     name[3] = '0' + (char)(mapnum / 10);
     name[4] = '0' + (char)(mapnum % 10);
-    name[5] = NULL;
+    name[5] = 0; /* [PC] */
 
     lump = W_GetNumForName(name);
     size = W_LumpLength(lump);

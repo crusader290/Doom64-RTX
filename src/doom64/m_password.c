@@ -152,12 +152,12 @@ void M_EncodePassword(byte *buff) // 8000BC10
     }
     #endif // ENABLE_NIGHTMARE
 
-    decodebit[0] = (*(short*)&encode[0]);
-    decodebit[1] = (*(short*)&encode[2]);
-    decodebit[2] = (*(short*)&encode[4]);
+    decodebit[0] = BE16(*(short*)&encode[0]); /* [PC] N64 byte order keeps passwords compatible */
+    decodebit[1] = BE16(*(short*)&encode[2]); /* [PC] N64 byte order keeps passwords compatible */
+    decodebit[2] = BE16(*(short*)&encode[4]); /* [PC] N64 byte order keeps passwords compatible */
 
-    *(short*)&encode[6] = (~(decodebit[0] + decodebit[1] + decodebit[2]));
-    *(short*)&encode[8] = (~(decodebit[0] ^ decodebit[1] ^ decodebit[2]));
+    *(short*)&encode[6] = BE16((short)(~(decodebit[0] + decodebit[1] + decodebit[2]))); /* [PC] */
+    *(short*)&encode[8] = BE16((short)(~(decodebit[0] ^ decodebit[1] ^ decodebit[2]))); /* [PC] */
 
     for(i = 0; i < 10; i++)
     {
@@ -292,12 +292,12 @@ int M_DecodePassword(byte *inbuff, int *levelnum, int *skill, player_t *player) 
     // Verify Decoded Password
     //
 
-    xbit1 = *(short*)&decode[0];
-    xbit2 = *(short*)&decode[2];
-    xbit3 = *(short*)&decode[4];
+    xbit1 = BE16(*(short*)&decode[0]); /* [PC] */
+    xbit2 = BE16(*(short*)&decode[2]); /* [PC] */
+    xbit3 = BE16(*(short*)&decode[4]); /* [PC] */
 
     x = ((~((xbit1 + xbit2) + xbit3) << 16) >> 16);
-    y = *(short*)&decode[6];
+    y = BE16(*(short*)&decode[6]); /* [PC] */
 
     if(x != y)
     {
@@ -305,7 +305,7 @@ int M_DecodePassword(byte *inbuff, int *levelnum, int *skill, player_t *player) 
     }
 
     x = ((~(xbit1 ^ (xbit2 ^ xbit3)) << 16) >> 16);
-    y = *(short*)&decode[8];
+    y = BE16(*(short*)&decode[8]); /* [PC] */
 
     if(x != y)
     {

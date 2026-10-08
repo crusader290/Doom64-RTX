@@ -245,7 +245,7 @@ void ST_Drawer (void) // 80029DC0
 
         debug = 1;//
 
-        if (globallump != (int)sfontlump)
+        if (globallump != (int)(intptr_t)sfontlump /* [PC] */)
         {
             gDPPipeSync(GFX1++);
             gDPSetCycleType(GFX1++, G_CYC_1CYCLE);
@@ -269,7 +269,7 @@ void ST_Drawer (void) // 80029DC0
         gDPSetTile(GFX1++, G_IM_FMT_CI, G_IM_SIZ_8b, 10, 0, G_TX_RENDERTILE, 0, 0, 0, 0, 0, 0, 0);
         gDPSetTileSize(GFX1++, G_TX_RENDERTILE, 0, 0, (79 << 2), (15 << 2));
 
-        gDPSetTextureImage(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_16b , 1, src + ((spriteN64_t*)statuslump)->cmpsize);
+        gDPSetTextureImage(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_16b , 1, src + BE16(((spriteN64_t*)statuslump)->cmpsize));
 
         gDPTileSync(GFX1++);
         gDPSetTile(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_4b, 0, 256, G_TX_LOADTILE, 0, 0, 0, 0, 0, 0, 0);
@@ -379,7 +379,7 @@ void ST_Message(int x,int y,char *text,int color) // 8002A36C
     int xpos, ypos;
     int bVar2;
 
-    if (globallump != (int)sfontlump)
+    if (globallump != (int)(intptr_t)sfontlump /* [PC] */)
     {
         gDPPipeSync(GFX1++);
 
@@ -416,7 +416,7 @@ void ST_Message(int x,int y,char *text,int color) // 8002A36C
 
         gDPPipeSync(GFX1++);
 
-        globallump = (int)sfontlump;
+        globallump = (int)(intptr_t)sfontlump /* [PC] */;
     }
 
     gDPSetPrimColorD64(GFX1++, 0, 0, color);
@@ -754,7 +754,7 @@ void ST_DrawSymbol(int xpos, int ypos, int index, int color) // 8002ADEC
         gDPSetRenderMode(GFX1++, G_RM_XLU_SURF_CLAMP, G_RM_XLU_SURF2_CLAMP);
 
         // Load Palette Data
-        offset = (((gfxN64_t*)data)->width * ((gfxN64_t*)data)->height);
+        offset = (BE16(((gfxN64_t*)data)->width) * BE16(((gfxN64_t*)data)->height));
         offset = (offset + 7) & ~7;
         gDPSetTextureImage(GFX1++, G_IM_FMT_RGBA, G_IM_SIZ_16b ,
                            1, data + offset + sizeof(gfxN64_t));
@@ -774,7 +774,7 @@ void ST_DrawSymbol(int xpos, int ypos, int index, int color) // 8002ADEC
 
     // Load Image Data
     gDPSetTextureImage(GFX1++, G_IM_FMT_CI, G_IM_SIZ_8b ,
-                       ((gfxN64_t*)data)->width, data + sizeof(gfxN64_t));
+                       BE16(((gfxN64_t*)data)->width), data + sizeof(gfxN64_t));
 
     symbol = &symboldata[index];
 

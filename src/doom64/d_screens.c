@@ -13,6 +13,12 @@ int D_RunDemo(char *name, skill_t skill, int map) // 8002B2D0
 
   lump = W_GetNumForName(name);
   W_ReadLump(lump, demo_p, dec_d64);
+#ifdef D64_PC
+  { /* [PC] demo lumps hold big-endian ints recorded on the N64 */
+    int i, n = W_LumpLength(lump) / 4;
+    for (i = 0; i < n; i++) demo_p[i] = BE32(demo_p[i]);
+  }
+#endif
   exit = G_PlayDemoPtr(skill, map);
   Z_Free(demo_p);
 

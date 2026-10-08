@@ -68,7 +68,7 @@ DECODE BASED ROUTINES
 */
 int GetOutputSize(void) // [GEC] New
 {
-    return (int)((int)buffers.output - (int)buffers.ostart);
+    return (int)(buffers.output - buffers.ostart); /* [PC] */
 }
 
 /*
@@ -81,7 +81,7 @@ int GetOutputSize(void) // [GEC] New
 
 int GetReadSize(void) // [GEC] New
 {
-    return (int)((int)buffers.input - (int)buffers.istart);
+    return (int)(buffers.input - buffers.istart); /* [PC] */
 }
 
 /*

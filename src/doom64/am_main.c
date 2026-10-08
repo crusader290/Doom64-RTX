@@ -2,6 +2,7 @@
 
 #include "doomdef.h"
 #include "p_local.h"
+void R_RenderPlane(leaf_t *leaf, int numverts, int zpos, int texture, int xpos, int ypos, int color); /* [PC] */
 
 #define COLOR_RED     0xA40000FF
 #define COLOR_GREEN   0x00C000FF

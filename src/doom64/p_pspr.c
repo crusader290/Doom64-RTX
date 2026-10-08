@@ -2,6 +2,7 @@
 
 #include "doomdef.h"
 #include "p_local.h"
+void P_Thrust (player_t *player, angle_t angle, fixed_t move); /* [PC] */
 
 #define	LOWERSPEED		FRACUNIT*7
 #define	RAISESPEED		FRACUNIT*7

@@ -24,7 +24,11 @@ extern u32 NextFrameIdx;
 
 memzone_t	*mainzone;
 
+#ifdef D64_PC /* [PC] 64-bit pointers make zone blocks larger; give the zone more room */
+#define MEM_HEAP_SIZE (0x2000000) // 32 MB
+#else
 #define MEM_HEAP_SIZE (0x26B510) // 2.41 MB
+#endif
 extern u64 mem_heap[MEM_HEAP_SIZE / sizeof(u64)]; // 800BA2F0
 
 /*
@@ -42,8 +46,8 @@ void Z_Init (void) // 8002C8F0
 	byte	*mem;
 	int		size;
 
-	mem = (byte *)(u32)(((u32)mem_heap + 15) & ~15);
-	size = (u32)(mem_heap+(MEM_HEAP_SIZE / sizeof(u64))) - (u32)mem;
+	mem = (byte *)(((uintptr_t)mem_heap + 15) & ~(uintptr_t)15); /* [PC] */
+	size = (int)((byte *)(mem_heap+(MEM_HEAP_SIZE / sizeof(u64))) - mem); /* [PC] */
 
 	/* mars doesn't have a refzone */
 	mainzone = Z_InitZone(mem, size);
@@ -511,7 +515,7 @@ void Z_ChangeTag (void *ptr, int tag) // 8002D0F0
 	block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
 	if (block->id != ZONEID)
 		I_Error ("Z_ChangeTag: freed a pointer without ZONEID");
-	if (tag >= PU_PURGELEVEL && (int)block->user < 0x100)
+	if (tag >= PU_PURGELEVEL && (intptr_t)block->user < 0x100 /* [PC] */)
 		I_Error ("Z_ChangeTag: an owner is required for purgable blocks");
 	block->tag = tag;
 	block->lockframe = NextFrameIdx;

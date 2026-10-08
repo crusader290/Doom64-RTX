@@ -6,9 +6,11 @@
 #define AUDIO_HEAP_SIZE	(0x44800)
 extern u64 audio_heap[AUDIO_HEAP_SIZE / sizeof(u64)];//80325800
 
+#ifndef D64_PC /* [PC] ROM segments are virtual addresses from d64pc.h */
 extern char _doom64_wmdSegmentRomStart[], _doom64_wmdSegmentRomEnd[];
 extern char _doom64_wsdSegmentRomStart[], _doom64_wsdSegmentRomEnd[];
 extern char _doom64_wddSegmentRomStart[], _doom64_wddSegmentRomEnd[];
+#endif
 
 #define SYS_FRAMES_PER_SEC 30
 

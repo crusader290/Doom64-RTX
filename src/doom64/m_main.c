@@ -1762,8 +1762,8 @@ void M_DrawBackground(int x, int y, int color, char *name) // 80009A68
 
     gDPSetPrimColorD64(GFX1++, 0, 0, color);
 
-    width = ((gfxN64_t*)data)->width;
-    height = ((gfxN64_t*)data)->height;
+    width = BE16(((gfxN64_t*)data)->width);
+    height = BE16(((gfxN64_t*)data)->height);
 
     // Load Palette Data
     offset = (width * height);

@@ -8,6 +8,7 @@ int mystrlen(char *string) // 80001CE8
   return rc;
 }
 
+#ifndef D64_PC /* [PC] replaced by host vsprintf */
 int D_vsprintf(char *string, const char *format, int *argptr) // 80001D24
 {
   int len, i, div, uselong;
@@ -121,3 +122,4 @@ int D_vsprintf(char *string, const char *format, int *argptr) // 80001D24
 
   return origstring - string;
 }
+#endif /* D64_PC */
