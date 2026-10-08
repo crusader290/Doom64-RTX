@@ -397,6 +397,12 @@ static void test_hooks(void)
             SDL_Delay((Uint32)SDL_atoi(SDL_getenv("D64_SHOT_HOLD")));
         }
     }
+    if (SDL_getenv("D64_CRASH_AT") && frame_no == (unsigned)SDL_strtoul(SDL_getenv("D64_CRASH_AT"), NULL, 10))
+    {
+        volatile int *bad = NULL;
+        SDL_Log("D64_CRASH_AT: crashing on purpose to test the crash handler");
+        *bad = 1;
+    }
     if (q && frame_no >= (unsigned)SDL_strtoul(q, NULL, 10))
     {
         const gbistats_t *st = GBI_Stats();
