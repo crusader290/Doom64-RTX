@@ -909,7 +909,10 @@ static void do_texrect(uint32_t w0, uint32_t w1, uint32_t h1, uint32_t h2, int f
     float t = (float)(int16_t)(h1 & 0xffff) / 32.0f;
     float dsdx = (float)(int16_t)(h2 >> 16) / 1024.0f;
     float dtdy = (float)(int16_t)(h2 & 0xffff) / 1024.0f;
-    static const uint8_t white[4] = { 255, 255, 255, 255 };
+    /* Rectangles have no shade on the RDP. Keep rgb white for combiners that
+     * multiply by SHADE, but alpha 0 so the fog blender leaves them alone
+     * (the weapon sprite is drawn with fog enabled). */
+    static const uint8_t white[4] = { 255, 255, 255, 0 };
     float s1, t1;
 
     if (cycle_type() == G_CYC_COPY)
@@ -1424,5 +1427,26 @@ void GBI_RunFrame(Gfx *dl)
 
     stats.cmds = out_cn;
     stats.vertices = out_vn;
+    {
+        /* debug: D64_DUMPCMDS=<frame> prints that frame's draw commands */
+        const char *dc = getenv("D64_DUMPCMDS");
+        if (dc && (uint32_t)atoi(dc) == frame_counter)
+        {
+            uint32_t k;
+            for (k = 0; k < out_cn; k++)
+            {
+                const D64GfxDrawCmd *c = &out_c[k];
+                const D64GfxVertex *v = &out_v[c->first_vertex];
+                fprintf(stderr, "cmd %u: n=%u tex=%u,%u flags=%x cc=%02x%02x%02x%02x/%02x%02x%02x%02x %02x%02x%02x%02x/%02x%02x%02x%02x "
+                        "prim=%02x%02x%02x%02x env=%02x%02x%02x%02x shade0=%02x%02x%02x%02x pos0=%.2f,%.2f,%.2f,%.2f uv0=%.3f,%.3f\n",
+                        k, c->vertex_count, c->tex[0], c->tex[1], c->flags,
+                        c->cc[0], c->cc[1], c->cc[2], c->cc[3], c->cc[4], c->cc[5], c->cc[6], c->cc[7],
+                        c->cc[8], c->cc[9], c->cc[10], c->cc[11], c->cc[12], c->cc[13], c->cc[14], c->cc[15],
+                        c->prim[0], c->prim[1], c->prim[2], c->prim[3], c->env[0], c->env[1], c->env[2], c->env[3],
+                        v->shade[0], v->shade[1], v->shade[2], v->shade[3], v->pos[0], v->pos[1], v->pos[2], v->pos[3],
+                        v->uv[0], v->uv[1]);
+            }
+        }
+    }
     d64gfx_render_frame(&frame);
 }

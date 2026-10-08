@@ -21,6 +21,7 @@ typedef struct {
     int   vsync;
     int   aspect;            /* 0 = 4:3 pillarbox, 1 = stretch */
     int   filter;            /* 0 = follow game (N64 bilinear), 1 = force nearest */
+    int   brightness;        /* initial in-game brightness 0..100 (N64 default 0) */
     int   mouse;             /* mouse turning */
     float mouse_sens;
     int   gpu_index;         /* preferred Vulkan device index, -1 = auto */

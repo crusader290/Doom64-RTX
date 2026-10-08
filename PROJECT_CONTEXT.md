@@ -114,5 +114,15 @@ message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
   the individual locals (TODO).
 - Milestone: Vulkan ray traced world (renderer/src/vk/rt.rs + shaders vk_rt.comp,
   vk_denoise.comp, vk_composite.frag) runs on lavapipe and composites correctly.
+- User report "a lot of textures don't look loaded" (2026-10-08). Findings:
+  - Texture decoding verified correct by dumping (D64_DUMPTEX): walls, flats, sprites, weapon.
+  - BUG: weapon sprite drew black. Texture rectangles had shade alpha 255, and the psprite
+    combiner runs with the fog blender (FOG_SHADE_A) -> 100% fog (black). The RDP has no shade
+    for rectangles; now rgb=white, alpha=0.
+  - The game's brightness defaults to 0 (very dark, as on N64), which makes surfaces look
+    untextured. New ini setting `brightness` (default 50) seeds the in-game Brightness option.
+  - The white full-screen flash after pressing Start on the title is the game's own effect
+    (prim LOD fraction = sector light level in COMB07), not a renderer bug.
+  - D64_DUMPCMDS=<frame> prints a frame's resolved draw commands (gbi.c).
 - Container setup used: `apt-get install glslang-tools mingw-w64 libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.

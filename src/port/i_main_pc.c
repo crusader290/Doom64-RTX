@@ -475,6 +475,10 @@ void I_Init(void)
     IN_Init();
     IN_SetGrab(window, 1);
     S_Init();
+    {
+        extern int brightness;
+        brightness = pc_config.brightness < 0 ? 0 : pc_config.brightness > 100 ? 100 : pc_config.brightness;
+    }
     time_base_ns = SDL_GetTicksNS();
     vsync = vbl_now();
 }

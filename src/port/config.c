@@ -26,6 +26,7 @@ void Config_Defaults(void)
     pc_config.height = 960;
     pc_config.vsync = 1;
     pc_config.mouse = 1;
+    pc_config.brightness = 50;
     pc_config.mouse_sens = 1.0f;
     pc_config.gpu_index = -1;
 }
@@ -48,6 +49,7 @@ static const cvar_t cvars[] = {
     { "vsync",          CV_INT,      &pc_config.vsync, 0 },
     { "aspect",         CV_INT,      &pc_config.aspect, 0 },
     { "filter",         CV_INT,      &pc_config.filter, 0 },
+    { "brightness",     CV_INT,      &pc_config.brightness, 0 },
     { "mouse",          CV_INT,      &pc_config.mouse, 0 },
     { "mouse_sens",     CV_FLOAT,    &pc_config.mouse_sens, 0 },
     { "gpu_index",      CV_INT,      &pc_config.gpu_index, 0 },
