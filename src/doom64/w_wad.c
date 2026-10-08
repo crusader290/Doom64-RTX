@@ -130,6 +130,12 @@ int W_CheckNumForName(char *name, int hibit1, int hibit2) // 8002C0F4 removed un
 	int		i;
 	lumpinfo_t	*lump_p;
 
+#ifdef D64_PC
+	/* [PC] the masks were written for big-endian name words */
+	hibit1 = BE32(hibit1);
+	hibit2 = BE32(hibit2);
+#endif
+
 	/* make the name into two integers for easy compares */
 
 	*(int *)&name8[4] = 0;
@@ -449,7 +455,7 @@ int W_MapGetNumForName(char *name) // 8002C7D0
 	lump_p = maplump;
 	for(i = 0; i < mapnumlumps; i++)
     {
-        if ((*(int *)&name8[0] == (*(int *)&lump_p->name[0] & 0x7fffffff)) &&
+        if ((*(int *)&name8[0] == (*(int *)&lump_p->name[0] & BE32(0x7fffffff)) /* [PC] */) &&
             (*(int *)&name8[4] == (*(int *)&lump_p->name[4])))
                 return i;
 

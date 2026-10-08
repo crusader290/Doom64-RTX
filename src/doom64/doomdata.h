@@ -8,7 +8,12 @@
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
+#ifdef D64_PC /* [PC] SDL pulls in stdbool.h, whose true/false are macros */
+#include <stdbool.h>
+typedef int boolean;
+#else
 typedef enum {false, true} boolean;
+#endif
 typedef unsigned char byte;
 #endif
 

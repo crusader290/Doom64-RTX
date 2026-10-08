@@ -110,6 +110,17 @@ typedef union { OSTask_t t; long long force_structure_alignment; } OSTask;
 #define M_GFXTASK 1
 #define M_AUDTASK 2
 
+/* Microcode identities (never executed on PC; see src/port/os.c) */
+extern u64 rspbootTextStart[], rspbootTextEnd[];
+extern u64 gspF3DEX_NoN_fifoTextStart[], gspF3DEX_NoN_fifoDataStart[];
+extern u64 gspL3DEX_fifoTextStart[], gspL3DEX_fifoDataStart[];
+extern u64 aspMainTextStart[], aspMainDataStart[];
+#define SP_UCODE_SIZE 4096
+#define SP_UCODE_DATA_SIZE 2048
+#define SP_DRAM_STACK_SIZE8 1024
+#define SP_DRAM_STACK_SIZE64 128
+#define OS_YIELD_DATA_SIZE 0xc00
+
 /* Controllers */
 #define MAXCONTROLLERS 4
 typedef struct { u16 type; u8 status; u8 errno_; } OSContStatus;

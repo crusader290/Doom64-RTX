@@ -54,5 +54,8 @@ void G_PlayerFinishLevel(int player);
 
 /* PC platform services (src/port) */
 void I_PCFatal(const char *fmt, ...);
+int  I_PCMouseTurn(void);
+void I_PCAudioUpdate(void);
+void I_PCToggleRaytracing(void);
 
 #endif

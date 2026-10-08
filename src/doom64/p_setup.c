@@ -700,7 +700,7 @@ void P_GroupLines (void) // 8001E614
 	}
 
 /* build line tables for each sector	 */
-	linebuffer = Z_Malloc (total*4, PU_LEVEL, 0);
+	linebuffer = Z_Malloc (total*sizeof(line_t *), PU_LEVEL, 0); /* [PC] was total*4 */
 	sector = sectors;
 	for (i=0 ; i<numsectors ; i++, sector++)
 	{

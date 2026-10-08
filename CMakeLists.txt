@@ -5,7 +5,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(D64_WITH_AUDIO "Build the WESS sound system (N64 synth emulation)" ON)
+option(D64_WITH_AUDIO "Build the WESS sound system (N64 synth emulation)" OFF)
+option(D64_NULL_RENDERER "Link the headless null renderer instead of the Rust renderer" OFF)
 option(D64_FETCH_SDL3 "Download and build SDL3 if it is not found" ON)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -36,15 +37,15 @@ endif()
 set(D64_GAME_DIR ${CMAKE_SOURCE_DIR}/src/doom64)
 set(D64_GAME_SOURCES
   am_main.c c_convert.c cfb.c d_main.c d_screens.c decodes.c doominfo.c
-  doomlib.c f_main.c funqueue.c g_game.c in_main.c m_bbox.c m_fixed.c
+  doomlib.c f_main.c g_game.c in_main.c m_bbox.c m_fixed.c
   m_main.c m_password.c p_base.c p_ceilng.c p_change.c p_doors.c p_enemy.c
   p_floor.c p_inter.c p_lights.c p_macros.c p_map.c p_maputl.c p_misc.c
   p_mobj.c p_move.c p_plats.c p_pspr.c p_setup.c p_shoot.c p_sight.c
   p_slide.c p_spec.c p_switch.c p_telept.c p_tick.c p_user.c r_data.c
-  r_main.c r_phase1.c r_phase2.c r_phase3.c sprinfo.c st_main.c tables.c
+  mem_heap.c audio_heap.c vsprintf.c r_main.c r_phase1.c r_phase2.c r_phase3.c sprinfo.c st_main.c tables.c
   w_wad.c z_zone.c)
 set(D64_AUDIO_SOURCES
-  s_sound.c wessapi.c wessapic.c wessapim.c wessapip.c wessapit.c wessarc.c
+  s_sound.c funqueue.c wessapi.c wessapic.c wessapim.c wessapip.c wessapit.c wessarc.c
   wessedit.c wessfade.c wesshand.c wessseq.c wessshell.c wesstrak.c
   wesstwek.c seqload.c seqloadl.c seqloadr.c n64cmd.c)
 list(TRANSFORM D64_GAME_SOURCES PREPEND ${D64_GAME_DIR}/)
@@ -58,8 +59,12 @@ set(D64_PORT_SOURCES
   src/port/pak.c
   src/port/config.c
   src/port/gu.c
+  src/port/rtlights.c
   src/gfx/gbi.c
-  src/gfx/gfx_null.c)
+)
+if(D64_NULL_RENDERER)
+  list(APPEND D64_PORT_SOURCES src/gfx/gfx_null.c)
+endif()
 if(D64_WITH_AUDIO)
   list(APPEND D64_PORT_SOURCES src/port/n64synth.c src/port/audio_pc.c)
 else()

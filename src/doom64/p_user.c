@@ -375,6 +375,12 @@ void P_BuildMove (player_t *player) // 80022154
         }
 	}
 
+#ifdef D64_PC
+	/* [PC] mouse turning, accumulated since the previous tic */
+	if (!demoplayback)
+		player->angleturn += I_PCMouseTurn();
+#endif
+
 	/* */
 	/* if slowed down to a stop, change to a standing frame */
 	/* */
