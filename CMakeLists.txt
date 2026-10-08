@@ -160,6 +160,10 @@ elseif(MSVC)
   target_compile_options(doom64rtx PRIVATE /W3 /wd4244 /wd4018 /wd4996 /wd4146)
 endif()
 
+if(UNIX AND NOT APPLE)
+  # look for a bundled libSDL3.so next to the executable first
+  set_target_properties(doom64rtx PROPERTIES BUILD_RPATH "\$ORIGIN" INSTALL_RPATH "\$ORIGIN")
+endif()
 if(WIN32)
   set_target_properties(doom64rtx PROPERTIES WIN32_EXECUTABLE OFF)
   # ship SDL3.dll next to the executable

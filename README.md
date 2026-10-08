@@ -18,6 +18,18 @@ temporal accumulation and denoising). No code is shared with that project.
 
 ![Title demo, OpenGL renderer](docs/img/gl_title_demo.png)
 
+## Download
+
+Preview builds are in [`releases/`](releases/):
+
+| File | Platform |
+|---|---|
+| `doom64rtx-0.1.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
+| `doom64rtx-0.1.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
+
+Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
+`.github/workflows/build.yml` are built the same way.
+
 ## Status
 
 | Area | State |
@@ -26,9 +38,9 @@ temporal accumulation and denoising). No code is shared with that project.
 | ROM auto-detection | working |
 | OpenGL 3.3 renderer | working |
 | Vulkan raster renderer | working |
-| Vulkan ray traced world | in progress |
+| Vulkan ray traced world | preview (F10); light sources from game objects in progress |
 | Sound and music (WESS / N64 synth) | in progress (silent for now) |
-| Windows build (MinGW-w64) | builds; runtime test pending |
+| Windows build (MinGW-w64) | working (tested under Wine: OpenGL and Vulkan) |
 | Saves (Controller Pak emulation) | working, needs more testing |
 
 See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and

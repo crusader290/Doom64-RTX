@@ -124,5 +124,13 @@ message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
   - The white full-screen flash after pressing Start on the title is the game's own effect
     (prim LOD fraction = sector light level in COMB07), not a renderer bug.
   - D64_DUMPCMDS=<frame> prints a frame's resolved draw commands (gbi.c).
-- Container setup used: `apt-get install glslang-tools mingw-w64 libvulkan-dev libx11-dev
+- Windows: MinGW-w64 cross build works (only system DLLs + SDL3.dll); exe verified under Wine 9
+  with OpenGL and Vulkan (lavapipe through winevulkan, RT available).
+- Release 0.1.0 preview committed to releases/ (Linux tar.gz with bundled libSDL3 and
+  `$ORIGIN` runpath set via patchelf; Windows zip with SDL3.dll; both include doom64rtx.ini,
+  README, LICENSE, RELEASE_NOTES.txt). Both smoke-tested from fresh extractions.
+  To rebuild a release: build `build` (Linux Release) and `build-win` (MinGW), strip, copy
+  SDL libs, `patchelf --set-rpath '$ORIGIN'`, archive as releases/doom64rtx-<ver>-<os>-x86_64.*
+- NEXT: RT light sources (rtlights.c), in-game RT verification, WESS audio port, MSVC fixes.
+- Container setup used: `apt-get install glslang-tools mingw-w64 wine64 wine patchelf libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.
