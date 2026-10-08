@@ -18,6 +18,10 @@ enum HandleFlag { NoHandle, YesHandle };
 /* used by wess_seq_stop and wess_seq_stop_and_voiceramp functions */
 enum MuteRelease { NoMuteRelease, YesMuteRelease};
 
+/* [PC] defined in wessapi.c */
+extern int wess_seq_structrig(sequence_data *psq_info, int seq_num, int seq_type,
+	enum HandleFlag gethandle, TriggerPlayAttr *attr);
+
 void wess_seq_trigger_type(int seq_num, unsigned int seq_type) // 80032160
 {
 	sequence_data *psq_info;

@@ -228,6 +228,9 @@ int wess_size_module(char *wmd_filename) // 8002F770
 
 	readrequest = sizeof(tmp_moddata.mod_hdr);
 	readresult = module_read(&tmp_moddata.mod_hdr, readrequest, fp_wmd_file);
+#ifdef D64_PC
+	wess_swap_module_header(&tmp_moddata.mod_hdr);
+#endif
 	if (readrequest != readresult)
 	{
 		err(wess_FREAD);
@@ -242,6 +245,21 @@ int wess_size_module(char *wmd_filename) // 8002F770
 
 	readrequest = sizeof(tmp_patgrpdata.pat_grp_hdr);
 	readresult = module_read(&tmp_patgrpdata.pat_grp_hdr, readrequest, fp_wmd_file);
+#ifdef D64_PC
+	{
+		patch_group_header *g = &tmp_patgrpdata.pat_grp_hdr;
+		WESS_SWAP32(g->load_flags);
+		WESS_SWAP16(g->patches);
+		WESS_SWAP16(g->patch_size);
+		WESS_SWAP16(g->patchmaps);
+		WESS_SWAP16(g->patchmap_size);
+		WESS_SWAP16(g->patchinfo);
+		WESS_SWAP16(g->patchinfo_size);
+		WESS_SWAP16(g->drummaps);
+		WESS_SWAP16(g->drummap_size);
+		WESS_SWAP32(g->extra_data_size);
+	}
+#endif
 	if (readrequest != readresult)
 	{
 		err(wess_FREAD);
@@ -343,7 +361,7 @@ int wess_load_module(char *wmd_filename,
 	if (memory_pointer == NULL)
 	{
 		wmd_mem_is_mine = 1;
-		wmd_mem = wess_malloc((char *)memory_allowance);
+		wmd_mem = wess_malloc((char *)(uintptr_t)memory_allowance);
 		if (wmd_mem == NULL)
 		{
 			return(module_loaded);
@@ -426,6 +444,9 @@ int wess_load_module(char *wmd_filename,
 
 	readrequest = sizeof(tmp_moddata.mod_hdr);
 	readresult = module_read(&tmp_moddata.mod_hdr, readrequest, fp_wmd_file);
+#ifdef D64_PC
+	wess_swap_module_header(&tmp_moddata.mod_hdr);
+#endif
 	if (readrequest != readresult)
 	{
 		err(wess_FREAD);
@@ -450,6 +471,21 @@ int wess_load_module(char *wmd_filename,
 
 	readrequest = sizeof(tmp_patgrpdata.pat_grp_hdr);
 	readresult = module_read(&tmp_patgrpdata.pat_grp_hdr, readrequest, fp_wmd_file);
+#ifdef D64_PC
+	{
+		patch_group_header *g = &tmp_patgrpdata.pat_grp_hdr;
+		WESS_SWAP32(g->load_flags);
+		WESS_SWAP16(g->patches);
+		WESS_SWAP16(g->patch_size);
+		WESS_SWAP16(g->patchmaps);
+		WESS_SWAP16(g->patchmap_size);
+		WESS_SWAP16(g->patchinfo);
+		WESS_SWAP16(g->patchinfo_size);
+		WESS_SWAP16(g->drummaps);
+		WESS_SWAP16(g->drummap_size);
+		WESS_SWAP32(g->extra_data_size);
+	}
+#endif
 	if (readrequest != readresult)
 	{
 		err(wess_FREAD);

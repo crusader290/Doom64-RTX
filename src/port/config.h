@@ -27,6 +27,8 @@ typedef struct {
     int   gpu_index;         /* preferred Vulkan device index, -1 = auto */
     int   validation;        /* Vulkan validation layers */
     int   log;               /* write doom64rtx.log (default on) */
+    int   sound;             /* 1 = sound and music (WESS synth) */
+    int   audio_rate;        /* synth output rate in Hz (N64: 22050) */
 } pcconfig_t;
 
 extern pcconfig_t pc_config;   /* effective settings (file + command line) */

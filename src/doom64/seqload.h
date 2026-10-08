@@ -112,5 +112,9 @@ extern int wess_seq_range_load(int seqfirst,int numseqs,void *memptr);
 
 extern int wess_seq_range_free(int seqfirst,int numseqs);
 
+/* [PC] prototypes the original relied on implicitly */
+extern int open_sequence_data(void);
+extern void close_sequence_data(void);
+
 #endif
 

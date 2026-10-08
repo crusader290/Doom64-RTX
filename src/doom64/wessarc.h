@@ -14,6 +14,17 @@ enum Wess_Error {
 	wess_FSEEK
 };
 
+#ifdef D64_PC
+/* [PC] The WMD/WSD banks are big-endian N64 data; these convert in place. */
+static inline unsigned short wess_be16(unsigned short v) { return (unsigned short)((v << 8) | (v >> 8)); }
+static inline unsigned int wess_be32(unsigned int v)
+{
+	return (v >> 24) | ((v >> 8) & 0xff00u) | ((v & 0xff00u) << 8) | (v << 24);
+}
+#define WESS_SWAP16(x) ((x) = wess_be16((unsigned short)(x)))
+#define WESS_SWAP32(x) ((x) = wess_be32((unsigned int)(x)))
+#endif
+
 //LCD FILE Structs
 typedef struct
 {
@@ -118,6 +129,17 @@ typedef struct
 	unsigned int	data_size;			//*24
 	unsigned int	pad6;				//*28
 }module_header;//32
+
+#ifdef D64_PC
+static inline void wess_swap_module_header(module_header *h)
+{
+	WESS_SWAP32(h->module_id_text);
+	WESS_SWAP32(h->module_version);
+	WESS_SWAP16(h->sequences);
+	WESS_SWAP32(h->compress_size);
+	WESS_SWAP32(h->data_size);
+}
+#endif
 
 typedef struct
 {
@@ -443,6 +465,16 @@ extern void wess_disable(void);
 
 
 extern int WessInterruptHandler(void);
+
+#ifdef D64_PC
+/* [PC] prototypes the original relied on implicitly */
+extern void process_function_queue(void);
+extern void SeqEngine(void);
+extern void trackstart(track_status *ptmp, sequence_status *psq_stat);
+extern void Eng_SeqEnd(track_status *ptk_stat);
+extern int wess_handle_getposition(int handle);
+extern void wess_track_parm_mod(track_status *ptmp, int value, void (*funcion)(track_status *, int));
+#endif
 
 typedef void(*WessAction)(track_status *ptmp, int value);
 

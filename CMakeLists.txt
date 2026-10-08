@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(D64_WITH_AUDIO "Build the WESS sound system (N64 synth emulation)" OFF)
+option(D64_WITH_AUDIO "Build the WESS sound system (N64 synth emulation)" ON)
 option(D64_NULL_RENDERER "Link the headless null renderer instead of the Rust renderer" OFF)
 option(D64_FETCH_SDL3 "Download and build SDL3 if it is not found" ON)
 
@@ -125,6 +125,13 @@ if(NOT D64_NULL_RENDERER)
 endif()
 if(D64_WITH_AUDIO)
   target_sources(doom64rtx PRIVATE ${D64_AUDIO_SOURCES})
+  # WESS was built with an unsigned-char compiler (it tests char data
+  # against 0xFF), so keep that for the sound system.
+  if(MSVC)
+    set_source_files_properties(${D64_AUDIO_SOURCES} PROPERTIES COMPILE_OPTIONS "/J")
+  else()
+    set_source_files_properties(${D64_AUDIO_SOURCES} PROPERTIES COMPILE_OPTIONS "-funsigned-char")
+  endif()
 endif()
 
 target_include_directories(doom64rtx PRIVATE

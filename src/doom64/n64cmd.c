@@ -3,6 +3,7 @@
 #include <ultra64.h>
 #include "ultratypes.h"
 #include <libaudio.h>
+#include <stdlib.h>
 
 #include "wessseq.h"
 
@@ -114,7 +115,11 @@ ALRawLoop2					rawloop;				// 800B6730
 ALADPCMloop2				cmploop;				// 800B6740
 NoteState					*pns = 0;				// 8005DB4C
 NoteState					pnotestate;				// 800B6770
+#ifdef D64_PC
+char                        *g_wddloc;				// [PC] WDD bank in memory
+#else
 s32                         g_wddloc;				// 800B6978
+#endif
 f32							wess_output_ratio = 1.0;// 8005DB50
 
 enum Snd_Type {Snd_Music, Snd_Sfx};
@@ -141,12 +146,19 @@ void N64_set_output_rate(u32 rate) // 80037750
 
 void N64_wdd_location(char *wdd_location) // 80037788
 {
+#ifdef D64_PC
+	/* [PC] the sample bank is read straight from the loaded ROM image */
+	extern unsigned char *I_PCWddData(char *wdd_location);
+	g_wddloc = (char *)I_PCWddData(wdd_location);
+#else
 	g_wddloc = (s32)wdd_location;
+#endif
 }
 
 void start_record_music_mute(int remember) // 80037794
 {
-    if ((int)&pnotestate)
+    /* [PC] was a null check of a static address */
+    if (1)
 	{
 		pnotestate.numnotes = 0;
 		pnotestate.remember = remember;
@@ -333,6 +345,127 @@ void TriggerN64Voice(voice_status *voice_stat) // 80037A64
 // Driver System
 //-----------------------------------------------------------
 
+#ifdef D64_PC
+/* [PC] The patch bank was loaded raw from the big-endian WMD. Swap it in
+ * place and rebuild the sample table (N64 records hold 32-bit pointers and
+ * offsets) as native patchinfo_header entries. File record sizes:
+ * patches 4, patchmaps 20, patchinfo 24, drummaps 4 (each phrase aligned),
+ * loopinfo 8, raw loops 16, ADPCM loops 48, ADPCM books 264. */
+static patchinfo_header *pc_samples;
+
+#define PC_ALIGN8(off) ((off) = ((off) + 7) & ~7u)
+
+static unsigned int pc_rd32(const unsigned char *r)
+{
+	return ((unsigned int)r[0] << 24) | ((unsigned int)r[1] << 16) | ((unsigned int)r[2] << 8) | r[3];
+}
+
+static void N64_PCDriverInit(void)
+{
+	unsigned char *base = (unsigned char *)ppgd->ppat_data;
+	unsigned int off = 0, i, j, n;
+	unsigned char *pinfo;
+	patchinfo_header *sample;
+
+	patchesbase = (patches_header *)(base + off);
+	for (i = 0; i < ppgd->pat_grp_hdr.patches; i++)
+		WESS_SWAP16(patchesbase[i].patchmap_idx);
+	off += ppgd->pat_grp_hdr.patches * 4;
+	PC_ALIGN8(off);
+
+	patchmapsbase = (patchmaps_header *)(base + off);
+	for (i = 0; i < ppgd->pat_grp_hdr.patchmaps; i++)
+	{
+		patchmaps_header *pm = &patchmapsbase[i];
+		WESS_SWAP16(pm->sample_id);
+		WESS_SWAP16(pm->attack_time);
+		WESS_SWAP16(pm->decay_time);
+		WESS_SWAP16(pm->release_time);
+	}
+	off += ppgd->pat_grp_hdr.patchmaps * 20;
+	PC_ALIGN8(off);
+
+	pinfo = base + off;
+	off += ppgd->pat_grp_hdr.patchinfo * 24;
+	PC_ALIGN8(off);
+
+	drummapsbase = (char *)(base + off);
+	off += ppgd->pat_grp_hdr.drummaps * 4;
+	PC_ALIGN8(off);
+
+	samplesinfochunk = (loopinfo_header *)(base + off);
+	WESS_SWAP16(samplesinfochunk->nsfx1);
+	WESS_SWAP16(samplesinfochunk->rawcount);
+	WESS_SWAP16(samplesinfochunk->adpcmcount);
+	WESS_SWAP16(samplesinfochunk->nsfx2);
+	off += sizeof(loopinfo_header);
+
+	samplesrawloopbase = (ALRawLoop2 *)(base + off);
+	for (i = 0; i < samplesinfochunk->rawcount; i++)
+	{
+		WESS_SWAP32(samplesrawloopbase[i].start);
+		WESS_SWAP32(samplesrawloopbase[i].end);
+		WESS_SWAP32(samplesrawloopbase[i].count);
+	}
+	off += samplesinfochunk->rawcount * sizeof(ALRawLoop2);
+
+	samplescmploopbase = (ALADPCMloop2 *)(base + off);
+	for (i = 0; i < samplesinfochunk->adpcmcount; i++)
+	{
+		ALADPCMloop2 *lp = &samplescmploopbase[i];
+		WESS_SWAP32(lp->start);
+		WESS_SWAP32(lp->end);
+		WESS_SWAP32(lp->count);
+		for (j = 0; j < 16; j++)
+			WESS_SWAP16(lp->state[j]);
+	}
+	off += samplesinfochunk->adpcmcount * sizeof(ALADPCMloop2);
+
+	samplescmphdrbase = (ALADPCMBook2 *)(base + off);
+
+	n = ppgd->pat_grp_hdr.patchinfo;
+	free(pc_samples);
+	pc_samples = (patchinfo_header *)calloc(n ? n : 1, sizeof(patchinfo_header));
+	samplesbase = pc_samples;
+
+	for (i = 0; i < n; i++)
+	{
+		const unsigned char *r = pinfo + i * 24;
+		int floopidx = (int)pc_rd32(r + 16);
+		sample = &pc_samples[i];
+
+		sample->wave.base = (u8 *)g_wddloc + pc_rd32(r);
+		sample->wave.len = (s32)pc_rd32(r + 4);
+		sample->wave.type = r[8];
+		sample->wave.flags = 1;
+		sample->pitch = (s32)pc_rd32(r + 12); /* the file keeps the pitch in the loop field */
+
+		if (sample->wave.type == AL_RAW16_WAVE)
+		{
+			if (floopidx != -1 && floopidx < samplesinfochunk->rawcount)
+				sample->wave.loop = &samplesrawloopbase[floopidx];
+			else
+				sample->wave.loop = &rawloop;
+			sample->wave.book = NULL;
+		}
+		else
+		{
+			ALADPCMBook2 *bk = &samplescmphdrbase[i];
+			if (floopidx != -1 && floopidx < samplesinfochunk->adpcmcount)
+				sample->wave.loop = &samplescmploopbase[floopidx];
+			else
+				sample->wave.loop = &cmploop;
+
+			WESS_SWAP32(bk->order);
+			WESS_SWAP32(bk->npredictors);
+			for (j = 0; j < 128; j++)
+				WESS_SWAP16(bk->book[j]);
+			sample->wave.book = bk;
+		}
+	}
+}
+#endif
+
 void N64_DriverInit (track_status *ptk_stat) // 80037DA8
 {
     static int vt, mi; //800B699C
@@ -361,6 +494,11 @@ void N64_DriverInit (track_status *ptk_stat) // 80037DA8
 	//PRINTF_D(WHITE,"ppgd %x",ppgd);
 	//PRINTF_D(WHITE,"nvss %d",nvss);
 
+#ifdef D64_PC
+	N64_PCDriverInit();
+	(void)pmem;
+	(void)sample;
+#else
 	pmem = ppgd->ppat_data; /* pointer math temp */
 
 	patchesbase = (patches_header *)pmem;
@@ -466,6 +604,7 @@ void N64_DriverInit (track_status *ptk_stat) // 80037DA8
 			sample->wave.book = &samplescmphdrbase[vt];
 		}
 	}
+#endif
 }
 
 void N64_DriverExit (track_status *ptk_stat) // 8003806C
@@ -826,7 +965,12 @@ void N64_ReverbMod(track_status *ptk_stat) // 80038BD8
 			{
 				if ((pvs->flags & VOICE_ACTIVE) && (pvs->track == ptk_stat->refindx))
 				{
+#ifdef D64_PC
+					/* [PC] reverb controller sets the effect send, not the pan */
+					alSynSetFXMix(&alGlobals->drvr, &voice[pvs->refindx], (u8)thereverbmod);
+#else
 					alSynSetPan(&alGlobals->drvr, &voice[pvs->refindx], (ALPan)thereverbmod);
+#endif
 
 					if (!--vn) break;
 				}

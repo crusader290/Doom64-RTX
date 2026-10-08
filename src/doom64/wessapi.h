@@ -183,6 +183,13 @@ extern void wess_get_tweaks(WessTweakAttr *attr);
 #define    WESS_REVERB_ECHO          5
 #define    WESS_REVERB_CUSTOM        6
 
+/* [PC] prototypes the original relied on implicitly */
+extern int Is_System_Active(void);
+extern int Is_Module_Loaded(void);
+extern int Is_Seq_Num_Valid(int seq_num);
+extern void start_record_music_mute(int remember);
+extern void end_record_music_mute(void);
+
 typedef struct WessConfig {     /* see wess_init function for more info */
     f32       audioframerate;   /* the number of times per second that wesswork is called */
     u32       outputsamplerate; /* the output samplerate to calculate */

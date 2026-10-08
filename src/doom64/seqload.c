@@ -3,6 +3,7 @@
 #define _ALIGN8_ 1
 
 /* WESS API INCLUDES */
+#include <stdlib.h>
 #include "wessapi.h"	// audio stuff...
 #include "seqload.h"
 #include "soundhw.h"
@@ -173,6 +174,33 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 				return(0);
 		}
 
+#ifdef D64_PC
+		/* [PC] swap each big-endian track header and label list as we walk */
+		for (tracknum = 0; tracknum < numtracks; tracknum++)
+		{
+			unsigned int li;
+			track_header *th;
+
+			ptrk_info = (psq_info->ptrk_info + tracknum);
+			th = (track_header *)dmem;
+			WESS_SWAP16(th->initpatchnum);
+			WESS_SWAP16(th->initpitch_cntrl);
+			WESS_SWAP16(th->initppq);
+			WESS_SWAP16(th->initqpm);
+			WESS_SWAP16(th->labellist_count);
+			WESS_SWAP32(th->data_size);
+			ptrk_info->trk_hdr = th;
+			dmem += sizeof(track_header);
+
+			ptrk_info->plabellist = (unsigned int *)dmem;
+			for (li = 0; li < th->labellist_count; li++)
+				WESS_SWAP32(ptrk_info->plabellist[li]);
+			dmem += (th->labellist_count * sizeof(int));
+
+			ptrk_info->ptrk_data = (char *)dmem;
+			dmem += (th->data_size);
+		}
+#else
 		tracknum = 0;
 		if (numtracks > 0)
 		{
@@ -263,6 +291,7 @@ int load_sequence_data(int seqnum, void *memptr) // 8003980C
 				} while (tracknum != numtracks);
 			}
 		}
+#endif
 	}
 
 	return (int)((char *)pmem - (char *)memptr);//(int)(void *)((int)pmem - (int)memptr);
@@ -302,6 +331,9 @@ int wess_seq_loader_sizeof(void *input_pm_stat, char *seqfile) // 80039C20
 			err(SEQLOAD_FREAD);
 			return (0);
 		}
+#ifdef D64_PC
+		wess_swap_module_header(&sfile_hdr);
+#endif
 
 		close_sequence_data();
 
@@ -311,7 +343,14 @@ int wess_seq_loader_sizeof(void *input_pm_stat, char *seqfile) // 80039C20
 		//printf("compress_size %d\n",sfile_hdr.compress_size);
 		//printf("data_size %d\n",sfile_hdr.data_size);
 
+#ifdef D64_PC
+		/* [PC] the table is rebuilt with native pointer-sized records */
+		size = sfile_hdr.sequences * (int)sizeof(sequence_data);
+		if (size < (int)sfile_hdr.data_size)
+			size = (int)sfile_hdr.data_size;
+#else
 		size = sfile_hdr.data_size;
+#endif
 	}
 
 	return size;
@@ -355,6 +394,9 @@ int wess_seq_loader_init(void *input_pm_stat, char *seqfile, enum OpenSeqHandleF
 			err(SEQLOAD_FREAD);
 			return (0);
 		}
+#ifdef D64_PC
+		wess_swap_module_header(&sfile_hdr);
+#endif
 
 		//PRINTF_D(WHITE,"WSD::module_id_text %x",sfile_hdr.module_id_text);
 		//PRINTF_D(WHITE,"WSD::module_version %d",sfile_hdr.module_version);
@@ -373,7 +415,30 @@ int wess_seq_loader_init(void *input_pm_stat, char *seqfile, enum OpenSeqHandleF
 		{
 			//PRINTF_D(WHITE,"WSD::readbytes %d",readbytes);
 
+#ifdef D64_PC
+			{
+				/* [PC] file records: seq_header (12 bytes, BE) + 32-bit pointer */
+				unsigned char *raw = (unsigned char *)malloc(readbytes);
+				int si;
+
+				if (!raw)
+					return (0);
+				seqread = module_read(raw, readbytes, fp_seq_file);
+				for (si = 0; si < ref_max_seq_num && (si + 1) * 16 <= readbytes; si++)
+				{
+					sequence_data *sd = ref_pm_stat->pmod_info->pseq_info + si;
+					const unsigned char *r = raw + si * 16;
+					sd->seq_hdr.tracks = (unsigned short)((r[0] << 8) | r[1]);
+					sd->seq_hdr.decomp_type = (unsigned short)((r[2] << 8) | r[3]);
+					sd->seq_hdr.trkinfolength = ((unsigned int)r[4] << 24) | (r[5] << 16) | (r[6] << 8) | r[7];
+					sd->seq_hdr.fileposition = ((unsigned int)r[8] << 24) | (r[9] << 16) | (r[10] << 8) | r[11];
+					sd->ptrk_info = NULL;
+				}
+				free(raw);
+			}
+#else
 			seqread = module_read(ref_pm_stat->pmod_info->pseq_info, readbytes, fp_seq_file);
+#endif
 
 			if (seqread != readbytes)
 			{

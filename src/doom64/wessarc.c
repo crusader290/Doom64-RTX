@@ -134,6 +134,13 @@ short GetIntsPerSec(void) // 800353DC
 
 unsigned int CalcPartsPerInt(short ips, short ppq, short qpm) // 800353E4
 {
+#ifdef D64_PC
+	/* [PC] ((qpm << 16) * ppq / 60) / ips in 64-bit, as the MIPS code did */
+	unsigned long long v = (unsigned long long)((long long)qpm * 65536 * (long long)ppq);
+	v /= 60;
+	v /= (unsigned long long)(long long)ips;
+	return (unsigned int)v;
+#else
 	register unsigned int arg0;
 	register unsigned int ppi;
 
@@ -150,6 +157,7 @@ unsigned int CalcPartsPerInt(short ips, short ppq, short qpm) // 800353E4
 	asm("move	%0,$2":"=r"(arg0) : );
 	asm("move	%0,$3":"=r"(ppi) : );
     return (u32) ppi;
+#endif
 }
 
 int WessInterruptHandler(void) // 80035458
@@ -216,7 +224,7 @@ int module_seek(Wess_File_IO_Struct *fileptr, int seekpos, int seekmode) // 8003
 
 unsigned int module_tell(Wess_File_IO_Struct *fileptr) // 800355B0
 {
-	return (unsigned int)fileptr->src;
+	return (unsigned int)(uintptr_t)fileptr->src;
 }
 
 void module_close(Wess_File_IO_Struct *fileptr) // 800355BC

@@ -26,6 +26,10 @@ extern void(*DrvFunctions[36])(track_status *);
 /* used by wess trigger functions */
 enum HandleFlag { NoHandle, YesHandle };
 
+/* [PC] defined in wessapi.c */
+extern int wess_seq_structrig(sequence_data *psq_info, int seq_num, int seq_type,
+	enum HandleFlag gethandle, TriggerPlayAttr *attr);
+
 enum HandleStatus { HANDLE_INVALID, HANDLE_STOPPED, HANDLE_PLAYING };
 
 
@@ -78,7 +82,7 @@ int wess_handle_get(int seq_num) // 80032F80
 	sequence_data *psq_info;
 
 	if (!Is_Seq_Num_Valid(seq_num))
-		return(NULL);
+		return(0);
 
 	psq_info = (pm_stat->pmod_info->pseq_info + seq_num);
 	return wess_seq_structrig(psq_info, seq_num, 0, YesHandle, NULL);

@@ -86,7 +86,7 @@ int wess_handle_create_edit_space(char *memory_pointer, int data_size, int memor
 	if (_memory_pointer == NULL)
 	{
 		edt_mem_is_mine = 1;
-		edt_mem = wess_malloc((char *)_memory_allowance);
+		edt_mem = wess_malloc((char *)(uintptr_t)_memory_allowance);
 		if (edt_mem == NULL)
 		{
 			return(0);

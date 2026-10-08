@@ -28,6 +28,8 @@ void Config_Defaults(void)
     pc_config.vsync = 1;
     pc_config.mouse = 1;
     pc_config.brightness = 50;
+    pc_config.sound = 1;
+    pc_config.audio_rate = 44100;
     pc_config.mouse_sens = 1.0f;
     pc_config.gpu_index = -1;
     pc_config.log = 1;
@@ -58,6 +60,8 @@ static const cvar_t cvars[] = {
     { "gpu_index",      CV_INT,      &pc_config.gpu_index, 0 },
     { "validation",     CV_INT,      &pc_config.validation, 0 },
     { "log",            CV_INT,      &pc_config.log, 0 },
+    { "sound",          CV_INT,      &pc_config.sound, 0 },
+    { "audio_rate",     CV_INT,      &pc_config.audio_rate, 0 },
 };
 
 static void set_cvar_in(pcconfig_t *cfg, const char *key, const char *val);
@@ -199,6 +203,7 @@ void Config_ParseArgs(int argc, char **argv)
         else if (!SDL_strcmp(a, "-fullscreen")) pc_config.fullscreen = 1;
         else if (!SDL_strcmp(a, "-window"))  pc_config.fullscreen = 0;
         else if (!SDL_strcmp(a, "-nolog"))   pc_config.log = 0;
+        else if (!SDL_strcmp(a, "-nosound")) pc_config.sound = 0;
         else if (!SDL_strcmp(a, "-widescreen")) pc_config.aspect = 1;
         else if (!SDL_strcmp(a, "-set") && i + 2 < argc) { set_cvar(argv[i + 1], argv[i + 2]); i += 2; }
     }

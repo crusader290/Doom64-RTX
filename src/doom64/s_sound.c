@@ -3,7 +3,11 @@
 #include "p_local.h"
 #include "r_local.h"
 
+#ifdef D64_PC
+#define AUDIO_HEAP_SIZE	(0x100000) /* [PC] native structs are larger */
+#else
 #define AUDIO_HEAP_SIZE	(0x44800)
+#endif
 extern u64 audio_heap[AUDIO_HEAP_SIZE / sizeof(u64)];//80325800
 
 #ifndef D64_PC /* [PC] ROM segments are virtual addresses from d64pc.h */
@@ -13,6 +17,35 @@ extern char _doom64_wddSegmentRomStart[], _doom64_wddSegmentRomEnd[];
 #endif
 
 #define SYS_FRAMES_PER_SEC 30
+
+#ifdef D64_PC
+#define S_IMPL static
+static void S_Init_impl(void);
+static void S_SetSoundVolume_impl(int volume);
+static void S_SetMusicVolume_impl(int volume);
+static void S_StartMusic_impl(int mus_seq);
+static void S_StopMusic_impl(void);
+static void S_PauseSound_impl(void);
+static void S_ResumeSound_impl(void);
+static void S_StopSound_impl(mobj_t *origin,int seqnum);
+static void S_StopAll_impl(void);
+static int S_SoundStatus_impl(int seqnum);
+static void S_StartSound_impl(mobj_t *origin, int sound_id);
+#else
+#define S_IMPL
+#define S_Init_impl S_Init
+#define S_SetSoundVolume_impl S_SetSoundVolume
+#define S_SetMusicVolume_impl S_SetMusicVolume
+#define S_StartMusic_impl S_StartMusic
+#define S_StopMusic_impl S_StopMusic
+#define S_PauseSound_impl S_PauseSound
+#define S_ResumeSound_impl S_ResumeSound
+#define S_StopSound_impl S_StopSound
+#define S_StopAll_impl S_StopAll
+#define S_SoundStatus_impl S_SoundStatus
+#define S_StartSound_impl S_StartSound
+#endif
+
 
 void S_Error_Callback_Routine(char *errstring, int errnum1, int errnum2) // 80029580
 {
@@ -25,7 +58,7 @@ extern int MusVolume;
 extern void wess_set_tweaks2(WessTweakAttr *attr);
 extern void wess_get_tweaks2(WessTweakAttr *attr);
 
-void S_Init(void) // 80029590
+S_IMPL void S_Init_impl(void) // 80029590
 {
 	int audioHeapEnd;
 	int wmdlength;
@@ -110,7 +143,7 @@ void S_Init(void) // 80029590
 	//this call may result in decompression callbacks
 	wess_seq_range_load(0, wess_seq_loader_count(), seqptr);
 
-	audioHeapEnd = (int)alHeapAlloc(&sys_aheap, 1, 4) - (int)&audio_heap;
+	audioHeapEnd = (int)((char *)alHeapAlloc(&sys_aheap, 1, 4) - (char *)&audio_heap);
 	audioHeapEnd += 16;
 
 	//PRINTF_D(WHITE, "audioHeapEnd %x", audioHeapEnd);
@@ -118,6 +151,12 @@ void S_Init(void) // 80029590
 	if (audioHeapEnd > AUDIO_HEAP_SIZE)
 		I_Error("S_Init: Audio heap overflow");
 
+#ifdef D64_PC
+	{
+		extern void I_PCAudioDumpSamples(void);
+		I_PCAudioDumpSamples();
+	}
+#endif
 	S_SetSoundVolume(SfxVolume);
 	S_SetMusicVolume(MusVolume);
 
@@ -126,19 +165,19 @@ void S_Init(void) // 80029590
 	//while(1){}
 }
 
-void S_SetSoundVolume(int volume) // 800297A8
+S_IMPL void S_SetSoundVolume_impl(int volume) // 800297A8
 {
   wess_master_sfx_vol_set((char)((volume * 85) / 100));
 }
 
-void S_SetMusicVolume(int volume) // 800297F4
+S_IMPL void S_SetMusicVolume_impl(int volume) // 800297F4
 {
   wess_master_mus_vol_set((char)((volume * 110) / 100));
 }
 
 int music_sequence; // 8005b250
 
-void S_StartMusic(int mus_seq) // 8002983C
+S_IMPL void S_StartMusic_impl(int mus_seq) // 8002983C
 {
     if (disabledrawing == false)
     {
@@ -147,31 +186,31 @@ void S_StartMusic(int mus_seq) // 8002983C
     }
 }
 
-void S_StopMusic(void) // 80029878
+S_IMPL void S_StopMusic_impl(void) // 80029878
 {
     wess_seq_stop(music_sequence);
     music_sequence = 0;
 }
 
-void S_PauseSound(void) // 800298A4
+S_IMPL void S_PauseSound_impl(void) // 800298A4
 {
     wess_seq_pauseall(YesMute, (REMEMBER_MUSIC|REMEMBER_SNDFX));
 }
 
-void S_ResumeSound(void) // 800298C8
+S_IMPL void S_ResumeSound_impl(void) // 800298C8
 {
     wess_seq_restartall(YesVoiceRestart);
 }
 
-void S_StopSound(mobj_t *origin,int seqnum) // 800298E8
+S_IMPL void S_StopSound_impl(mobj_t *origin,int seqnum) // 800298E8
 {
     if (!origin)
         wess_seq_stop(seqnum);
     else
-        wess_seq_stoptype((int)origin);
+        wess_seq_stoptype((int)(uintptr_t)origin);
 }
 
-void S_StopAll(void) // 8002991C
+S_IMPL void S_StopAll_impl(void) // 8002991C
 {
     wess_seq_stopall();
 }
@@ -179,7 +218,7 @@ void S_StopAll(void) // 8002991C
 #define SND_INACTIVE 0
 #define SND_PLAYING 1
 
-int S_SoundStatus(int seqnum) // 8002993C
+S_IMPL int S_SoundStatus_impl(int seqnum) // 8002993C
 {
     if (wess_seq_status(seqnum) == SEQUENCE_PLAYING)
         return SND_PLAYING;
@@ -187,7 +226,7 @@ int S_SoundStatus(int seqnum) // 8002993C
         return SND_INACTIVE;
 }
 
-void S_StartSound(mobj_t *origin, int sound_id) // 80029970
+S_IMPL void S_StartSound_impl(mobj_t *origin, int sound_id) // 80029970
 {
 	int flags;
 	int vol;
@@ -227,7 +266,7 @@ void S_StartSound(mobj_t *origin, int sound_id) // 80029970
 			}
 		}
 
-		wess_seq_trigger_type_special(sound_id, (unsigned int)origin, &attr);
+		wess_seq_trigger_type_special(sound_id, (unsigned int)(uintptr_t)origin, &attr);
 	}
 }
 
@@ -281,3 +320,90 @@ int S_AdjustSoundParams(mobj_t *listener, mobj_t *origin, int* vol, int* pan) //
 
 	return (*vol > 0);
 }
+
+#ifdef D64_PC
+/* [PC] WESS runs on the audio thread; every entry from the game takes the
+ * audio lock (see src/port/audio_pc.c). */
+extern void I_PCAudioLock(void);
+extern void I_PCAudioUnlock(void);
+
+void S_Init(void)
+{
+    I_PCAudioLock();
+    S_Init_impl();
+    I_PCAudioUnlock();
+}
+
+void S_SetSoundVolume(int volume)
+{
+    I_PCAudioLock();
+    S_SetSoundVolume_impl(volume);
+    I_PCAudioUnlock();
+}
+
+void S_SetMusicVolume(int volume)
+{
+    I_PCAudioLock();
+    S_SetMusicVolume_impl(volume);
+    I_PCAudioUnlock();
+}
+
+void S_StartMusic(int mus_seq)
+{
+    I_PCAudioLock();
+    S_StartMusic_impl(mus_seq);
+    I_PCAudioUnlock();
+}
+
+void S_StopMusic(void)
+{
+    I_PCAudioLock();
+    S_StopMusic_impl();
+    I_PCAudioUnlock();
+}
+
+void S_PauseSound(void)
+{
+    I_PCAudioLock();
+    S_PauseSound_impl();
+    I_PCAudioUnlock();
+}
+
+void S_ResumeSound(void)
+{
+    I_PCAudioLock();
+    S_ResumeSound_impl();
+    I_PCAudioUnlock();
+}
+
+void S_StopSound(mobj_t *origin,int seqnum)
+{
+    I_PCAudioLock();
+    S_StopSound_impl(origin, seqnum);
+    I_PCAudioUnlock();
+}
+
+void S_StopAll(void)
+{
+    I_PCAudioLock();
+    S_StopAll_impl();
+    I_PCAudioUnlock();
+}
+
+int S_SoundStatus(int seqnum)
+{
+    int r;
+    I_PCAudioLock();
+    r = S_SoundStatus_impl(seqnum);
+    I_PCAudioUnlock();
+    return r;
+}
+
+void S_StartSound(mobj_t *origin, int sound_id)
+{
+    I_PCAudioLock();
+    S_StartSound_impl(origin, sound_id);
+    I_PCAudioUnlock();
+}
+
+#endif
