@@ -26,7 +26,9 @@ Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verific
 | src/gfx/gbi.c | ✅ | F3DEX subset, TMEM emulation (LoadBlock/LoadTile/LoadTLUT, odd-row swizzle), texture cache, combiner/blender translation, fog, rects, L3DEX lines -> quads |
 | src/gfx/gfx_null.c | ✅ | headless renderer for tests |
 | renderer/src/gl_backend.rs | ✅ | OpenGL 3.3 core fallback (glow) |
-| renderer/src/vk/ | 🔧 | ash Vulkan 1.1 raster + ray query path |
+| renderer/src/vk/mod.rs | ✅ | ash Vulkan 1.1 raster: offscreen scene, 4 pipelines (blend x depth), descriptor cache, texture uploads, read-back, swapchain recreation |
+| renderer/src/vk/mem.rs | ✅ | sub-allocator (32 MiB blocks), Buffer/Image helpers |
+| renderer/src/vk/rt.rs | 🔧 | ray query world renderer |
 | renderer/shaders/combiner.glsl | ✅ | N64 combiner/blender emulation shared by GL and VK |
 
 ## Game sources (src/doom64)

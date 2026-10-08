@@ -379,6 +379,11 @@ static void test_hooks(void)
         char name[64];
         SDL_snprintf(name, sizeof(name), "shot_%04u.bmp", frame_no);
         save_screenshot_named(name);
+        if (SDL_getenv("D64_SHOT_HOLD"))
+        {
+            SDL_Log("holding frame %u", frame_no);
+            SDL_Delay((Uint32)SDL_atoi(SDL_getenv("D64_SHOT_HOLD")));
+        }
     }
     if (q && frame_no >= (unsigned)SDL_strtoul(q, NULL, 10))
     {
@@ -614,7 +619,7 @@ void I_DrawFrame(void)
     I_PCAudioUpdate();
 
     /* wait for the next 30 Hz slot (two N64 vblanks) */
-    for (;;)
+    for (; !SDL_getenv("D64_FIXED_TIMESTEP");)
     {
         s32 now = vbl_now();
         if (now - drawsync2 >= 2)
@@ -622,8 +627,8 @@ void I_DrawFrame(void)
         SDL_DelayPrecise(1000000);
     }
     vsync = vbl_now();
-    if (demoplayback || demorecording)
-        vsync = drawsync2 + 2;
+    if (demoplayback || demorecording || SDL_getenv("D64_FIXED_TIMESTEP"))
+        vsync = drawsync2 + 2; /* deterministic: exactly one 30 Hz frame */
     drawsync1 = vsync - drawsync2;
     if (drawsync1 > 8)
         drawsync1 = 2; /* do not try to catch up after a stall */

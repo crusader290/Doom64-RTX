@@ -103,5 +103,10 @@ message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
     demo lumps are big-endian ints -> swapped after `W_ReadLump`; passwords keep N64 byte order.
 - Milestone: OpenGL fallback renders the legal screen and the title-map demo correctly
   (docs/img/gl_title_demo.png).
+- Milestone: Vulkan raster backend (ash) works on lavapipe; with `D64_FIXED_TIMESTEP=1` its
+  frame 100 is pixel-identical to the GL backend.
+- OPEN ISSUE: game logic is not deterministic between runs even with D64_FIXED_TIMESTEP=1
+  (frames diverge between ~100 and ~200, during the title map). Suspect an uninitialised
+  read or a 64-bit struct-size assumption in game code; matters for demo sync. Not a renderer bug.
 - Container setup used: `apt-get install glslang-tools mingw-w64 libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.
