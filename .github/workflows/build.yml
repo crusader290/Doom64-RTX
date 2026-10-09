@@ -2,8 +2,17 @@ name: build
 
 on:
   push:
+    paths-ignore: ['**.md', 'docs/**', 'releases/**', 'addons/**', '.claude/**']
   pull_request:
+    paths-ignore: ['**.md', 'docs/**', 'releases/**', 'addons/**', '.claude/**']
   workflow_dispatch:
+
+# Builds go through tools/check.sh: the job summary shows the first errors and the
+# failure class; the full log is uploaded as an artifact when a build fails.
+# No ROM is available in CI, so runtime tests (tools/smoke.sh) are not run here.
+
+env:
+  SDL_TAG: release-3.2.24   # keep in sync with CMakeLists.txt / tools/setup_env.sh
 
 jobs:
   linux:
@@ -18,15 +27,39 @@ jobs:
             libwayland-dev libxkbcommon-dev libegl-dev libgl-dev libdecor-0-dev \
             libasound2-dev libpulse-dev libudev-dev libdbus-1-dev
       - uses: dtolnay/rust-toolchain@stable
-      - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Cache cargo downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ runner.os }}-${{ hashFiles('renderer/Cargo.lock') }}
+      - name: Cache prebuilt SDL3
+        id: sdl
+        uses: actions/cache@v4
+        with:
+          path: deps/sdl3-linux
+          key: sdl3-linux-${{ env.SDL_TAG }}-ubuntu-24.04
+      - name: Build SDL3 (cache miss only)
+        if: steps.sdl.outputs.cache-hit != 'true'
+        run: |
+          git clone -q --depth 1 --branch "$SDL_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
+          cmake -S /tmp/SDL3 -B /tmp/sdl-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+                -DCMAKE_INSTALL_PREFIX="$PWD/deps/sdl3-linux" -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF
+          cmake --build /tmp/sdl-build && cmake --install /tmp/sdl-build
       - name: Build
-        run: cmake --build build
+        run: D64_DEPS="$PWD/deps" tools/check.sh linux
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-linux
+          path: build-logs
       - name: Package
         run: |
           mkdir -p dist
           cp build/doom64rtx dist/
-          cp build/_deps/sdl3-build/libSDL3.so* dist/ 2>/dev/null || true
+          cp -L deps/sdl3-linux/lib/libSDL3.so.0 dist/
           cp README.md LICENSE dist/
       - uses: actions/upload-artifact@v4
         with:
@@ -44,10 +77,21 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-pc-windows-gnu
-      - name: Configure
-        run: cmake -S . -B build-win -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake
+      - name: Cache cargo downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-${{ runner.os }}-${{ hashFiles('renderer/Cargo.lock') }}
       - name: Build
-        run: cmake --build build-win
+        run: tools/check.sh win
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-windows
+          path: build-logs
       - name: Package
         run: |
           mkdir -p dist
@@ -59,7 +103,7 @@ jobs:
 
   windows-msvc:
     runs-on: windows-2022
-    continue-on-error: true   # experimental: GCC/MinGW is the supported Windows toolchain
+    continue-on-error: true   # experimental: GCC/MinGW is the supported Windows toolchain (task T16)
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

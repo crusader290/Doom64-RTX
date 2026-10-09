@@ -29,3 +29,6 @@ target/
 # Archived add-ons are committed on purpose (see addons/doom64-retribution/README.md)
 !addons/**/*.wad
 !addons/**/*.WAD
+
+# tools/check.sh logs
+/build-logs/

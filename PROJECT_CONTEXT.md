@@ -1,165 +1,48 @@
-# PROJECT_CONTEXT — Doom64-RTX
+# PROJECT_CONTEXT — Doom64-RTX (current state)
 
-Handoff log for any agent or human picking this up. **Update it every session.** The newest
-entries go at the top of the *Session log*.
+Read this first; it is kept short on purpose. Durable facts: `docs/DISCOVERIES.md`.
+Per-file status / index: `PORT_MANIFEST.md`. Task ledger: `docs/tasks.json`.
+History: `docs/DEVLOG.md`. Update this file at milestones and before ending a session
+(replace, do not append).
 
 ## Goal (from the user)
-1. Take the Doom 64 reverse-engineering source (https://github.com/Erick194/DOOM64-RE, GPLv3)
-   and **compile it as a native PC program**.
-2. Platform layer: **SDL3** (window, input, audio, timing).
-3. Renderers: **Vulkan** (primary) with **ray tracing**, plus an **OpenGL fallback**.
-4. Ray tracing approach: use https://github.com/jlrouzies-fr/doom64-rt as the *reference* for
-   what to light and how (real emitters instead of baked light, sector-light driven lighting,
-   denoise/accumulate). That project is GZDoom-RT + RTGL1 on Retribution; we do not share
-   code with it, we take ideas.
-5. Targets: **x86-64 Windows and Linux**.
-6. **ROM detection**: the game scans its working directory for a Doom 64 ROM
-   (`.z64/.n64/.v64`), fixes the byte order, and pulls WAD/WMD/WSD/WDD out of it in memory.
-7. Keep `PROJECT_CONTEXT.md` (this file) and `PORT_MANIFEST.md` (per-file port status) logged.
+Native PC port of Doom 64 from DOOM64-RE (GPLv3): SDL3 platform layer, Rust renderer with
+Vulkan 1.1+ (ash) + toggleable ray tracing (ideas from jlrouzies-fr/doom64-rt, no shared
+code) + OpenGL 3.3 fallback (glow); x86-64 Windows and Linux; ROM auto-detected in the
+working directory (never commit ROMs). Modern-play extras in the spirit of Brutal Doom
+(ideas only, no code from GZDoom mods). Develop on branch `claude/amazing-archimedes-7wr3t5`;
+no PR unless asked. Releases go to `releases/` (`tools/make_release.sh <ver>`).
 
-## Repo layout
-```
-src/doom64/     Original DOOM64-RE game sources (modified for PC; every change is
-                marked with a `// [PC]` comment)
-src/port/       Platform layer: libultra shim (ultra64.h + os*), SDL3 main loop, input,
-                audio output, ROM loader/detector, config
-src/gfx/        N64 display list (F3DEX GBI) interpreter + render backends
-                (gl = OpenGL 3.3 fallback, vk = Vulkan raster, vkrt = Vulkan ray tracing)
-src/gfx/shaders GLSL sources; compiled SPIR-V is committed as headers (see below)
-tools/          dm64ex.c — Erick194's ROM extractor (reference for ROM offsets)
-.github/        CI: Linux (gcc) and Windows (MinGW cross + MSVC) builds
-```
+## Milestone
+Playable port with sound, RT preview, modern controls, 60/120 fps, save/load, QoL extras.
+Next milestone: resource packs (pk3) + doom64-rt RT materials (T12, T13), RT translucency fix (T05).
 
-## Key facts / discoveries
-- **DOOM64-RE is N64-native**: it renders by building F3DEX display lists (`gSP*`/`gDP*`
-  macros into `GFX1`), vertices (`VTX1`) and fixed-point matrices (`MTX1`) that the RSP reads
-  *later*. The vertex data is often written **after** `gSPVertex` is emitted, so the display
-  list can only be interpreted once the frame is complete (`I_DrawFrame`). Our interpreter
-  runs there.
-- We **do not** use Nintendo's SDK headers (`ultra64.h`, `gbi.h`). `src/port/ultra64.h` is a
-  clean-room shim that defines the types and the GBI macros in our own encoding:
-  `Gfx = { u32 w0; uintptr_t w1; }` so pointers survive on 64-bit.
-- **64-bit hazards** in the RE code: `(int)ptr` arithmetic (e.g. `(int)GFX1 - (int)GFX2` in
-  `I_CheckGFX`), `(u32)` casts of ROM symbols, `long` assumed 32-bit (LLP64 vs LP64!).
-  Fix pattern: pointer differences / `intptr_t`.
-- **Endianness**: N64 is big-endian. The WAD *directory and map lumps* are little-endian
-  (the RE uses `LittleShort`/`LongSwap` to read them on N64) → on PC those become identity.
-  Texture/palette data are fed raw to the RDP, which reads memory big-endian → the GBI
-  interpreter reads texel memory as big-endian bytes. CPU-written words that the RDP reads
-  (e.g. `*(int*)VTX1[i].v.cn = color`) are native-endian on PC; the interpreter decodes `cn`
-  accordingly.
-- **Matrices**: game writes N64 `Mtx` directly (s15.16 split: words 0–7 integer halves, 8–15
-  fraction halves). The projection is `R_ProjectionMatrix` loaded in `p_tick.c`.
-- **ROM data offsets** (from tools/dm64ex.c), index = region:
-  | region | detect | WAD off/size | WMD | WSD | WDD |
-  |---|---|---|---|---|---|
-  | 0 USA     | hdr[0x3E]='E', hdr[0x10]=0xA8 | 0x63D10 / 0x5D18B0 | 0x6355C0 / 0xB9E0 | 0x640FA0 / 0x142F8 | 0x6552A0 / 0x1716C4 |
-  | 1 EUR     | hdr[0x3E]='P'                 | 0x63F60 / 0x5D6CDC | 0x63AC40          | 0x646620          | 0x65A920 |
-  | 2 JAP     | hdr[0x3E]='J'                 | 0x64580 / 0x5D8478 | 0x63CA00          | 0x6483E0          | 0x65C6E0 |
-  | 3 USA r1  | hdr[0x3E]='E', hdr[0x10]=0x42 | 0x63DC0 / 0x5D301C | 0x636DE0          | 0x6427C0          | 0x656AC0 |
-  The user supplied *Doom 64 (USA) (Rev 1).z64*, sha1 `6fb0ce9c75bbe54b6e1ede337652b0221e5f2aad`
-  (NOT in the repo — never commit ROMs).
-- Reference RT project (doom64-rt) lessons worth keeping: painted/baked light must become real
-  emitters; sector light colours drive lighting; sprites need special handling (flat normals,
-  shadow proxies); temporal accumulation + denoise is mandatory at 1 spp; archived settings
-  that engine code writes become "a diary" — don't persist runtime-modified settings.
+## Verified working (evidence in docs/tasks.json)
+GL + Vulkan raster renderers, RT on lavapipe, ROM detection, sound/music, 16:9, logging +
+crash reports, options pages, mouse look/jump, interpolation (logic identical at 30/120 fps),
+save/load (pause menu, title, F5/F9), ADS zoom, Windows build under Wine (0.1.1; audio RMS
+identical).
 
-## Build
-See README.md. Short version:
-```
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-./build/doom64rtx        # with a Doom 64 ROM in the working directory
-```
-Windows cross-compile from Linux: `cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=cmake/mingw-w64-x86_64.cmake`.
+## Implemented, not fully verified
+F7 debug page (no key injection in tests), weapon keys 1-8, kick damage/push, extra gore,
+fast weapons, autosave slot.
 
-## Testing without a GPU (works in the cloud container)
-Mesa's llvmpipe (OpenGL 4.5) and lavapipe (Vulkan 1.4 **with VK_KHR_ray_query and
-VK_KHR_acceleration_structure**) run under Xvfb, so every backend can be exercised headless:
-```
-Xvfb :99 -screen 0 1280x1024x24 &
-cd <dir with the ROM>
-DISPLAY=:99 D64_HEADLESS=1 D64_SHOTS=200,500 D64_QUIT_AT=501 ./doom64rtx -gl     # or -vulkan, -rt
-```
-Test hooks (src/port/i_main_pc.c): `D64_SHOTS` = frames to save as shot_NNNN.bmp,
-`D64_QUIT_AT` = exit at frame, `D64_PRESS="frame:hexmask[/len],..."` = tap N64 buttons
-(mask = high 16 bits of the pad word, e.g. 1000 = START, 8000 = A), `D64_HEADLESS` = no
-message boxes, `D64_DUMPTEX` = dump every decoded texture as .pam (gbi.c).
-`-DD64_NULL_RENDERER=ON` builds without the Rust renderer (prints frame stats).
+## Build / test status
+- `tools/check.sh linux win` — OK at the last commit of this session (see git log).
+- `tools/smoke.sh` — PASS (title 400 frames, GL); `--newgame` PASS.
+- Last known-good release: 0.1.1 (`releases/`). 0.2.0 being built (T14).
 
-## Session log
-### 2026-10-08 — session 1 (restarted several times; earlier attempts left nothing pushed)
-- Lesson: **commit + push early and often**; previous workers were restarted and lost all work.
-- Imported DOOM64-RE sources (commit 6931e678a0b2958be1b49598f2fe60712c6596e1) into src/doom64.
-- Reference doom64-rt at 750c1d84f87546de38fe8ad774da59ff6a606ed0.
-- Bugs found & fixed while bringing it up (watch for the same classes elsewhere):
-  - `W_CheckNumForName` masks name words with `0x7fffffff` (big-endian) -> byte-swap masks.
-  - `P_GroupLines` allocated `total*4` for an array of pointers -> heap corruption on 64-bit.
-  - Header-defined globals (`R_RenderSKY`, `gametic`) need `extern` with modern GCC (-fno-common).
-  - `boolean` enum clashed with stdbool's `true/false` macros pulled in by SDL -> `typedef int`.
-  - LoadTLUT must read from the start of the texture image (not the load tile's stale `uls`);
-    wrong palettes looked like noise and also defeated the texture cache.
-  - Asset headers (`spriteN64_t`, `textureN64_t`, `gfxN64_t`) are big-endian -> `BE16()` on reads;
-    demo lumps are big-endian ints -> swapped after `W_ReadLump`; passwords keep N64 byte order.
-- Milestone: OpenGL fallback renders the legal screen and the title-map demo correctly
-  (docs/img/gl_title_demo.png).
-- Milestone: Vulkan raster backend (ash) works on lavapipe; with `D64_FIXED_TIMESTEP=1` its
-  frame 100 is pixel-identical to the GL backend.
-- FIXED: game logic was not deterministic between runs. Cause: the reconstructed code reads
-  uninitialised locals (gcc -Wmaybe-uninitialized lists ~25, e.g. p_enemy.c, p_pspr.c,
-  r_phase3.c); stack garbage differed per run (ASLR) and per renderer, changing how often
-  P_Random was called. Fix: build game code with `-ftrivial-auto-var-init=zero`.
-  Verified with `D64_TRACE=1` (per-frame gametic/P_Random/camera trace): GL, GL, Vulkan
-  identical over 600 frames. MSVC has no equivalent flag -> prefer GCC/Clang/MinGW, or fix
-  the individual locals (TODO).
-- Milestone: Vulkan ray traced world (renderer/src/vk/rt.rs + shaders vk_rt.comp,
-  vk_denoise.comp, vk_composite.frag) runs on lavapipe and composites correctly.
-- User report "a lot of textures don't look loaded" (2026-10-08). Findings:
-  - Texture decoding verified correct by dumping (D64_DUMPTEX): walls, flats, sprites, weapon.
-  - BUG: weapon sprite drew black. Texture rectangles had shade alpha 255, and the psprite
-    combiner runs with the fog blender (FOG_SHADE_A) -> 100% fog (black). The RDP has no shade
-    for rectangles; now rgb=white, alpha=0.
-  - The game's brightness defaults to 0 (very dark, as on N64), which makes surfaces look
-    untextured. New ini setting `brightness` (default 50) seeds the in-game Brightness option.
-  - The white full-screen flash after pressing Start on the title is the game's own effect
-    (prim LOD fraction = sector light level in COMB07), not a renderer bug.
-  - D64_DUMPCMDS=<frame> prints a frame's resolved draw commands (gbi.c).
-- Windows: MinGW-w64 cross build works (only system DLLs + SDL3.dll); exe verified under Wine 9
-  with OpenGL and Vulkan (lavapipe through winevulkan, RT available).
-- Release 0.1.0 preview committed to releases/ (Linux tar.gz with bundled libSDL3 and
-  `$ORIGIN` runpath set via patchelf; Windows zip with SDL3.dll; both include doom64rtx.ini,
-  README, LICENSE, RELEASE_NOTES.txt). Both smoke-tested from fresh extractions.
-  To rebuild a release: build `build` (Linux Release) and `build-win` (MinGW), strip, copy
-  SDL libs, `patchelf --set-rpath '$ORIGIN'`, archive as releases/doom64rtx-<ver>-<os>-x86_64.*
-- Widescreen (user request): Options > Display > Aspect Ratio. gbi.c keeps 2D in a centred
-  4:3 area of a virtual 426.7x240 screen (NDC x scaled by 320/vw), stretches full-width 2D
-  (sky, fades, clears, wipes) and SKY triangles, widens 3D (clip x scaled; RT proj too);
-  r_phase1.c scales lateral view coords by R_PCFovInvScale so BSP culling covers the wider
-  view. ABI v2: D64GfxFrame.virtual_width (viewport aspect + scissor units).
-- Logging (user request): src/port/log.c, on by default; crash handler with backtrace.
-- RT in game: works (lights from rtlights.c). KNOWN ISSUE: translucent world surfaces (e.g.
-  MAP01 doorway grate, BLEND+ALPHA_THRESH mid-texture) mostly disappear in RT mode even with
-  the depth test disabled -> investigate composite ordering / alpha.
-- Release 0.1.1 in releases/ via tools/make_release.sh.
-- NEXT (user): crash hunting (ASan/UBSan soak runs, long automated play), then WESS audio.
+## Known problems
+- RT: translucent mid-textures (MAP01 doorway grate) mostly vanish (T05).
+- MSVC build unsupported (needs zero-init of uninitialised locals) (T16).
+- Saves are tied to struct sizes; a build that changes `mobj_t`/`player_t`/`sector_t`/
+  `line_t` refuses older saves.
 
-### Session 2 — audio (WESS) and gameplay modernisation
-- Sound works: WESS + src/port/n64synth.c (clean-room alSyn*). Music and SFX verified by
-  rendering to WAV (`D64_WAVOUT=file.wav`, deterministic with `D64_FIXED_TIMESTEP=1`,
-  1/30 s per frame) and looking at spectrograms; Windows (Wine) output RMS identical.
-  `D64_DUMPSAMPLES=<dir>` writes all 124 bank samples (VADPCM decode checked visually).
-- Data formats (all big-endian): WMD = module_header(32) + patch_group_header(24) + patch
-  bank: patches(4 B each) | patchmaps(20) | patchinfo(24: base, len, type, flags, pad,
-  pitch(!), loopindex, unused) | drummaps(4) | loopinfo(8) | raw loops(16) | ADPCM loops(48,
-  state[16]) | ADPCM books(264, one per sample index). Sections 8-byte aligned relative to
-  the bank start. WSD = module_header + table of 16-byte records (seq_header 12 + pointer)
-  then per-sequence track blocks (track_header 20, labels u32[], event bytes; event
-  parameters are little-endian byte pairs). WDD = raw sample data (offsets from patchinfo).
-- WESS needs **unsigned char** (`*lpdest != 0xFF` track tests) -> `-funsigned-char` on the
-  audio sources only; with signed char it crashed in queue_wess_seq_stopall on map change.
-- Threading: synth + sequencer run in the SDL audio callback; s_sound.c wrappers lock the
-  same mutex, wess_disable/enable are no-ops (wesssys_disable_ints).
-- Not emulated exactly: N64 exponential envelope ramps (linear here), 22050 Hz output
-  (default audio_rate=44100, pitch ratios scale automatically), reverb params approximated.
-- Container setup used: `apt-get install glslang-tools mingw-w64 wine64 wine patchelf libvulkan-dev libx11-dev
-  libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.
+## Environment notes
+- Prebuilt SDL3 in `../deps/sdl3-linux` (made by `tools/setup_env.sh`); without it CMake
+  fetches and builds SDL3 (slow). ROM for tests: `../run/*.z64` (or `D64_ROM`).
+- Xvfb does not survive container restarts; `tools/smoke.sh` starts it.
+
+## Next recommended task
+T12 resource packs — accept when a test pk3 in `packs/` replacing one wall texture shows in a
+`tools/smoke.sh --newgame --shots 30` screenshot, and `tools/check.sh linux win` passes.

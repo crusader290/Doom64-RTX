@@ -1,5 +1,7 @@
 # PORT_MANIFEST — per-file port status
 
+File index for navigation (layer boundaries and entry points: docs/DISCOVERIES.md).
+
 Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verification · 🔧 in progress · ⬜ not started · ❌ removed/replaced
 
 ## Platform layer (src/port)
@@ -20,6 +22,9 @@ Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verific
 | log.c/.h | ✅ | doom64rtx.log (+ .old.log), SDL log capture, crash handler (signals + backtrace / SEH + stack), crash context, Rust panic hook |
 | n64synth.c/.h | 🟡 | software N64 synth: VADPCM/raw16 voices, loops (ADPCM state restore), linear-interp resampling, equal-power pan + reverb send, linear volume ramps (vol² curve), big-room style reverb, sample-accurate player callbacks (WESS 120 Hz tick) |
 | audio_pc.c | 🟡 | replaces audio.c: wess_init, ROM reads, WDD bank pointer, SDL3 audio stream (audio thread) + I_PCAudioLock; D64_WAVOUT / D64_DUMPSAMPLES hooks |
+| pc_options.c/.h | ✅ | Options > Graphics / Gameplay, F7 Debug, Save/Load slot pages (data for the [PC] page system in m_main.c) |
+| interp.c/.h | ✅ | 60/120 fps: snapshot before each tic, blend things/sectors/view/weapon while drawing, restore after |
+| savegame.c/.h | ✅ | full level save/load with pointer references; 9 slots (7 = quick F5/F9, 8 = auto) |
 | s_sound_stub.c | ✅ | silent sound API, only for -DD64_WITH_AUDIO=OFF |
 
 ## Graphics (src/gfx, renderer/)
@@ -69,3 +74,8 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | tools/compile_shaders.sh | ✅ | GLSL -> SPIR-V (checked in under renderer/shaders/spv) |
 | releases/ | ✅ | 0.1.1 preview archives (Linux tar.gz, Windows zip) |
 | tools/make_release.sh, tools/release/ | ✅ | packaging script + ini/notes templates |
+| tools/check.sh | ✅ | build entry point: preflight, incremental build, first-error excerpt, failure class, repeat guard, build-logs/ |
+| tools/smoke.sh | ✅ | headless runtime test (Xvfb, ROM, presses, shots, WAV); PASS/FAIL/SKIPPED |
+| tools/setup_env.sh | ✅ | idempotent environment setup (apt, rust target, prebuilt SDL3 in ../deps); `--check` |
+| tools/session_status.sh, .claude/ | ✅ | SessionStart status hook; skills build-diagnose, runtime-test, session-handoff |
+| tools/dm64ex.c | ref | Erick194's ROM extractor (reference for ROM offsets), not built |
