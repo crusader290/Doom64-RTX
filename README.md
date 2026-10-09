@@ -24,8 +24,8 @@ Preview builds are in [`releases/`](releases/):
 
 | File | Platform |
 |---|---|
-| `doom64rtx-0.3.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
-| `doom64rtx-0.3.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
+| `doom64rtx-0.4.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
+| `doom64rtx-0.4.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
 
 Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 `.github/workflows/build.yml` are built the same way.
@@ -109,7 +109,7 @@ preference directory (`%APPDATA%\Doom64RTX\Doom64RTX\` or `~/.local/share/Doom64
 
 ```ini
 renderer = vulkan        # vulkan | opengl
-raytracing = 0           # 1 = ray traced world (also toggled with F10)
+raytracing = 1           # ray traced world when the GPU supports it (F10 toggles)
 widescreen = 0           # 1 = 16:9 (also in Options > Display > Aspect Ratio)
 brightness = 50          # starting value of the game's Brightness option (0..100)
 log = 1                  # write doom64rtx.log
@@ -151,8 +151,12 @@ instead of) the colour image: `NAME_orm.png` (occlusion, roughness, metallic), `
 (normal map) and `NAME_e.png` (emissive), plus defaults in `rt/data/*.json`
 (`textureName`, `roughnessDefault`, `metallicDefault`, `emissiveMult`). They are used by the
 ray traced renderer only (normal-mapped lighting, specular highlights, glowing surfaces).
-The archived set from doom64-rt is in this repository: run with
+Release builds ship these in `packs/` and load them automatically: the doom64-rt RT
+materials (`doom64rt-materials.pk3`, made by `tools/pack_materials.py`) and the doom64-rt lost
+soul and fireball sprite packs. From source, run with
 `-pack addons/doom64-retribution/Retribution-RT-Materials` or copy that folder into `packs/`.
+With the materials loaded, things whose sprite has a doom64-rt light colour (items, fire,
+projectiles, barrels) and walls/flats with emissive maps cast coloured light when ray tracing.
 
 ### Logs and crash reports
 

@@ -178,7 +178,7 @@
     "releases/"
    ],
    "next": null,
-   "evidence": "0.3.0 archives built at dbb43f8 (+version bump); fresh extractions with ROM and a pk3 in packs/: textures replaced, MAP01 reached, audio written (Linux native, Windows under Wine)"
+   "evidence": "0.4.0 archives (packs/ bundled: doom64rt-materials.pk3, d64r-lostsoul-rt.pk3, d64r-caco-ball-recolor.pk3); fresh extractions with default settings: Vulkan + ray tracing on, 3 packs auto-loaded, MAP01 reached, barrel green RT light visible, audio written (Linux native, Windows under Wine)"
   },
   {
    "id": "T15",
@@ -205,15 +205,17 @@
   {
    "id": "T17",
    "subsystem": "RT emitter lights",
-   "status": "pending",
+   "status": "implemented",
    "deps": [
     "T13"
    ],
    "paths": [
     "src/port/rtlights.c",
-    "src/port/respack.c"
+    "src/port/respack.c",
+    "src/doom64/w_wad.c"
    ],
-   "next": "spawn RT point lights for emissive world textures using doom64-rt lightColorHEX (textures_world_emis.json); accept: a lit fixture casts light on nearby walls in an -rt screenshot"
+   "next": "verify static emitter lights in a room with an emissive wall (e.g. screenshot near a lit panel); tune intensity/radius",
+   "evidence": "-rt MAP01 with materials: barrel (BAR1 lightColorHEX) casts green light on the wall/floor behind it; 25 static lights placed from emissive wall/flat textures (log) but their visual effect was not isolated"
   }
  ]
 }

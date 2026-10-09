@@ -15,7 +15,8 @@ no PR unless asked. Releases go to `releases/` (`tools/make_release.sh <ver>`).
 
 ## Milestone
 Playable port with sound, RT preview with doom64-rt materials, resource packs, modern
-controls, 60/120 fps, save/load, QoL extras. Release 0.3.0.
+controls, 60/120 fps, save/load, QoL extras. Release 0.4.0: RT on by default, doom64-rt packs
+bundled in packs/ and auto-loaded, coloured RT lights from doom64-rt data.
 
 ## Verified working (evidence in docs/tasks.json)
 GL + Vulkan raster renderers, RT on lavapipe, ROM detection, sound/music, 16:9, logging +
@@ -28,10 +29,10 @@ F7 debug page (no key injection in tests), weapon keys 1-8, kick damage/push, ex
 fast weapons, autosave slot.
 
 ## Build / test status
-- `tools/check.sh linux win` — OK at the 0.3.0 release commit.
+- `tools/check.sh linux win` — OK at the 0.4.0 release commit.
 - `tools/smoke.sh` — PASS (GL, Vulkan, RT, with and without packs).
-- Last known-good release: 0.3.0 (`releases/`), both archives smoke-tested from fresh
-  extractions with a pk3 in `packs/` (Linux native, Windows under Wine).
+- Last known-good release: 0.4.0 (`releases/`, ~29 MB each with the bundled packs), both
+  archives smoke-tested from fresh extractions with default settings (Linux, Windows/Wine).
 
 ## Known problems
 - MSVC build unsupported (needs zero-init of uninitialised locals) (T16).
@@ -44,6 +45,6 @@ fast weapons, autosave slot.
 - Xvfb does not survive container restarts; `tools/smoke.sh` starts it.
 
 ## Next recommended task
-T17 RT emitter lights from emissive textures (doom64-rt lightColorHEX) — accept when a lit
-fixture visibly lights nearby walls in `tools/smoke.sh --renderer rt --newgame` with
-`-set packs addons/doom64-retribution/Retribution-RT-Materials`.
+T17 follow-up: verify/tune the static lights from emissive wall/flat textures (placed, effect
+not yet isolated in a screenshot) — accept when a screenshot near an emissive panel shows its
+light on nearby surfaces with `-rt`.

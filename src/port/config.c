@@ -17,7 +17,7 @@ void Config_Defaults(void)
 {
     memset(&pc_config, 0, sizeof(pc_config));
     pc_config.renderer = RENDERER_VULKAN;
-    pc_config.raytracing = 0;
+    pc_config.raytracing = 1; /* falls back to raster when the GPU cannot ray trace */
     pc_config.rt_spp = 1;
     pc_config.rt_bounces = 1;
     pc_config.rt_denoise = 1;

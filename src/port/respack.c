@@ -81,6 +81,8 @@ typedef struct {
     char name[9];
     float rough, metal, emis;
     int has_rough, has_metal;
+    int has_light;
+    float light[3], light_intensity;
 } matdef_t;
 static matdef_t *matdefs;
 static int nmatdefs;
@@ -190,6 +192,22 @@ static void parse_matjson(const char *text, size_t len)
         md.has_rough = json_num(ob, oe, "roughnessDefault", &md.rough) != NULL;
         md.has_metal = json_num(ob, oe, "metallicDefault", &md.metal) != NULL;
         json_num(ob, oe, "emissiveMult", &md.emis);
+        {
+            const char *lc = SDL_strstr(ob, "\"lightColorHEX\"");
+            if (lc && lc < oe)
+            {
+                const char *hq = SDL_strchr(lc + 15, '"');
+                if (hq && hq < oe)
+                {
+                    unsigned long v = SDL_strtoul(hq + 1, NULL, 16);
+                    md.has_light = 1;
+                    md.light[0] = (float)((v >> 16) & 255) / 255.0f;
+                    md.light[1] = (float)((v >> 8) & 255) / 255.0f;
+                    md.light[2] = (float)(v & 255) / 255.0f;
+                }
+            }
+            json_num(ob, oe, "lightIntensity", &md.light_intensity);
+        }
         matdefs = SDL_realloc(matdefs, sizeof(matdef_t) * (size_t)(nmatdefs + 1));
         matdefs[nmatdefs++] = md;
         count++;
@@ -607,4 +625,61 @@ int ResPack_SourceOf(const void *addr, respack_src_t *out)
         out->offset = (int)(a - r->base);
         return 1;
     }
+}
+
+static const matdef_t *find_matdef(const char *name)
+{
+    int i;
+    for (i = nmatdefs - 1; i >= 0; i--)
+        if (!SDL_strcmp(matdefs[i].name, name))
+            return &matdefs[i];
+    return NULL;
+}
+
+int ResPack_LightFor(const char *lumpname, float rgb[3], float *strength, float *radius)
+{
+    char name[9];
+    const matdef_t *md;
+    if (!enabled || !nmatdefs || !lumpname || !lumpname[0])
+        return 0;
+    norm_name(lumpname, name);
+    md = find_matdef(name);
+    if (!md || !md->has_light)
+        return 0;
+    SDL_memcpy(rgb, md->light, sizeof(md->light));
+    *strength = md->emis;
+    *radius = md->light_intensity > 0.0f ? md->light_intensity : 0.0f;
+    return 1;
+}
+
+int ResPack_EmissiveGlow(const char *lumpname, float rgb[3], float *strength)
+{
+    char name[9];
+    int idx, w, h, i, n;
+    const Uint8 *img;
+    const matdef_t *md;
+    double sum[3] = { 0, 0, 0 };
+
+    if (!enabled || !nmaps || !lumpname || !lumpname[0])
+        return 0;
+    norm_name(lumpname, name);
+    idx = find_entry_map(name, MAP_EMISSIVE);
+    if (idx < 0)
+        return 0;
+    img = decode_entry(idx, &w, &h);
+    if (!img)
+        return 0;
+    n = w * h;
+    for (i = 0; i < n; i++)
+    {
+        sum[0] += img[i * 4];
+        sum[1] += img[i * 4 + 1];
+        sum[2] += img[i * 4 + 2];
+    }
+    for (i = 0; i < 3; i++)
+        rgb[i] = (float)(sum[i] / (255.0 * (n > 0 ? n : 1)));
+    md = find_matdef(name);
+    *strength = md ? md->emis : 1.0f;
+    /* skip maps that are almost black (small glints) */
+    return rgb[0] + rgb[1] + rgb[2] > 0.06f;
 }

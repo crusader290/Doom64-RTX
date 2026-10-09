@@ -338,6 +338,20 @@ void *W_CacheLumpNum (int lump, int tag, decodetype dectype) // 8002C430
 	return lc->cache;
 }
 
+#ifdef D64_PC
+/* [PC] lump name as a C string (used for resource pack lookups) */
+void W_PCLumpName(int lump, char out[9])
+{
+	int i;
+	out[0] = 0;
+	if (lump < 0 || lump >= numlumps)
+		return;
+	for (i = 0; i < 8 && lumpinfo[lump].name[i]; i++)
+		out[i] = lumpinfo[lump].name[i] & (i == 0 ? 0x7f : 0xff);
+	out[i] = 0;
+}
+#endif
+
 /*
 ====================
 =

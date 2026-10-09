@@ -19,7 +19,10 @@ N64 game code, so only the **art** in them can be used:
 |---|---|
 | `sprites/*.png`, `textures/*.png`, `flats/*.png`, `graphics/*.png` whose names match Doom 64 lumps | yes, as replacements (see README "Resource packs") |
 | ZSCRIPT, DECORATE, MAPINFO, GLDEFS, UDMF maps (TEXTMAP), ACS | no (GZDoom only), listed in doom64rtx.log |
-| `Retribution-RT-Materials/rt/mat_dev/*_{orm,n,e,h}.png` and `rt/data/*.json` (RTGL1 material conventions: G = roughness, B = metallic in `_orm`) | feeding the Doom64-RTX ray tracer (in progress) |
+| `Retribution-RT-Materials/rt/mat/*_{orm,n,e}.png` and `rt/data/*.json` (RTGL1 conventions: G = roughness, B = metallic in `_orm`; light colours) | yes, by the ray tracer (`_h` and the `_dev`/quarantine copies are ignored) |
 
-They are not loaded automatically. Load one with `-file addons/doom64-retribution/<name>.pk3`
-or copy it into an `addons/` folder next to the executable (auto-loaded).
+From source they are not loaded automatically: use `-pack <file or folder>` or copy them into
+a `packs/` folder next to the executable (auto-loaded). Release builds bundle
+`d64r-lostsoul-rt.pk3`, `d64r-caco-ball-recolor.pk3` and the materials (as
+`doom64rt-materials.pk3`) in `packs/`; the other packs here only contain GZDoom scripts/maps or
+art that does not match Doom 64 lump names.

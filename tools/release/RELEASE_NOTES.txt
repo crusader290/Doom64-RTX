@@ -11,6 +11,10 @@ save at each level start), mouse look with free aim, jumping (Space), weapon key
 aim down sights (right mouse), kick (V), 30/60/120 fps (interpolated, game logic stays
 30 Hz), Options > Graphics and Options > Gameplay, F7 debug page + stats overlay,
 crosshair, extra gore, fast weapon switching.
+New in 0.4: ray tracing is on by default (falls back automatically when the GPU cannot ray
+trace; F10 or Options > Graphics to switch), the doom64-rt packs come bundled in packs/
+(RT materials, ray traced lost soul and fireball sprites) and are loaded automatically,
+glowing things and textures cast coloured light in the ray traced view.
 New in 0.3: resource packs (PNG texture/sprite replacements from .pk3 files or folders in
 packs/, or -pack <file>) and ray tracing materials (doom64-rt normal, roughness/metal and
 emissive maps; the archived set is Retribution-RT-Materials in the source repository).

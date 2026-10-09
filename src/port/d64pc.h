@@ -83,5 +83,6 @@ int  I_PCActions(void);
 int  I_PCWeaponKey(void);
 int  I_PCStatsLines(char lines[][64], int max);
 int  I_PCInSubframe(void);
+void W_PCLumpName(int lump, char out[9]);
 
 #endif

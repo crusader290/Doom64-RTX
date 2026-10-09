@@ -33,6 +33,11 @@ typedef struct {
 } respack_mat_t;
 int ResPack_Material(const char *lumpname, respack_mat_t *m);
 
+/* doom64-rt light colour for a sprite/texture (lightColorHEX); radius 0 = default */
+int ResPack_LightFor(const char *lumpname, float rgb[3], float *strength, float *radius);
+/* average colour of the emissive map (for placing world lights) */
+int ResPack_EmissiveGlow(const char *lumpname, float rgb[3], float *strength);
+
 /* called by W_CacheLumpNum when it (re)loads a lump */
 void ResPack_RegisterLump(int lump, const char *name8, int kind, const void *data, int size);
 /* lets the registry check that a lump is still cached at the same address */

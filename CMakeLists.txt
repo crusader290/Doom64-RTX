@@ -143,7 +143,7 @@ target_include_directories(doom64rtx PRIVATE
   ${CMAKE_SOURCE_DIR}/src/port
   ${CMAKE_SOURCE_DIR}/src/gfx
   ${D64_GAME_DIR})
-set(D64_VERSION "0.3.0")
+set(D64_VERSION "0.4.0")
 find_package(Git QUIET)
 set(D64_GIT_HASH "unknown")
 if(GIT_FOUND)
