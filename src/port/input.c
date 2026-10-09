@@ -16,6 +16,7 @@
  * PC-only actions (not part of the pad word, read by the game directly):
  *   Space           jump             RMB          aim down sights
  *   1-8             select weapon    mouse Y      look up/down
+ *   V, mouse 4      kick
  *
  * Doom64-RTX PC port, GPLv3.
  */
@@ -220,6 +221,8 @@ int I_PCActions(void)
         a |= PCACT_JUMP;
     if (input_grab && (mb & SDL_BUTTON_RMASK))
         a |= PCACT_ADS;
+    if (keys[SDL_SCANCODE_V] || (input_grab && (mb & SDL_BUTTON_X1MASK)))
+        a |= PCACT_KICK;
     if (gamepad)
     {
         if (SDL_GetGamepadButton(gamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK))

@@ -15,6 +15,7 @@ int  IN_ReadPad(void);
 #ifndef PCACT_JUMP
 #define PCACT_JUMP 1
 #define PCACT_ADS  2
+#define PCACT_KICK 4
 #endif
 
 #endif

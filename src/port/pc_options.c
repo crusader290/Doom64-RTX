@@ -141,12 +141,14 @@ static int gfx_change(int i, int dir)
 
 /* ---- Gameplay ------------------------------------------------------------ */
 
-enum { P_MOUSELOOK, P_INVERT, P_SENS, P_RUN, P_AUTOAIM, P_CROSSHAIR, P_JUMP, P_BOB, P_COUNT };
+enum { P_MOUSELOOK, P_INVERT, P_SENS, P_RUN, P_AUTOAIM, P_CROSSHAIR, P_JUMP, P_BOB, P_ADS, P_FASTWEAP,
+       P_GORE, P_COUNT };
 
 static const char *play_label(int i)
 {
     static const char *l[P_COUNT] = { "Mouse Look", "Invert Mouse", "Mouse Speed", "Always Run",
-                                      "Autoaim", "Crosshair", "Jumping", "Weapon Bob" };
+                                      "Autoaim", "Crosshair", "Jumping", "Bobbing", "Aim Sights",
+                                      "Fast Weapons", "Extra Gore" };
     return l[i];
 }
 
@@ -164,8 +166,11 @@ static const char *play_value(int i, char *buf, int len)
     case P_CROSSHAIR: return onoff(pc_config.crosshair);
     case P_JUMP: return onoff(pc_config.jump);
     case P_BOB:
-        SDL_snprintf(buf, len, "%d%%", pc_config.weapon_bob);
+        SDL_snprintf(buf, len, "%d", pc_config.weapon_bob);
         return buf;
+    case P_ADS: return onoff(pc_config.ads);
+    case P_FASTWEAP: return onoff(pc_config.fast_weapons);
+    case P_GORE: return onoff(pc_config.gore);
     }
     return NULL;
 }
@@ -196,6 +201,9 @@ static int play_change(int i, int dir)
     case P_CROSSHAIR: CONFIG_SET(crosshair, !pc_config.crosshair); break;
     case P_JUMP: CONFIG_SET(jump, !pc_config.jump); break;
     case P_BOB: CONFIG_SET(weapon_bob, step_choice(pc_config.weapon_bob, bob, 5, dir)); break;
+    case P_ADS: CONFIG_SET(ads, !pc_config.ads); break;
+    case P_FASTWEAP: CONFIG_SET(fast_weapons, !pc_config.fast_weapons); break;
+    case P_GORE: CONFIG_SET(gore, !pc_config.gore); break;
     }
     Config_Save();
     return 0;
@@ -320,6 +328,8 @@ static const char *slot_label(int i)
     static char l[PC_SAVE_SLOTS][16];
     if (i == PC_QUICK_SLOT)
         return "Quick";
+    if (i == PC_AUTO_SLOT)
+        return "Auto";
     SDL_snprintf(l[i], sizeof(l[i]), "Slot %d", i + 1);
     return l[i];
 }
@@ -333,7 +343,7 @@ static const char *slot_value(int i, char *buf, int len)
 
 static int save_change(int i, int dir)
 {
-    if (dir != 0)
+    if (dir != 0 || i == PC_AUTO_SLOT)
         return 0;
     if (G_PCSaveGame(i))
     {

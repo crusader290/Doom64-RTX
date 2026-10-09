@@ -502,9 +502,24 @@ void A_WeaponReady (player_t *player, pspdef_t *psp) // 8001B83C
 	/* */
 	//angle = (64*gamevbls)&(FINEANGLES-1);
 	angle = (64*ticon)&(FINEANGLES-1); // PsxDoom/D64 use ticon no gamevbls
+#ifdef D64_PC
+	{
+		/* [PC] Bobbing option; aiming down sights steadies the weapon */
+		fixed_t bob = player->bob;
+		if (!demoplayback && !demorecording)
+		{
+			bob = (bob / 100) * pc_config.weapon_bob;
+			bob = FixedMul(bob, FRACUNIT - FixedMul(player->pc_ads, 0xCCCC));
+		}
+		psp->sx = WEAPONX + FixedMul(bob, finecosine[angle]);
+		angle &= FINEANGLES/2-1;
+		psp->sy = WEAPONTOP + FixedMul(bob, finesine[angle]);
+	}
+#else
 	psp->sx = WEAPONX + FixedMul(player->bob, finecosine[angle]);
 	angle &= FINEANGLES/2-1;
 	psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
+#endif
 }
 
 
@@ -559,7 +574,11 @@ void A_CheckReload(player_t *player, pspdef_t *psp) // 8001B9A0
 
 void A_Lower (player_t *player, pspdef_t *psp) // 8001B9C0
 {
+#ifdef D64_PC
+	psp->sy += (pc_config.fast_weapons && !demoplayback && !demorecording) ? LOWERSPEED * 2 : LOWERSPEED;
+#else
 	psp->sy += LOWERSPEED;
+#endif
 	if (psp->sy < WEAPONBOTTOM )
 		return;
 
@@ -608,7 +627,11 @@ void A_Raise (player_t *player, pspdef_t *psp) // 8001BA84
 {
 	statenum_t	new;
 
+#ifdef D64_PC
+	psp->sy -= (pc_config.fast_weapons && !demoplayback && !demorecording) ? RAISESPEED * 2 : RAISESPEED;
+#else
 	psp->sy -= RAISESPEED;
+#endif
 
 	if (psp->sy > WEAPONTOP )
 		return;
@@ -877,6 +900,11 @@ void P_GunShot (mobj_t *mo, boolean accurate) // 8001C024
     {
         rnd1 = P_Random();
         rnd2 = P_Random();
+#ifdef D64_PC
+		if (mo->player && mo->player->pc_ads)
+			angle += FixedMul((rnd2-rnd1)<<18, FRACUNIT - FixedMul(mo->player->pc_ads, 0xC000)); /* [PC] aimed */
+		else
+#endif
 		angle += (rnd2-rnd1)<<18;
     }
 	P_LineAttack (mo, angle, 0, MISSILERANGE, bulletslope, damage);

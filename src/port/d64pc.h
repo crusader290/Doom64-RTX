@@ -76,6 +76,7 @@ int  I_PCTakeQuickRequest(void);
 #ifndef PCACT_JUMP
 #define PCACT_JUMP 1
 #define PCACT_ADS  2
+#define PCACT_KICK 4
 #endif
 int  I_PCMousePitch(void);
 int  I_PCActions(void);

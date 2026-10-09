@@ -3,6 +3,7 @@
 #ifdef D64_PC
 #include "pc_options.h" /* [PC] */
 #include "savegame.h"
+#include "config.h"
 #endif
 #include "st_main.h"
 
@@ -334,6 +335,17 @@ void P_Drawer (void) // 80021AC8
 	gMoveWd(GFX1++, G_MW_PERSPNORM, G_MWO_MATRIX_XX_XY_I, 68);
 
 	// create a projection matrix
+#ifdef D64_PC
+    if (players[0].pc_ads && cameratarget == players[0].mo)
+    {
+        /* [PC] aiming down sights: narrower field of view */
+        static Mtx zoomed;
+        float z = (float)P_PCZoom(&players[0]) / 65536.0f;
+        guFrustum(&zoomed, -8.0f * z, 8.0f * z, -6.0f * z, 6.0f * z, 8.0f, 3808.0f, 1.0f);
+        gSPMatrix(GFX1++, OS_K0_TO_PHYSICAL(&zoomed), G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
+    }
+    else
+#endif
     gSPMatrix(GFX1++, OS_K0_TO_PHYSICAL(&R_ProjectionMatrix), G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
 
     // create a model matrix
@@ -400,6 +412,8 @@ void P_Start (void) // 80021C50
     /* [PC] a Load Game from the menu reloads the map, then its saved state */
     if (G_PCLoadPending())
         G_PCApplyPendingLoad();
+    else if (pc_config.autosave && !demoplayback && !demorecording && gamemap >= 1 && gamemap < 33)
+        G_PCSaveGame(PC_AUTO_SLOT);
 #endif
 }
 

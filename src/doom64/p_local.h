@@ -22,6 +22,7 @@
 void P_PCSelectWeapon(player_t *player, int key);
 fixed_t P_PCAimSlope(mobj_t *mo);             /* tan(pitch) for free aim */
 boolean P_PCFreeAim(mobj_t *mo);              /* player shot uses its pitch */
+fixed_t P_PCZoom(player_t *player);           /* 1.0 .. 0.65 while aiming down sights */
 #endif
 
 /* mapblocks are used to check movement against lines and things */

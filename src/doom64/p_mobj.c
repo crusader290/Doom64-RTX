@@ -381,9 +381,13 @@ void P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z) // 80019218
 void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, int damage) // 800192B8
 {
 	mobj_t	*th;
-	int i;
+	int i, count = 3;
 
-	for(i = 0; i < 3; i++)
+#ifdef D64_PC
+	if (pc_config.gore && !demoplayback && !demorecording)
+		count = damage >= 20 ? 8 : 5; /* [PC] Extra Gore */
+#endif
+	for(i = 0; i < count; i++)
     {
         x += ((P_Random()-P_Random())<<12);
         y += ((P_Random()-P_Random())<<12);

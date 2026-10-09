@@ -390,10 +390,17 @@ void P_BuildMove (player_t *player) // 80022154
 	{
 		int wkey;
 
-		player->angleturn += I_PCMouseTurn();
+		player->angleturn += FixedMul(I_PCMouseTurn(), P_PCZoom(player));
+		if (player->pc_ads)
+		{
+			/* aiming: slower, steadier movement */
+			fixed_t slow = FRACUNIT - FixedMul(player->pc_ads, 0x6666);
+			player->forwardmove = FixedMul(player->forwardmove, slow);
+			player->sidemove = FixedMul(player->sidemove, slow);
+		}
 		if (pc_config.mouselook)
 		{
-			int p = (int)player->pc_pitch + I_PCMousePitch();
+			int p = (int)player->pc_pitch + FixedMul(I_PCMousePitch(), P_PCZoom(player));
 			if (p > PC_MAXPITCH)
 				p = PC_MAXPITCH;
 			if (p < -PC_MAXPITCH)
@@ -540,6 +547,10 @@ void P_CalcHeight (player_t *player) // 80022670
 
 	angle = (FINEANGLES/40*ticon)&(FINEANGLES-1);
 	bob = FixedMul((player->bob / 2), finesine[angle]);
+#ifdef D64_PC
+	if (!demoplayback && !demorecording)
+		bob = (bob / 100) * pc_config.weapon_bob; /* [PC] Bobbing option */
+#endif
 
 	//ST_DebugPrint("bob %x",FixedMul((player->bob / 2), finesine[angle]));
 	//ST_DebugPrint("bob2 %x",FixedMul2((player->bob / 2), finesine[angle]));
@@ -772,6 +783,70 @@ void P_PlayerInSpecialSector (player_t *player, sector_t *sec) // 80022B1C
 =================
 */
 
+#ifdef D64_PC
+/*
+ * [PC] Aim-down-sights blend and the kick (melee without changing weapon),
+ * both in the spirit of modern Doom mods. Runs once per tic.
+ */
+static void P_PCKick(player_t *player)
+{
+	angle_t angle;
+	int damage;
+	mobj_t *mo = player->mo;
+
+	damage = ((P_Random() & 7) + 2) * 3;
+	if (player->powers[pw_strength])
+		damage *= 5;
+	angle = mo->angle;
+	P_AimLineAttack(mo, angle, 0, MELEERANGE + 16 * FRACUNIT);
+	P_LineAttack(mo, angle, 0, MELEERANGE + 16 * FRACUNIT, MAXINT, damage);
+	if (linetarget)
+	{
+		mobj_t *t = linetarget;
+		S_StartSound(mo, sfx_punch);
+		if (!(t->flags & MF_NOCLIP) && t->info->mass < 1000)
+		{
+			fixed_t push = (12 * FRACUNIT * 100) / (t->info->mass > 0 ? t->info->mass : 100);
+			if (push > 16 * FRACUNIT)
+				push = 16 * FRACUNIT;
+			t->momx += FixedMul(push, finecosine[angle >> ANGLETOFINESHIFT]);
+			t->momy += FixedMul(push, finesine[angle >> ANGLETOFINESHIFT]);
+		}
+	}
+	player->recoilpitch = 0x2AA8000 / 2; /* half of the weapon RECOILPITCH */
+}
+
+static void P_PCPlayerThink(player_t *player)
+{
+	if (player->playerstate == PST_LIVE && pc_config.ads && (player->pc_buttons & PCACT_ADS))
+	{
+		player->pc_ads += FRACUNIT / 5;
+		if (player->pc_ads > FRACUNIT)
+			player->pc_ads = FRACUNIT;
+	}
+	else
+	{
+		player->pc_ads -= FRACUNIT / 5;
+		if (player->pc_ads < 0)
+			player->pc_ads = 0;
+	}
+
+	if (player->pc_kicktics > 0)
+		player->pc_kicktics--;
+	if (player->playerstate == PST_LIVE && (player->pc_buttons & PCACT_KICK) && !player->pc_kicktics)
+	{
+		player->pc_kicktics = 18;
+		P_PCKick(player);
+	}
+}
+
+/* View zoom while aiming: 1.0 normal .. 0.65 fully aimed. */
+fixed_t P_PCZoom(player_t *player)
+{
+	return FRACUNIT - FixedMul(player->pc_ads, 0x5999);
+}
+#endif
+
 void P_PlayerThink (player_t *player) // 80022D60
 {
 	int		     buttons, oldbuttons;
@@ -782,6 +857,10 @@ void P_PlayerThink (player_t *player) // 80022D60
 	buttons = ticbuttons[0];
 	oldbuttons = oldticbuttons[0];
 	cbutton = BT_DATA[0];
+
+#ifdef D64_PC
+	P_PCPlayerThink(player);
+#endif
 
 	/* */
 	/* check for weapon change */

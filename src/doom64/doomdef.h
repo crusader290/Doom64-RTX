@@ -483,6 +483,7 @@ typedef struct player_s
 	int         pc_jumptics;            /* [PC] jump cooldown */
 	fixed_t     pc_ads;                 /* [PC] aim-down-sights blend 0..FRACUNIT */
 	int         pc_buttons;             /* [PC] PCACT_* held this tic */
+	int         pc_kicktics;            /* [PC] kick cooldown */
 	fixed_t     pc_oviewz;              /* [PC] previous tic, for interpolation */
 	fixed_t     pc_osx[NUMPSPRITES], pc_osy[NUMPSPRITES];
 	unsigned    pc_ogen;

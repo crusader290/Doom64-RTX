@@ -35,6 +35,9 @@ void Config_Defaults(void)
     pc_config.crosshair = 1;
     pc_config.jump = 1;
     pc_config.weapon_bob = 100;
+    pc_config.ads = 1;
+    pc_config.gore = 1;
+    pc_config.autosave = 1;
     pc_config.audio_rate = 44100;
     pc_config.mouse_sens = 1.0f;
     pc_config.gpu_index = -1;
@@ -76,6 +79,10 @@ static const cvar_t cvars[] = {
     { "crosshair",      CV_INT,      &pc_config.crosshair, 0 },
     { "jump",           CV_INT,      &pc_config.jump, 0 },
     { "weapon_bob",     CV_INT,      &pc_config.weapon_bob, 0 },
+    { "ads",            CV_INT,      &pc_config.ads, 0 },
+    { "fast_weapons",   CV_INT,      &pc_config.fast_weapons, 0 },
+    { "gore",           CV_INT,      &pc_config.gore, 0 },
+    { "autosave",       CV_INT,      &pc_config.autosave, 0 },
     { "show_stats",     CV_INT,      &pc_config.show_stats, 0 },
 };
 
