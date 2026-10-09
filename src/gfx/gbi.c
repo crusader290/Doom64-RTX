@@ -468,6 +468,36 @@ static uint32_t replacement_texture(const respack_src_t *rs, const uint8_t *img,
     return id;
 }
 
+/* Attaches doom64-rt material maps (orm / normal / emissive) for a lump to a
+ * freshly created texture, cropped like the albedo for sprite strips. Only
+ * when the renderer can ray trace. */
+static void attach_material(uint32_t id, const respack_src_t *rs, int w, int h)
+{
+    static int rt_ok = -1;
+    respack_mat_t m;
+    uint32_t maps[3] = { 0, 0, 0 };
+    float params[4];
+    int k;
+
+    if (rt_ok < 0)
+    {
+        D64GfxStatus st;
+        d64gfx_status(&st);
+        rt_ok = st.rt_supported != 0;
+    }
+    if (!rt_ok || !id || !ResPack_Material(rs->name, &m))
+        return;
+    for (k = 0; k < 3; k++)
+        if (m.map[k])
+            maps[k] = replacement_texture(rs, m.map[k], m.w[k], m.h[k], w, h);
+    params[0] = m.rough;
+    params[1] = m.metal;
+    params[2] = m.emissive;
+    params[3] = 0.0f;
+    d64gfx_texture_set_material(id, maps[0], maps[1], maps[2], params);
+    stats.tex_uploads++;
+}
+
 static uint32_t texture_for_tile(int tidx)
 {
     const tile_t *tl = &rdp.tiles[tidx];
@@ -480,6 +510,7 @@ static uint32_t texture_for_tile(int tidx)
     uint8_t *rgba;
     uint32_t id;
     respack_src_t rsrc;
+    int have_src = 0;
     const uint8_t *repl = NULL;
     int repl_w = 0, repl_h = 0;
 
@@ -514,6 +545,7 @@ static uint32_t texture_for_tile(int tidx)
     if (ResPack_Count() && tmem_src[tl->tmem & 511] &&
         ResPack_SourceOf(tmem_src[tl->tmem & 511], &rsrc))
     {
+        have_src = 1;
         repl = ResPack_Image(rsrc.name, &repl_w, &repl_h);
         if (repl)
         {
@@ -603,6 +635,8 @@ static uint32_t texture_for_tile(int tidx)
     stats.tex_uploads++;
 
 cache_it:
+    if (have_src)
+        attach_material(id, &rsrc, w, h);
     slot = (int)(key & (TEXCACHE_SIZE - 1));
     while (texcache[slot].used)
         slot = (slot + 1) & (TEXCACHE_SIZE - 1);

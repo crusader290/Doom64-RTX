@@ -29,6 +29,8 @@ const DEPTH_FORMAT: vk::Format = vk::Format::D32_SFLOAT;
 struct Texture {
     image: Image,
     sets: Vec<vk::DescriptorSet>,
+    /// RT material maps (orm, normal, emissive; 0 = none) and parameters
+    mat: Option<([u32; 3], [f32; 4])>,
 }
 
 struct PendingUpload {
@@ -977,10 +979,10 @@ impl Backend for VkBackend {
             }
         };
         let id = if let Some(id) = self.free_ids.pop() {
-            self.textures[id as usize] = Some(Texture { image: img, sets: Vec::new() });
+            self.textures[id as usize] = Some(Texture { image: img, sets: Vec::new(), mat: None });
             id
         } else {
-            self.textures.push(Some(Texture { image: img, sets: Vec::new() }));
+            self.textures.push(Some(Texture { image: img, sets: Vec::new(), mat: None }));
             (self.textures.len() - 1) as u32
         };
         self.pending.push(PendingUpload { id, w, h, data: rgba.to_vec() });
@@ -993,6 +995,13 @@ impl Backend for VkBackend {
         }
         let Some(slot) = self.textures.get_mut(id as usize) else { return };
         let Some(tex) = slot.take() else { return };
+        if let Some((maps, _)) = tex.mat {
+            for m in maps {
+                if m != 0 && m != id {
+                    self.texture_destroy(m);
+                }
+            }
+        }
         self.pending.retain(|p| p.id != id);
         self.desc_cache.retain(|k, _| k.0 != id);
         // the previous frame may still sample it: free after this slot's fence
@@ -1000,6 +1009,27 @@ impl Backend for VkBackend {
         self.frames[fi].dead_images.push(tex.image);
         self.frames[fi].dead_sets.extend(tex.sets);
         self.free_ids.push(id);
+    }
+
+    fn texture_set_material(&mut self, tex: u32, maps: [u32; 3], params: [f32; 4]) {
+        let old = match self.textures.get_mut(tex as usize) {
+            Some(Some(t)) => t.mat.replace((maps, params)),
+            _ => {
+                for m in maps {
+                    if m != 0 {
+                        self.texture_destroy(m);
+                    }
+                }
+                return;
+            }
+        };
+        if let Some((old_maps, _)) = old {
+            for m in old_maps {
+                if m != 0 && !maps.contains(&m) {
+                    self.texture_destroy(m);
+                }
+            }
+        }
     }
 
     fn render(&mut self, frame: &D64GfxFrame) {

@@ -152,15 +152,21 @@
   {
    "id": "T13",
    "subsystem": "RT materials from doom64-rt",
-   "status": "pending",
+   "status": "verified",
    "deps": [
     "T12",
     "T04"
    ],
    "paths": [
-    "addons/doom64-retribution/Retribution-RT-Materials/"
+    "src/port/respack.c",
+    "src/gfx/gbi.c",
+    "renderer/src/vk/rt.rs",
+    "renderer/shaders/vk_rt.comp",
+    "renderer/shaders/vk_denoise.comp"
    ],
-   "next": "feed _orm (G roughness, B metallic), _n, _e maps + rt/data/*.json to the RT shader"
+   "next": "spawn RT point lights from emissive surfaces using lightColorHEX (doom64-rt \"textures_world_emis.json\")",
+   "evidence": "-rt on lavapipe, MAP01: with Retribution-RT-Materials as a pack the ceiling light fixtures glow (emissive) and occlusion darkens creases (mean abs diff 2.25 vs no pack); GL and Vulkan raster unchanged (diff 4e-5)",
+   "known_gaps": "normal-map orientation convention not cross-checked against doom64-rt; lightColorHEX (emitter lights) not used; noShadow ignored"
   },
   {
    "id": "T14",

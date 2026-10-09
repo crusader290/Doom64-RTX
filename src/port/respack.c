@@ -39,8 +39,11 @@ typedef struct {
     size_t zip_size;
 } pack_t;
 
+enum { MAP_ALBEDO, MAP_ORM, MAP_NORMAL, MAP_EMISSIVE, MAP_COUNT };
+
 typedef struct {
     char name[9];      /* lump name, upper case */
+    int map;           /* MAP_* (file suffix _orm, _n, _e; none = albedo) */
     int pack;
     char file[512];    /* folder packs: full path */
     Uint32 method, csize, usize, local_ofs; /* zip entry */
@@ -59,14 +62,29 @@ static int enabled = 1;
 static Uint32 rd16(const Uint8 *p) { return (Uint32)p[0] | ((Uint32)p[1] << 8); }
 static Uint32 rd32(const Uint8 *p) { return rd16(p) | (rd16(p + 2) << 16); }
 
-static int find_entry(const char *name)
+static int find_entry_map(const char *name, int map)
 {
     int i;
     for (i = nentries - 1; i >= 0; i--) /* last pack wins */
-        if (!SDL_strcmp(entries[i].name, name))
+        if (entries[i].map == map && !SDL_strcmp(entries[i].name, name))
             return i;
     return -1;
 }
+
+static int find_entry(const char *name)
+{
+    return find_entry_map(name, MAP_ALBEDO);
+}
+
+/* doom64-rt material defaults (rt/data/ json files) */
+typedef struct {
+    char name[9];
+    float rough, metal, emis;
+    int has_rough, has_metal;
+} matdef_t;
+static matdef_t *matdefs;
+static int nmatdefs;
+static int nmaps;
 
 static entry_t *add_entry(const char *filename)
 {
@@ -76,11 +94,28 @@ static entry_t *add_entry(const char *filename)
     size_t n, i;
     entry_t *e;
 
+    int map = MAP_ALBEDO;
+    const char *us;
+
+    /* doom64-rt keeps development/quarantined copies next to the real maps */
+    if (SDL_strstr(filename, "quarantine") || SDL_strstr(filename, "_dev/"))
+        return NULL;
     base = base ? base + 1 : filename;
     dot = SDL_strrchr(base, '.');
     if (!dot || SDL_strcasecmp(dot, ".png"))
         return NULL;
     n = (size_t)(dot - base);
+    us = SDL_strrchr(base, '_');
+    if (us && us < dot)
+    {
+        size_t sl = (size_t)(dot - us - 1);
+        if (sl == 3 && !SDL_strncasecmp(us + 1, "orm", 3)) map = MAP_ORM;
+        else if (sl == 1 && (us[1] == 'n' || us[1] == 'N')) map = MAP_NORMAL;
+        else if (sl == 1 && (us[1] == 'e' || us[1] == 'E')) map = MAP_EMISSIVE;
+        else if (sl == 1 && (us[1] == 'h' || us[1] == 'H')) return NULL; /* height: unused */
+        if (map != MAP_ALBEDO)
+            n = (size_t)(us - base);
+    }
     if (n == 0 || n > 8)
         return NULL;
     for (i = 0; i < n; i++)
@@ -94,8 +129,80 @@ static entry_t *add_entry(const char *filename)
     e = &entries[nentries++];
     SDL_memset(e, 0, sizeof(*e));
     SDL_strlcpy(e->name, name, sizeof(e->name));
+    e->map = map;
     e->pack = npacks - 1;
+    if (map != MAP_ALBEDO)
+        nmaps++;
     return e;
+}
+
+static Uint8 *read_entry(entry_t *e, size_t *len);
+
+static const char *json_num(const char *obj, const char *end, const char *key, float *out)
+{
+    const char *k = obj;
+    size_t kl = SDL_strlen(key);
+    while ((k = SDL_strstr(k, key)) && k < end)
+    {
+        const char *p = k + kl;
+        if (k > obj && k[-1] == '"' && *p == '"')
+        {
+            p++;
+            while (p < end && (*p == ' ' || *p == ':' || *p == '\t'))
+                p++;
+            *out = (float)SDL_strtod(p, NULL);
+            return p;
+        }
+        k = p;
+    }
+    return NULL;
+}
+
+/* Reads doom64-rt material defaults: [{ "textureName": "X", "roughnessDefault": r,
+ * "metallicDefault": m, "emissiveMult": e }, ...]. Tolerant, not a full JSON parser. */
+static void parse_matjson(const char *text, size_t len)
+{
+    char *buf = SDL_malloc(len + 1);
+    const char *p, *end;
+    int count = 0;
+    SDL_memcpy(buf, text, len);
+    buf[len] = 0;
+    end = buf + len;
+    p = buf;
+    while ((p = SDL_strstr(p, "\"textureName\"")))
+    {
+        const char *ob = p, *oe = SDL_strchr(p, '}'), *q;
+        matdef_t md;
+        size_t i = 0;
+        while (ob > buf && *ob != '{')
+            ob--;
+        if (!oe)
+            oe = end;
+        q = SDL_strchr(p + 13, '"');
+        if (!q || q >= oe)
+            break;
+        q++;
+        SDL_memset(&md, 0, sizeof(md));
+        while (q < oe && *q != '"' && i < 8)
+            md.name[i++] = (char)SDL_toupper((unsigned char)*q++);
+        md.name[i] = 0;
+        md.emis = 1.0f;
+        md.has_rough = json_num(ob, oe, "roughnessDefault", &md.rough) != NULL;
+        md.has_metal = json_num(ob, oe, "metallicDefault", &md.metal) != NULL;
+        json_num(ob, oe, "emissiveMult", &md.emis);
+        matdefs = SDL_realloc(matdefs, sizeof(matdef_t) * (size_t)(nmatdefs + 1));
+        matdefs[nmatdefs++] = md;
+        count++;
+        p = oe;
+    }
+    SDL_free(buf);
+    (void)count;
+}
+
+static int is_matjson(const char *path)
+{
+    const char *dot = SDL_strrchr(path, '.');
+    return dot && !SDL_strcasecmp(dot, ".json") && SDL_strstr(path, "rt/data/") && !SDL_strstr(path, "/scenes/");
 }
 
 static void scan_zip(void)
@@ -126,6 +233,21 @@ static void scan_zip(void)
             break;
         SDL_memcpy(fname, z + pos + 46, nlen < 511 ? nlen : 511);
         fname[nlen < 511 ? nlen : 511] = 0;
+        if (is_matjson(fname))
+        {
+            entry_t tmp;
+            size_t jl = 0;
+            Uint8 *js;
+            SDL_memset(&tmp, 0, sizeof(tmp));
+            tmp.pack = npacks - 1;
+            tmp.method = rd16(z + pos + 10);
+            tmp.csize = rd32(z + pos + 20);
+            tmp.local_ofs = rd32(z + pos + 42);
+            js = read_entry(&tmp, &jl);
+            if (js)
+                parse_matjson((const char *)js, jl);
+            SDL_free(js);
+        }
         e = add_entry(fname);
         if (e)
         {
@@ -154,6 +276,14 @@ static SDL_EnumerationResult SDLCALL scan_dir_cb(void *userdata, const char *dir
     {
         SDL_strlcat(full, "/", sizeof(full));
         SDL_EnumerateDirectory(full, scan_dir_cb, NULL);
+    }
+    else if (is_matjson(full))
+    {
+        size_t jl = 0;
+        void *js = SDL_LoadFile(full, &jl);
+        if (js)
+            parse_matjson(js, jl);
+        SDL_free(js);
     }
     else
     {
@@ -242,13 +372,13 @@ void ResPack_Init(void)
     SDL_free(cwd);
     SDL_free(pref);
     if (npacks)
-        SDL_Log("resource packs: %d loaded, %d replacement images%s", npacks, nentries,
-                enabled ? "" : " (disabled in settings)");
+        SDL_Log("resource packs: %d loaded, %d images (%d RT material maps, %d material defaults)%s", npacks,
+                nentries, nmaps, nmatdefs, enabled ? "" : " (disabled in settings)");
 }
 
 int ResPack_Count(void)
 {
-    return enabled ? nentries : 0;
+    return enabled ? nentries + nmatdefs : 0;
 }
 
 void ResPack_SetEnabled(int on)
@@ -293,18 +423,61 @@ static Uint8 *read_entry(entry_t *e, size_t *len)
     return NULL;
 }
 
-const Uint8 *ResPack_Image(const char *lumpname, int *w, int *h)
+static void norm_name(const char *lumpname, char name[9])
 {
-    char name[9];
-    int i, idx;
-    entry_t *e;
-
-    if (!enabled || !nentries || !lumpname)
-        return NULL;
+    int i;
     for (i = 0; i < 8 && lumpname[i]; i++)
         name[i] = (char)SDL_toupper((unsigned char)(lumpname[i] & 0x7f));
     name[i] = 0;
-    idx = find_entry(name);
+}
+
+static const Uint8 *decode_entry(int idx, int *w, int *h);
+
+const Uint8 *ResPack_Image(const char *lumpname, int *w, int *h)
+{
+    char name[9];
+
+    if (!enabled || !nentries || !lumpname)
+        return NULL;
+    norm_name(lumpname, name);
+    return decode_entry(find_entry(name), w, h);
+}
+
+int ResPack_Material(const char *lumpname, respack_mat_t *m)
+{
+    char name[9];
+    int k, i, any = 0;
+
+    SDL_memset(m, 0, sizeof(*m));
+    m->rough = -1.0f;
+    m->metal = -1.0f;
+    m->emissive = 1.0f;
+    if (!enabled || !lumpname || (!nmaps && !nmatdefs))
+        return 0;
+    norm_name(lumpname, name);
+    for (k = 0; k < 3; k++)
+    {
+        m->map[k] = decode_entry(find_entry_map(name, MAP_ORM + k), &m->w[k], &m->h[k]);
+        if (m->map[k])
+            any = 1;
+    }
+    for (i = nmatdefs - 1; i >= 0; i--)
+        if (!SDL_strcmp(matdefs[i].name, name))
+        {
+            if (matdefs[i].has_rough)
+                m->rough = matdefs[i].rough;
+            if (matdefs[i].has_metal)
+                m->metal = matdefs[i].metal;
+            m->emissive = matdefs[i].emis;
+            any = 1;
+            break;
+        }
+    return any;
+}
+
+static const Uint8 *decode_entry(int idx, int *w, int *h)
+{
+    entry_t *e;
     if (idx < 0)
         return NULL;
     e = &entries[idx];
@@ -411,7 +584,7 @@ int ResPack_SourceOf(const void *addr, respack_src_t *out)
     const Uint8 *a = addr;
     int lo = 0, hi = nregs;
 
-    if (!enabled || !nentries || !nregs)
+    if (!enabled || (!nentries && !nmatdefs) || !nregs)
         return 0;
     while (lo < hi) /* last registration with base <= a */
     {

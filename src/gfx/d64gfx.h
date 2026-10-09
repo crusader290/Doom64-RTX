@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-#define D64GFX_API_VERSION 2
+#define D64GFX_API_VERSION 3
 
 typedef enum {
     D64GFX_BACKEND_VULKAN = 0,
@@ -168,6 +168,11 @@ int32_t  d64gfx_init(const D64GfxInitInfo *info, char *err, uint32_t errlen);
 void     d64gfx_shutdown(void);
 uint32_t d64gfx_texture_create(uint32_t w, uint32_t h, const uint8_t *rgba8);
 void     d64gfx_texture_destroy(uint32_t id);
+/* v3: attach ray tracing material maps (texture ids, 0 = none) to a texture.
+ * The renderer owns the maps afterwards (destroyed with the texture).
+ * params: roughness, metallic (< 0 = from the ORM map), emissive multiplier, 0. */
+void     d64gfx_texture_set_material(uint32_t tex, uint32_t orm, uint32_t normal, uint32_t emissive,
+                                     const float params[4]);
 void     d64gfx_render_frame(const D64GfxFrame *frame);
 void     d64gfx_set_raytracing(int32_t enabled);
 void     d64gfx_set_vsync(int32_t enabled);

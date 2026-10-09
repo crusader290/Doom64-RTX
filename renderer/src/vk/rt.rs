@@ -38,6 +38,10 @@ struct RtMaterial {
     plod: f32,
     tex: u32,
     smp: u32,
+    /// material maps: orm, normal, emissive (u32::MAX = none), pad
+    maps: [u32; 4],
+    /// roughness, metallic (< 0 = from the ORM map), emissive multiplier, unused
+    mparams: [f32; 4],
 }
 
 #[repr(C)]
@@ -95,6 +99,8 @@ struct RtImages {
     nd: Image,
     depth: Image,
     color: Image,
+    /// emissive + specular light, added after the denoised diffuse
+    extra: Image,
     fresh: bool,
 }
 
@@ -205,8 +211,9 @@ impl RayTracer {
             b(9, vk::DescriptorType::STORAGE_IMAGE, 1),
             b(10, vk::DescriptorType::STORAGE_IMAGE, 1),
             b(11, vk::DescriptorType::STORAGE_IMAGE, 1),
+            b(12, vk::DescriptorType::STORAGE_IMAGE, 1),
         ];
-        let mut bflags = [vk::DescriptorBindingFlags::empty(); 12];
+        let mut bflags = [vk::DescriptorBindingFlags::empty(); 13];
         bflags[5] = vk::DescriptorBindingFlags::PARTIALLY_BOUND;
         let mut flags_info = vk::DescriptorSetLayoutBindingFlagsCreateInfo::default().binding_flags(&bflags);
         let dsl_rt = d
@@ -221,6 +228,7 @@ impl RayTracer {
             b(2, vk::DescriptorType::STORAGE_IMAGE, 1),
             b(3, vk::DescriptorType::STORAGE_IMAGE, 1),
             b(4, vk::DescriptorType::UNIFORM_BUFFER, 1),
+            b(5, vk::DescriptorType::STORAGE_IMAGE, 1),
         ];
         let dsl_dn = d
             .create_descriptor_set_layout(&vk::DescriptorSetLayoutCreateInfo::default().bindings(&dn_bindings), None)
@@ -274,7 +282,7 @@ impl RayTracer {
             vk::DescriptorPoolSize { ty: vk::DescriptorType::UNIFORM_BUFFER, descriptor_count: 2 * n },
             vk::DescriptorPoolSize { ty: vk::DescriptorType::SAMPLED_IMAGE, descriptor_count: max_textures * n },
             vk::DescriptorPoolSize { ty: vk::DescriptorType::SAMPLER, descriptor_count: 18 * n },
-            vk::DescriptorPoolSize { ty: vk::DescriptorType::STORAGE_IMAGE, descriptor_count: 9 * n },
+            vk::DescriptorPoolSize { ty: vk::DescriptorType::STORAGE_IMAGE, descriptor_count: 11 * n },
             vk::DescriptorPoolSize { ty: vk::DescriptorType::COMBINED_IMAGE_SAMPLER, descriptor_count: 2 * n },
         ];
         let pool = d
@@ -403,7 +411,7 @@ impl RayTracer {
         let d = be.core.device.clone();
         d.device_wait_idle().ok();
         if let Some(mut old) = self.images.take() {
-            for img in old.hist.iter_mut().chain([&mut old.albedo, &mut old.nd, &mut old.depth, &mut old.color]) {
+            for img in old.hist.iter_mut().chain([&mut old.albedo, &mut old.nd, &mut old.depth, &mut old.color, &mut old.extra]) {
                 img.destroy(&d, &mut be.core.alloc);
             }
         }
@@ -418,6 +426,7 @@ impl RayTracer {
             nd: mk(vk::Format::R16G16B16A16_SFLOAT)?,
             depth: mk(vk::Format::R32_SFLOAT)?,
             color: mk(vk::Format::R8G8B8A8_UNORM)?,
+            extra: mk(vk::Format::R16G16B16A16_SFLOAT)?,
             fresh: true,
         });
         self.history_valid = false;
@@ -516,7 +525,21 @@ impl RayTracer {
                 plod: c.prim_lod_frac,
                 tex: if tex < self.max_textures { tex } else { be.white },
                 smp: sampler_index(c.flags & CMD_FILTER != 0, c.wrap[0]) as u32,
+                maps: [u32::MAX; 4],
+                mparams: [-1.0, -1.0, 1.0, 0.0],
             });
+            if let Some(Some(t)) = be.textures.get(tex as usize) {
+                if let Some((ids, prm)) = t.mat {
+                    let last = mats.len() - 1;
+                    for k in 0..3 {
+                        let id = ids[k];
+                        if id != 0 && id < self.max_textures && matches!(be.textures.get(id as usize), Some(Some(_))) {
+                            mats[last].maps[k] = id;
+                        }
+                    }
+                    mats[last].mparams = prm;
+                }
+            }
             if !have_fog && c.flags & CMD_FOG != 0 {
                 fog = [c.fog[0] as f32 / 255.0, c.fog[1] as f32 / 255.0, c.fog[2] as f32 / 255.0, 1.0];
                 have_fog = true;
@@ -746,7 +769,7 @@ impl RayTracer {
         // ---- images to GENERAL on first use -----------------------------------
         let im = self.images.as_mut().unwrap();
         if im.fresh {
-            for img in [&im.hist[0], &im.hist[1], &im.albedo, &im.nd, &im.depth, &im.color] {
+            for img in [&im.hist[0], &im.hist[1], &im.albedo, &im.nd, &im.depth, &im.color, &im.extra] {
                 barrier(d, cmd, img.image, vk::ImageAspectFlags::COLOR, vk::ImageLayout::UNDEFINED, vk::ImageLayout::GENERAL);
             }
             im.fresh = false;
@@ -787,6 +810,7 @@ impl RayTracer {
         let ii_nd = img_info(&im.nd);
         let ii_dep = img_info(&im.depth);
         let ii_col = img_info(&im.color);
+        let ii_ext = img_info(&im.extra);
         let comp_info = |i: &Image| [vk::DescriptorImageInfo { sampler: self.sampler, image_view: i.view, image_layout: vk::ImageLayout::GENERAL }];
         let ci_col = comp_info(&im.color);
         let ci_dep = comp_info(&im.depth);
@@ -806,11 +830,13 @@ impl RayTracer {
             w(fr.set_rt, 9, si).image_info(&ii_alb),
             w(fr.set_rt, 10, si).image_info(&ii_nd),
             w(fr.set_rt, 11, si).image_info(&ii_dep),
+            w(fr.set_rt, 12, si).image_info(&ii_ext),
             w(fr.set_dn, 0, si).image_info(&ii_hout),
             w(fr.set_dn, 1, si).image_info(&ii_alb),
             w(fr.set_dn, 2, si).image_info(&ii_nd),
             w(fr.set_dn, 3, si).image_info(&ii_col),
             w(fr.set_dn, 4, vk::DescriptorType::UNIFORM_BUFFER).buffer_info(&bi_u),
+            w(fr.set_dn, 5, si).image_info(&ii_ext),
             w(fr.set_comp, 0, vk::DescriptorType::COMBINED_IMAGE_SAMPLER).image_info(&ci_col),
             w(fr.set_comp, 1, vk::DescriptorType::COMBINED_IMAGE_SAMPLER).image_info(&ci_dep),
         ];
@@ -882,7 +908,7 @@ impl RayTracer {
             }
         }
         if let Some(mut im) = self.images.take() {
-            for img in im.hist.iter_mut().chain([&mut im.albedo, &mut im.nd, &mut im.depth, &mut im.color]) {
+            for img in im.hist.iter_mut().chain([&mut im.albedo, &mut im.nd, &mut im.depth, &mut im.color, &mut im.extra]) {
                 img.destroy(&d, &mut be.core.alloc);
             }
         }

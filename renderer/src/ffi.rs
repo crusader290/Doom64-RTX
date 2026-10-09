@@ -3,7 +3,7 @@
 
 use std::ffi::{c_char, c_int, c_void};
 
-pub const D64GFX_API_VERSION: u32 = 2;
+pub const D64GFX_API_VERSION: u32 = 3;
 
 pub const BACKEND_VULKAN: u32 = 0;
 pub const BACKEND_OPENGL: u32 = 1;

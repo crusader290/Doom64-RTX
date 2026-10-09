@@ -22,6 +22,10 @@ uint32_t d64gfx_texture_create(uint32_t w, uint32_t h, const uint8_t *rgba8)
     return next_id++;
 }
 void d64gfx_texture_destroy(uint32_t id) { (void)id; }
+void d64gfx_texture_set_material(uint32_t tex, uint32_t orm, uint32_t normal, uint32_t emissive, const float params[4])
+{
+    (void)tex; (void)orm; (void)normal; (void)emissive; (void)params;
+}
 void d64gfx_render_frame(const D64GfxFrame *frame)
 {
     if ((frames++ % 30) == 0)

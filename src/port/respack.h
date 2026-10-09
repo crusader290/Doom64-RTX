@@ -24,6 +24,15 @@ void ResPack_SetEnabled(int on);
 /* Decoded RGBA replacement for a lump name, or NULL. Owned by the pack cache. */
 const uint8_t *ResPack_Image(const char *lumpname, int *w, int *h);
 
+/* RT material for a lump: maps (orm, normal, emissive; NULL if absent) and
+ * doom64-rt defaults (rough/metal < 0 = not set). Returns 0 if nothing. */
+typedef struct {
+    const uint8_t *map[3];
+    int w[3], h[3];
+    float rough, metal, emissive;
+} respack_mat_t;
+int ResPack_Material(const char *lumpname, respack_mat_t *m);
+
 /* called by W_CacheLumpNum when it (re)loads a lump */
 void ResPack_RegisterLump(int lump, const char *name8, int kind, const void *data, int size);
 /* lets the registry check that a lump is still cached at the same address */

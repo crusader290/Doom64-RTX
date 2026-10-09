@@ -96,6 +96,11 @@ soundorg/line(+low bit)/side/state/function/state-action/macro). Tied to struct 
 - Wall/flat textures are loaded whole (`textureN64_t` header 8 bytes). Sprites are loaded
   in strips: strip row = (offset - 16) / (cmpsize / height); row padding columns beyond
   `width` stay transparent.
+- RT materials: suffixes `_orm` (R occlusion, G roughness, B metallic), `_n`, `_e`; `_h`
+  ignored; folders containing `quarantine` or `_dev/` skipped (doom64-rt keeps duplicates
+  there). Maps are 64x64 like the N64 textures. Attached per texture through
+  `d64gfx_texture_set_material` (ABI v3); the RT shader writes emissive + GGX specular to an
+  extra rgba16f image that the denoise pass adds after `albedo * lighting` (not denoised).
 - PNG and zip-deflate decoding: vendored `src/port/third_party/stb_image.h` v2.30
   (public domain, sha1 2106632e75249329c21eab543ec02539ad94f10b).
 

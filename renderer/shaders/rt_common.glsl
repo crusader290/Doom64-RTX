@@ -15,6 +15,8 @@ struct Material {
     float plod;
     uint tex;
     uint smp;
+    uvec4 maps;     // RT material maps: orm, normal, emissive (0xffffffff = none)
+    vec4 mparams;   // roughness, metallic (< 0 = from the ORM map), emissive mult, unused
 };
 
 struct Light {

@@ -145,6 +145,14 @@ name replaces that texture or sprite, e.g. `textures/C1.png` or `sprites/SKULA1.
 (GZDoom-style folders work; higher resolutions are fine). Packs loaded later win.
 Turn them off in Options > Graphics > Texture Packs (`respacks = 0`).
 
+**Ray tracing materials.** Packs can also carry doom64-rt style material maps next to (or
+instead of) the colour image: `NAME_orm.png` (occlusion, roughness, metallic), `NAME_n.png`
+(normal map) and `NAME_e.png` (emissive), plus defaults in `rt/data/*.json`
+(`textureName`, `roughnessDefault`, `metallicDefault`, `emissiveMult`). They are used by the
+ray traced renderer only (normal-mapped lighting, specular highlights, glowing surfaces).
+The archived set from doom64-rt is in this repository: run with
+`-pack addons/doom64-retribution/Retribution-RT-Materials` or copy that folder into `packs/`.
+
 ### Logs and crash reports
 
 Every run writes `doom64rtx.log` next to `doom64rtx.ini` (the previous run is kept as

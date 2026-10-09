@@ -20,6 +20,15 @@ use std::sync::Mutex;
 pub(crate) trait Backend {
     fn texture_create(&mut self, w: u32, h: u32, rgba: &[u8]) -> u32;
     fn texture_destroy(&mut self, id: u32);
+    /// Attaches RT material maps (texture ids, 0 = none) to a texture; the
+    /// backend takes ownership of the maps. Backends without RT drop them.
+    fn texture_set_material(&mut self, _tex: u32, maps: [u32; 3], _params: [f32; 4]) {
+        for m in maps {
+            if m != 0 {
+                self.texture_destroy(m);
+            }
+        }
+    }
     fn render(&mut self, frame: &D64GfxFrame);
     fn set_raytracing(&mut self, on: bool);
     fn set_vsync(&mut self, on: bool);
@@ -131,6 +140,15 @@ pub unsafe extern "C" fn d64gfx_texture_create(w: u32, h: u32, rgba8: *const u8)
 #[no_mangle]
 pub extern "C" fn d64gfx_texture_destroy(id: u32) {
     with_backend(|b| b.texture_destroy(id));
+}
+
+/// # Safety
+/// `params` must be null or point to 4 floats: roughness, metallic (< 0 = from
+/// the ORM map), emissive multiplier, unused.
+#[no_mangle]
+pub unsafe extern "C" fn d64gfx_texture_set_material(tex: u32, orm: u32, normal: u32, emissive: u32, params: *const f32) {
+    let p = if params.is_null() { [-1.0, -1.0, 1.0, 0.0] } else { [*params, *params.add(1), *params.add(2), *params.add(3)] };
+    with_backend(|b| b.texture_set_material(tex, [orm, normal, emissive], p));
 }
 
 /// # Safety
