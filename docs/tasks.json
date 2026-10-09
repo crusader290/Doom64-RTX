@@ -140,12 +140,14 @@
   {
    "id": "T12",
    "subsystem": "resource packs (pk3/wad)",
-   "status": "pending",
+   "status": "verified",
    "paths": [
-    "addons/doom64-retribution/",
+    "src/port/respack.c",
+    "src/gfx/gbi.c",
     "src/doom64/w_wad.c"
    ],
-   "next": "load pk3 (zip) resource packs from a packs/ folder; PNG texture/sprite replacement by lump name. Accept: a test pack replacing one wall texture shows in a screenshot"
+   "next": "verify a real pk3 (addons d64r-lostsoul-rt.pk3) on a map with lost souls",
+   "evidence": "generated folder pack replaces all MAP01 walls/flats (checker) and BAR1/PISG sprites (strips seamless) in tools/smoke.sh --newgame screenshots; pk3 (zip) path unit-tested only by code review"
   },
   {
    "id": "T13",

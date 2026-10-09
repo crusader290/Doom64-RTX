@@ -15,6 +15,8 @@
 #include "d64gfx.h"
 #include "pc_options.h"
 #include "savegame.h"
+#include "respack.h"
+#include "gbi.h"
 
 extern mobj_t mobjhead;
 extern mapthing_t *spawnlist;
@@ -54,12 +56,14 @@ static int step_choice(int cur, const int *vals, int n, int dir)
 
 /* ---- Graphics ------------------------------------------------------------ */
 
-enum { G_RT, G_RT_SPP, G_RT_BOUNCES, G_RT_DENOISE, G_FPS, G_ASPECT, G_VSYNC, G_FULLSCREEN, G_RENDERER, G_COUNT };
+enum { G_RT, G_RT_SPP, G_RT_BOUNCES, G_RT_DENOISE, G_FPS, G_ASPECT, G_VSYNC, G_FULLSCREEN, G_RENDERER, G_PACKS,
+       G_COUNT };
 
 static const char *gfx_label(int i)
 {
     static const char *l[G_COUNT] = { "Ray Tracing", "RT Samples", "RT Bounces", "RT Denoiser",
-                                      "Frame Rate", "Aspect Ratio", "VSync", "Fullscreen", "Renderer" };
+                                      "Frame Rate", "Aspect Ratio", "VSync", "Fullscreen", "Renderer",
+                                      "Texture Packs" };
     return l[i];
 }
 
@@ -90,6 +94,8 @@ static const char *gfx_value(int i, char *buf, int len)
         return onoff(pc_config.fullscreen);
     case G_RENDERER:
         return pc_config_file.renderer == RENDERER_OPENGL ? "OpenGL" : "Vulkan";
+    case G_PACKS:
+        return onoff(pc_config.respacks);
     }
     return NULL;
 }
@@ -133,6 +139,11 @@ static int gfx_change(int i, int dir)
     case G_RENDERER:
         /* takes effect on the next start */
         pc_config_file.renderer = pc_config_file.renderer == RENDERER_OPENGL ? RENDERER_VULKAN : RENDERER_OPENGL;
+        break;
+    case G_PACKS:
+        CONFIG_SET(respacks, !pc_config.respacks);
+        ResPack_SetEnabled(pc_config.respacks);
+        GBI_FlushTextureCache(); /* re-decode with or without replacements */
         break;
     }
     Config_Save();

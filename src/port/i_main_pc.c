@@ -29,6 +29,7 @@
 #include "r_local.h"
 #include "log.h"
 #include "interp.h"
+#include "respack.h"
 
 /* ------------------------------------------------------------------ */
 /* globals the game expects from i_main.c                             */
@@ -1031,6 +1032,7 @@ int main(int argc, char **argv)
     if (!ROM_Init(pc_config.rom, err, sizeof(err)))
         I_PCFatal("%s", err);
     SDL_Log("Game data: %s", ROM_Description());
+    ResPack_Init();
 
     init_video();
     D_DoomMain();

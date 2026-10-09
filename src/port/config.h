@@ -40,6 +40,8 @@ typedef struct {
     int   fast_weapons;      /* twice as fast weapon switching */
     int   gore;              /* extra blood */
     int   autosave;          /* save to the Auto slot at each level start */
+    int   respacks;          /* use PNG resource packs (packs/ folders, packs =) */
+    char  packs[1024];       /* extra packs, ';' separated (also -pack <file>) */
     int   show_stats;        /* F7 debug overlay: fps / position */
     int   audio_rate;        /* synth output rate in Hz (N64: 22050) */
 } pcconfig_t;

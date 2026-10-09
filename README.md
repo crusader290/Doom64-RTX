@@ -71,6 +71,7 @@ See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
 | `-widescreen` | 16:9 for this run |
 | `-nolog` | do not write doom64rtx.log |
 | `-nosound` | no sound output |
+| `-pack <file>` | load a resource pack (pk3 or folder); repeatable |
 | `-set <name> <value>` | set any ini setting for this run |
 
 ### Keys
@@ -134,6 +135,15 @@ validation = 0           # Vulkan validation layers
 Save games (`save0.d64s` ... `save8.d64s`; 7 = quick, 8 = auto) and Controller Pak notes
 (`controller.pak`) are stored in the preference directory.
 Settings changed in game (F10, F11, Aspect Ratio) are saved; command-line options are not.
+
+### Resource packs (texture and sprite replacements)
+
+Put `.pk3` (zip) files or folders into a `packs/` folder next to the executable, in the
+folder you start the game from, or in the preference folder; or list them in the ini
+(`packs = a.pk3;b`) or with `-pack <file>`. Any PNG whose file name equals a Doom 64 lump
+name replaces that texture or sprite, e.g. `textures/C1.png` or `sprites/SKULA1.png`
+(GZDoom-style folders work; higher resolutions are fine). Packs loaded later win.
+Turn them off in Options > Graphics > Texture Packs (`respacks = 0`).
 
 ### Logs and crash reports
 

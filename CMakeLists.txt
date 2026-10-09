@@ -64,6 +64,7 @@ set(D64_PORT_SOURCES
   src/port/pc_options.c
   src/port/interp.c
   src/port/savegame.c
+  src/port/respack.c
   src/gfx/gbi.c
 )
 if(D64_NULL_RENDERER)

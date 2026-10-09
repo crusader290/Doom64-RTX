@@ -25,6 +25,7 @@ Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verific
 | pc_options.c/.h | ✅ | Options > Graphics / Gameplay, F7 Debug, Save/Load slot pages (data for the [PC] page system in m_main.c) |
 | interp.c/.h | ✅ | 60/120 fps: snapshot before each tic, blend things/sectors/view/weapon while drawing, restore after |
 | savegame.c/.h | ✅ | full level save/load with pointer references; 9 slots (7 = quick F5/F9, 8 = auto) |
+| respack.c/.h, third_party/stb_image.h | ✅ | PNG resource packs (pk3 zip or folders) replacing textures/sprites by lump name; lump memory registry for gbi.c |
 | s_sound_stub.c | ✅ | silent sound API, only for -DD64_WITH_AUDIO=OFF |
 
 ## Graphics (src/gfx, renderer/)

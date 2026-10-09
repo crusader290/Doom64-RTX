@@ -16,6 +16,7 @@
 #include <ultra64.h>
 #include "gbi.h"
 #include "d64gfx.h"
+#include "respack.h"
 
 #define MAX_VERTS_OUT   (1 << 18)
 #define MAX_CMDS_OUT    (1 << 14)
@@ -110,6 +111,9 @@ typedef struct {
 static texent_t texcache[TEXCACHE_SIZE];
 static uint32_t texcache_live;
 
+/* where each TMEM area was last loaded from (resource pack lookups) */
+static const void *tmem_src[512];
+
 /* ------------------------------------------------------------------ */
 /* math                                                               */
 /* ------------------------------------------------------------------ */
@@ -199,6 +203,7 @@ static void tmem_load_block(int tile, int uls, int ult, int lrs, int dxt)
 
     if (!rdp.timg)
         return;
+    tmem_src[(base >> 3) & 511] = src;
 
     if (rdp.timg_siz == G_IM_SIZ_32b)
     {
@@ -243,6 +248,7 @@ static void tmem_load_tile(int tile, int uls, int ult, int lrs, int lrt)
 
     if (!rdp.timg)
         return;
+    tmem_src[t->tmem & 511] = rdp.timg + (((t0 * rdp.timg_width + s0) * bpt2) >> 1);
     for (row = t0; row <= t1; row++)
     {
         int r = row - t0;
@@ -420,6 +426,48 @@ static void tile_dims(const tile_t *tl, int *w, int *h)
     *h = th;
 }
 
+/*
+ * Builds the renderer texture for a resource pack image. Wall textures are
+ * loaded whole, so the PNG is used as is. Sprites are drawn in horizontal
+ * strips: the strip's first row comes from its byte offset in the lump, and
+ * columns past the picture width (row padding) stay transparent.
+ */
+static uint32_t replacement_texture(const respack_src_t *rs, const uint8_t *img, int pw, int ph, int w, int h)
+{
+    int y0, ow, oh, x, y;
+    float sx, sy;
+    uint8_t *out;
+    uint32_t id;
+
+    if (rs->kind != RESPACK_SPRITE || rs->width <= 0 || rs->height <= 0 || rs->pixbytes <= 0)
+        return d64gfx_texture_create((uint32_t)pw, (uint32_t)ph, img);
+
+    {
+        int rowbytes = rs->pixbytes / rs->height;
+        y0 = rowbytes > 0 ? (rs->offset - rs->header) / rowbytes : 0;
+    }
+    if (y0 < 0)
+        y0 = 0;
+    sx = (float)pw / (float)rs->width;
+    sy = (float)ph / (float)rs->height;
+    ow = (int)((float)w * sx + 0.5f);
+    oh = (int)((float)h * sy + 0.5f);
+    if (ow < 1) ow = 1;
+    if (oh < 1) oh = 1;
+    out = (uint8_t *)calloc((size_t)ow * oh, 4);
+    for (y = 0; y < oh; y++)
+    {
+        int syi = (int)((float)y0 * sy) + y;
+        if (syi < 0 || syi >= ph)
+            continue;
+        for (x = 0; x < ow && x < pw; x++)
+            memcpy(out + ((size_t)y * ow + x) * 4, img + ((size_t)syi * pw + x) * 4, 4);
+    }
+    id = d64gfx_texture_create((uint32_t)ow, (uint32_t)oh, out);
+    free(out);
+    return id;
+}
+
 static uint32_t texture_for_tile(int tidx)
 {
     const tile_t *tl = &rdp.tiles[tidx];
@@ -431,6 +479,9 @@ static uint32_t texture_for_tile(int tidx)
     uint32_t oldest_frame = 0xffffffffu;
     uint8_t *rgba;
     uint32_t id;
+    respack_src_t rsrc;
+    const uint8_t *repl = NULL;
+    int repl_w = 0, repl_h = 0;
 
     tile_dims(tl, &w, &h);
     {
@@ -457,6 +508,18 @@ static uint32_t texture_for_tile(int tidx)
                 key = fnv1a(key, rdp.tmem + 0x800 + tl->palette * 16 * 8, 16 * 8);
             else
                 key = fnv1a(key, rdp.tmem + 0x800, 256 * 8);
+        }
+    }
+    /* resource pack replacement for the lump this TMEM area came from */
+    if (ResPack_Count() && tmem_src[tl->tmem & 511] &&
+        ResPack_SourceOf(tmem_src[tl->tmem & 511], &rsrc))
+    {
+        repl = ResPack_Image(rsrc.name, &repl_w, &repl_h);
+        if (repl)
+        {
+            key = fnv1a(key, rsrc.name, sizeof(rsrc.name));
+            key = fnv1a(key, &rsrc.offset, sizeof(rsrc.offset));
+            key ^= 0x5245504cull; /* 'REPL' */
         }
     }
     if (key == 0)
@@ -511,6 +574,12 @@ static uint32_t texture_for_tile(int tidx)
         }
     }
 
+    if (repl)
+    {
+        id = replacement_texture(&rsrc, repl, repl_w, repl_h, w, h);
+        stats.tex_uploads++;
+        goto cache_it;
+    }
     rgba = (uint8_t *)malloc((size_t)w * h * 4);
     for (y = 0; y < h; y++)
         for (x = 0; x < w; x++)
@@ -533,6 +602,7 @@ static uint32_t texture_for_tile(int tidx)
     free(rgba);
     stats.tex_uploads++;
 
+cache_it:
     slot = (int)(key & (TEXCACHE_SIZE - 1));
     while (texcache[slot].used)
         slot = (slot + 1) & (TEXCACHE_SIZE - 1);

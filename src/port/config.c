@@ -38,6 +38,7 @@ void Config_Defaults(void)
     pc_config.ads = 1;
     pc_config.gore = 1;
     pc_config.autosave = 1;
+    pc_config.respacks = 1;
     pc_config.audio_rate = 44100;
     pc_config.mouse_sens = 1.0f;
     pc_config.gpu_index = -1;
@@ -83,6 +84,8 @@ static const cvar_t cvars[] = {
     { "fast_weapons",   CV_INT,      &pc_config.fast_weapons, 0 },
     { "gore",           CV_INT,      &pc_config.gore, 0 },
     { "autosave",       CV_INT,      &pc_config.autosave, 0 },
+    { "respacks",       CV_INT,      &pc_config.respacks, 0 },
+    { "packs",          CV_STR,      pc_config.packs, sizeof(pc_config.packs) },
     { "show_stats",     CV_INT,      &pc_config.show_stats, 0 },
 };
 
@@ -218,6 +221,12 @@ void Config_ParseArgs(int argc, char **argv)
     {
         const char *a = argv[i];
         if (!SDL_strcmp(a, "-rom") && i + 1 < argc)        set_cvar("rom", argv[++i]);
+        else if (!SDL_strcmp(a, "-pack") && i + 1 < argc)
+        {
+            if (pc_config.packs[0])
+                SDL_strlcat(pc_config.packs, ";", sizeof(pc_config.packs));
+            SDL_strlcat(pc_config.packs, argv[++i], sizeof(pc_config.packs));
+        }
         else if (!SDL_strcmp(a, "-gl") || !SDL_strcmp(a, "-opengl")) pc_config.renderer = RENDERER_OPENGL;
         else if (!SDL_strcmp(a, "-vulkan") || !SDL_strcmp(a, "-vk")) pc_config.renderer = RENDERER_VULKAN;
         else if (!SDL_strcmp(a, "-rt"))      pc_config.raytracing = 1;

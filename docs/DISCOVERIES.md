@@ -86,6 +86,19 @@ soundorg/line(+low bit)/side/state/function/state-action/macro). Tied to struct 
 `activeceilings`/`activeplats`). Laser thinkers and their marker things are not saved.
 `mobj->extradata` holds mobj/line|1/laser pointers or small ints.
 
+## Resource packs (src/port/respack.c)
+- N64 WAD lump names are the GZDoom/Retribution names: of 2361 doom64-rt material names,
+  1175 match WAD texture (`T_START..T_END`, e.g. `C1`) or sprite (`S_START..S_END`, e.g.
+  `A001A0`, `SKULA1`) lumps exactly.
+- Mapping a draw back to its lump: `W_CacheLumpNum` registers the decompressed lump range;
+  `gbi.c` remembers the source address of each TMEM load; `ResPack_SourceOf` validates the
+  registration against `lumpcache[lump]` (zone memory gets reused).
+- Wall/flat textures are loaded whole (`textureN64_t` header 8 bytes). Sprites are loaded
+  in strips: strip row = (offset - 16) / (cmpsize / height); row padding columns beyond
+  `width` stay transparent.
+- PNG and zip-deflate decoding: vendored `src/port/third_party/stb_image.h` v2.30
+  (public domain, sha1 2106632e75249329c21eab543ec02539ad94f10b).
+
 ## Testing facts
 - llvmpipe (GL 4.5) and lavapipe (Vulkan incl. ray query) work under Xvfb `:99`.
 - Title sequence under `D64_FIXED_TIMESTEP`: a pad press at frame ≥300 leaves the demo,

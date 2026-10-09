@@ -27,7 +27,11 @@ static int			numlumps;				//800B2224
 static lumpinfo_t	*lumpinfo;				//800B2228 /* points directly to rom image */
 
 static int          mapnumlumps;			//800B2230 psxdoom/doom64
-static lumpinfo_t   *maplump;				//800B2234 psxdoom/doom64
+static lumpinfo_t   *maplump;
+#ifdef D64_PC
+#include "respack.h" /* [PC] */
+static int pc_tstart = -1, pc_tend = -1, pc_sstart = -1, pc_send = -1;
+#endif				//800B2234 psxdoom/doom64
 static byte         *mapfileptr;			//800B2238 psxdoom/doom64
 
 
@@ -110,6 +114,22 @@ void W_Init (void) // 8002BEC0
     lumpcache = (lumpcache_t *) Z_Malloc(numlumps * sizeof(lumpcache_t), PU_STATIC, 0);
     D_memset(lumpcache, 0, numlumps * sizeof(lumpcache_t)); /* [PC] */
     Z_Free(wadfileptr);
+
+#ifdef D64_PC
+    /* [PC] texture/sprite ranges, for resource pack replacements */
+    for (i = 0; i < numlumps; i++)
+    {
+        char n[9];
+        D_memcpy(n, lumpinfo[i].name, 8);
+        n[0] &= 0x7f;
+        n[8] = 0;
+        if (!D_strncasecmp(n, "T_START", 8)) pc_tstart = i;
+        else if (!D_strncasecmp(n, "T_END", 8)) pc_tend = i;
+        else if (!D_strncasecmp(n, "S_START", 8)) pc_sstart = i;
+        else if (!D_strncasecmp(n, "S_END", 8)) pc_send = i;
+    }
+    ResPack_SetLumpCache((void *const *)lumpcache);
+#endif
 }
 
 
@@ -300,6 +320,13 @@ void *W_CacheLumpNum (int lump, int tag, decodetype dectype) // 8002C430
 		Z_Malloc(lumpsize, tag, &lc->cache);
 
 		W_ReadLump(lump, lc->cache, dectype);
+#ifdef D64_PC
+		/* [PC] let resource packs map texture loads back to this lump */
+		ResPack_RegisterLump(lump, lumpinfo[lump].name,
+		                     (lump > pc_tstart && lump < pc_tend) ? RESPACK_TEXTURE :
+		                     (lump > pc_sstart && lump < pc_send) ? RESPACK_SPRITE : RESPACK_OTHER,
+		                     lc->cache, lumpsize);
+#endif
 	}
 	else
     {
