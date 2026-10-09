@@ -53,7 +53,7 @@
   {
    "id": "T05",
    "subsystem": "ray tracing",
-   "status": "pending",
+   "status": "verified",
    "deps": [
     "T04"
    ],
@@ -62,7 +62,8 @@
     "renderer/shaders/vk_composite.frag"
    ],
    "last_approach": "disabling depth test did not help",
-   "next": "MAP01 doorway grate (BLEND+ALPHA_THRESH mid-texture) mostly vanishes in RT mode: check composite ordering/alpha. Accept: grate visible with -rt at the same spot as -gl (tools/smoke.sh --renderer rt --newgame)"
+   "next": null,
+   "evidence": "not reproducible at dbb43f8: MAP01 start-room doorway grate and corridor grate render the same with -gl and -rt (lavapipe screenshots, build-logs/grate-*, door crop); the fixing change was not isolated"
   },
   {
    "id": "T06",
@@ -177,7 +178,7 @@
     "releases/"
    ],
    "next": null,
-   "evidence": "0.2.0 archives built (tools/check.sh linux win OK, make_release.sh); fresh extractions reach MAP01 with ROM next to the exe: Linux native, Windows under Wine (audio WAV written on both)"
+   "evidence": "0.3.0 archives built at dbb43f8 (+version bump); fresh extractions with ROM and a pk3 in packs/: textures replaced, MAP01 reached, audio written (Linux native, Windows under Wine)"
   },
   {
    "id": "T15",
@@ -200,6 +201,19 @@
    "status": "blocked",
    "evidence": "experimental CI job, continue-on-error; game code relies on -ftrivial-auto-var-init (no MSVC equivalent)",
    "next": "only if MSVC is required: zero-initialise the locals gcc -Wmaybe-uninitialized lists"
+  },
+  {
+   "id": "T17",
+   "subsystem": "RT emitter lights",
+   "status": "pending",
+   "deps": [
+    "T13"
+   ],
+   "paths": [
+    "src/port/rtlights.c",
+    "src/port/respack.c"
+   ],
+   "next": "spawn RT point lights for emissive world textures using doom64-rt lightColorHEX (textures_world_emis.json); accept: a lit fixture casts light on nearby walls in an -rt screenshot"
   }
  ]
 }

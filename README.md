@@ -24,8 +24,8 @@ Preview builds are in [`releases/`](releases/):
 
 | File | Platform |
 |---|---|
-| `doom64rtx-0.2.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
-| `doom64rtx-0.2.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
+| `doom64rtx-0.3.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
+| `doom64rtx-0.3.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
 
 Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 `.github/workflows/build.yml` are built the same way.
@@ -38,7 +38,8 @@ Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 | ROM auto-detection | working |
 | OpenGL 3.3 renderer | working |
 | Vulkan raster renderer | working |
-| Vulkan ray traced world | preview (F10 or Options > Graphics); see-through grates vanish (known issue) |
+| Vulkan ray traced world | preview (F10 or Options > Graphics) |
+| Resource packs (pk3/folders: PNG textures, sprites, RT materials) | working |
 | Sound and music (WESS + software N64 synth) | working (music, effects, reverb) |
 | Windows build (MinGW-w64) | working (tested under Wine: OpenGL and Vulkan) |
 | Save/load anywhere (pause/title menu, F5/F9, auto save) | working |

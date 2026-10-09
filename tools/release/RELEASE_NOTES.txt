@@ -11,8 +11,10 @@ save at each level start), mouse look with free aim, jumping (Space), weapon key
 aim down sights (right mouse), kick (V), 30/60/120 fps (interpolated, game logic stays
 30 Hz), Options > Graphics and Options > Gameplay, F7 debug page + stats overlay,
 crosshair, extra gore, fast weapon switching.
+New in 0.3: resource packs (PNG texture/sprite replacements from .pk3 files or folders in
+packs/, or -pack <file>) and ray tracing materials (doom64-rt normal, roughness/metal and
+emissive maps; the archived set is Retribution-RT-Materials in the source repository).
 Preview: ray traced world (F10 or Options > Graphics; needs VK_KHR_ray_query).
-Known issue: some see-through wall textures (grates) mostly vanish with ray tracing on.
 
 If something goes wrong, send doom64rtx.log (next to doom64rtx.ini: the program folder
 for this portable package, otherwise %APPDATA%\Doom64RTX\Doom64RTX on Windows or
