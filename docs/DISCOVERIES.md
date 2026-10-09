@@ -90,6 +90,7 @@ soundorg/line(+low bit)/side/state/function/state-action/macro). Tied to struct 
 - llvmpipe (GL 4.5) and lavapipe (Vulkan incl. ray query) work under Xvfb `:99`.
 - Title sequence under `D64_FIXED_TIMESTEP`: a pad press at frame ≥300 leaves the demo,
   the title menu is live at ~350, New Game + skill (presses at 380, 440) → MAP01 at ~500.
+  Under Wine the skill menu takes longer to accept input: add a second A press (~520).
 - Classic bug classes found so far: BE masks in `W_CheckNumForName`; `total*4` pointer
   arrays (`P_GroupLines`); stale `uls` in LoadTLUT; texrect shade alpha with the fog
   blender; freed mobjs in `RT_CollectLights` after `P_Stop`.

@@ -24,8 +24,8 @@ Preview builds are in [`releases/`](releases/):
 
 | File | Platform |
 |---|---|
-| `doom64rtx-0.1.1-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
-| `doom64rtx-0.1.1-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
+| `doom64rtx-0.2.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
+| `doom64rtx-0.2.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
 
 Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 `.github/workflows/build.yml` are built the same way.
@@ -38,10 +38,14 @@ Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 | ROM auto-detection | working |
 | OpenGL 3.3 renderer | working |
 | Vulkan raster renderer | working |
-| Vulkan ray traced world | preview (F10); light sources from game objects in progress |
+| Vulkan ray traced world | preview (F10 or Options > Graphics); see-through grates vanish (known issue) |
 | Sound and music (WESS + software N64 synth) | working (music, effects, reverb) |
 | Windows build (MinGW-w64) | working (tested under Wine: OpenGL and Vulkan) |
-| Saves (Controller Pak emulation) | working, needs more testing |
+| Save/load anywhere (pause/title menu, F5/F9, auto save) | working |
+| Mouse look, jumping, weapon keys, aim down sights, kick | working |
+| 30 / 60 / 120 fps (interpolated; game logic stays 30 Hz) | working |
+| Options > Graphics / Gameplay, F7 debug page | working |
+| Controller Pak notes / passwords | working, needs more testing |
 | 4:3 / 16:9 (Options › Display › Aspect Ratio) | working: wider field of view, HUD and menus keep their proportions |
 | Log file + crash reports | working, on by default |
 
@@ -74,15 +78,21 @@ See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
 | Key | Action |
 |---|---|
 | W / S, Up / Down | forward / back |
-| Left / Right, mouse | turn |
+| Left / Right, mouse | turn (mouse also looks up/down) |
 | A / D | strafe |
 | Ctrl, left mouse | fire |
-| E, Space, right mouse | use |
-| Shift | run |
+| Right mouse | aim down sights |
+| E, middle mouse | use |
+| Space | jump |
+| V, mouse button 4 | kick |
+| 1 - 8 | select weapon |
+| Shift | run (walk with Always Run on) |
 | Tab | automap |
 | Q / mouse wheel | previous / next weapon |
 | Enter / Backspace | menu confirm / back |
-| Esc | menu |
+| Esc | menu (Save Game / Load Game in the pause menu) |
+| F5 / F9 | quicksave / quickload |
+| F7 | debug page (god mode, noclip, give all, stats overlay, ...) |
 | **F10** | **toggle ray tracing** (Vulkan, RT-capable GPU) |
 | F11, Alt+Enter | fullscreen |
 | F12 | screenshot |
@@ -102,6 +112,10 @@ widescreen = 0           # 1 = 16:9 (also in Options > Display > Aspect Ratio)
 brightness = 50          # starting value of the game's Brightness option (0..100)
 log = 1                  # write doom64rtx.log
 sound = 1                # sound and music
+fps = 30                 # 30 (N64), 60 or 120 (interpolated)
+mouselook = 1            # also: invert_mouse, always_run, autoaim, crosshair, jump,
+ads = 1                  #   weapon_bob (0-100), fast_weapons, gore, autosave
+
 audio_rate = 44100       # synth output rate (the N64 used 22050)
 rt_spp = 1               # rays per pixel for AO / bounce light
 rt_bounces = 1
@@ -117,7 +131,8 @@ gpu_index = -1           # -1 = pick automatically
 validation = 0           # Vulkan validation layers
 ```
 
-Controller Pak saves are stored as `controller.pak` in the preference directory.
+Save games (`save0.d64s` ... `save8.d64s`; 7 = quick, 8 = auto) and Controller Pak notes
+(`controller.pak`) are stored in the preference directory.
 Settings changed in game (F10, F11, Aspect Ratio) are saved; command-line options are not.
 
 ### Logs and crash reports
@@ -128,6 +143,10 @@ renderer errors, a stats line every minute, and on a crash the signal or excepti
 backtrace and what the game was doing. Please attach it when reporting a problem.
 
 ## Building
+
+Shortcut for contributors: `tools/setup_env.sh` (dependencies, prebuilt SDL3), then
+`tools/check.sh linux win` (incremental builds with short error summaries; full logs in
+`build-logs/`) and `tools/smoke.sh` (headless runtime test, needs your ROM).
 
 Requirements: CMake 3.20+, a C11 compiler (GCC, Clang or MSVC), Rust (stable) with `cargo`,
 and SDL3 (found on the system, otherwise downloaded and built automatically).

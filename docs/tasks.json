@@ -1,61 +1,197 @@
 {
-  "_schema": "status: pending | in_progress | blocked | implemented (code done, not proven) | verified (evidence recorded). Update at milestones; keep entries short.",
-  "updated": "2026-10-09",
-  "tasks": [
-    {"id": "T01", "subsystem": "core port", "status": "verified",
-     "paths": ["src/doom64/", "src/port/", "src/gfx/gbi.c"],
-     "evidence": "title demo + MAP01 render on GL and Vulkan (lavapipe); D64_TRACE identical GL/VK; tools/smoke.sh PASS",
-     "next": null},
-    {"id": "T02", "subsystem": "rom detection", "status": "verified",
-     "paths": ["src/port/rom.c"], "evidence": "USA Rev1 z64 found in cwd/../run; -rom path works", "next": null},
-    {"id": "T03", "subsystem": "audio (WESS + n64synth)", "status": "verified",
-     "paths": ["src/port/n64synth.c", "src/port/audio_pc.c", "src/doom64/n64cmd.c", "src/doom64/seqload.c"],
-     "evidence": "D64_WAVOUT music+sfx spectrograms; 124 samples decode cleanly (D64_DUMPSAMPLES); Wine output RMS identical",
-     "known_gaps": "linear (not exponential) envelopes; approximate reverb", "next": null},
-    {"id": "T04", "subsystem": "ray tracing", "status": "implemented",
-     "paths": ["renderer/src/vk/rt.rs", "renderer/shaders/vk_rt.comp", "src/port/rtlights.c"],
-     "evidence": "runs on lavapipe; user reports RT working", "next": "T05"},
-    {"id": "T05", "subsystem": "ray tracing", "status": "pending", "deps": ["T04"],
-     "paths": ["renderer/src/vk/rt.rs", "renderer/shaders/vk_composite.frag"],
-     "last_approach": "disabling depth test did not help",
-     "next": "MAP01 doorway grate (BLEND+ALPHA_THRESH mid-texture) mostly vanishes in RT mode: check composite ordering/alpha. Accept: grate visible with -rt at the same spot as -gl (tools/smoke.sh --renderer rt --newgame)"},
-    {"id": "T06", "subsystem": "options pages", "status": "verified",
-     "paths": ["src/port/pc_options.c", "src/doom64/m_main.c"],
-     "evidence": "Options>Graphics screenshot, values cycle (menu4 test)", "next": null},
-    {"id": "T07", "subsystem": "F7 debug page + stats overlay", "status": "implemented",
-     "paths": ["src/port/pc_options.c", "src/doom64/p_tick.c", "src/doom64/st_main.c"],
-     "evidence": "stats overlay screenshot (-set show_stats 1); F7 page itself not exercised headless (no key injection)",
-     "next": "add a D64_KEYS test hook if keyboard-only paths need automated tests"},
-    {"id": "T08", "subsystem": "modern controls", "status": "verified",
-     "paths": ["src/port/input.c", "src/doom64/p_user.c", "src/doom64/p_pspr.c", "src/doom64/r_main.c"],
-     "evidence": "D64_LOOK +/-30 deg screenshots; D64_PCACT jump raises view; weapon keys 1-8 untested",
-     "next": null},
-    {"id": "T09", "subsystem": "60/120 fps interpolation", "status": "verified",
-     "paths": ["src/port/interp.c", "src/port/i_main_pc.c", "src/doom64/d_main.c"],
-     "evidence": "shot_NNNN_k sub-frames advance evenly; D64_TRACE identical at fps 30 and 120", "next": null},
-    {"id": "T10", "subsystem": "save/load", "status": "verified",
-     "paths": ["src/port/savegame.c", "src/doom64/p_tick.c"],
-     "evidence": "save, walk away, load restores position/weapon/ammo; title Load Game works",
-     "known_gaps": "saves tied to struct sizes; lasers not saved", "next": null},
-    {"id": "T11", "subsystem": "Brutal Doom style extras", "status": "implemented",
-     "paths": ["src/doom64/p_user.c", "src/doom64/p_pspr.c", "src/doom64/p_mobj.c", "src/doom64/p_tick.c"],
-     "evidence": "ADS zoom screenshot (ads2); kick runs without crash; gore/fast weapons/autosave untested",
-     "next": "verify kick damage and push near a monster; verify autosave slot written on MAP01 start"},
-    {"id": "T12", "subsystem": "resource packs (pk3/wad)", "status": "pending",
-     "paths": ["addons/doom64-retribution/", "src/doom64/w_wad.c"],
-     "next": "load pk3 (zip) resource packs from a packs/ folder; PNG texture/sprite replacement by lump name. Accept: a test pack replacing one wall texture shows in a screenshot"},
-    {"id": "T13", "subsystem": "RT materials from doom64-rt", "status": "pending", "deps": ["T12", "T04"],
-     "paths": ["addons/doom64-retribution/Retribution-RT-Materials/"],
-     "next": "feed _orm (G roughness, B metallic), _n, _e maps + rt/data/*.json to the RT shader"},
-    {"id": "T14", "subsystem": "release build", "status": "in_progress",
-     "paths": ["tools/make_release.sh", "releases/"],
-     "next": "tools/check.sh linux win && tools/make_release.sh 0.2.0; smoke-test both archives"},
-    {"id": "T15", "subsystem": "workflow tooling", "status": "implemented",
-     "paths": ["CLAUDE.md", "tools/check.sh", "tools/smoke.sh", "tools/setup_env.sh", ".claude/", ".github/workflows/build.yml"],
-     "evidence": "check.sh ok/code/link/env/refusal paths exercised; smoke PASS; setup --check 122 ms",
-     "next": "watch the first CI run that uses tools/check.sh"},
-    {"id": "T16", "subsystem": "MSVC build", "status": "blocked",
-     "evidence": "experimental CI job, continue-on-error; game code relies on -ftrivial-auto-var-init (no MSVC equivalent)",
-     "next": "only if MSVC is required: zero-initialise the locals gcc -Wmaybe-uninitialized lists"}
-  ]
+ "_schema": "status: pending | in_progress | blocked | implemented (code done, not proven) | verified (evidence recorded). Update at milestones; keep entries short.",
+ "updated": "2026-10-09",
+ "tasks": [
+  {
+   "id": "T01",
+   "subsystem": "core port",
+   "status": "verified",
+   "paths": [
+    "src/doom64/",
+    "src/port/",
+    "src/gfx/gbi.c"
+   ],
+   "evidence": "title demo + MAP01 render on GL and Vulkan (lavapipe); D64_TRACE identical GL/VK; tools/smoke.sh PASS",
+   "next": null
+  },
+  {
+   "id": "T02",
+   "subsystem": "rom detection",
+   "status": "verified",
+   "paths": [
+    "src/port/rom.c"
+   ],
+   "evidence": "USA Rev1 z64 found in cwd/../run; -rom path works",
+   "next": null
+  },
+  {
+   "id": "T03",
+   "subsystem": "audio (WESS + n64synth)",
+   "status": "verified",
+   "paths": [
+    "src/port/n64synth.c",
+    "src/port/audio_pc.c",
+    "src/doom64/n64cmd.c",
+    "src/doom64/seqload.c"
+   ],
+   "evidence": "D64_WAVOUT music+sfx spectrograms; 124 samples decode cleanly (D64_DUMPSAMPLES); Wine output RMS identical",
+   "known_gaps": "linear (not exponential) envelopes; approximate reverb",
+   "next": null
+  },
+  {
+   "id": "T04",
+   "subsystem": "ray tracing",
+   "status": "implemented",
+   "paths": [
+    "renderer/src/vk/rt.rs",
+    "renderer/shaders/vk_rt.comp",
+    "src/port/rtlights.c"
+   ],
+   "evidence": "runs on lavapipe; user reports RT working",
+   "next": "T05"
+  },
+  {
+   "id": "T05",
+   "subsystem": "ray tracing",
+   "status": "pending",
+   "deps": [
+    "T04"
+   ],
+   "paths": [
+    "renderer/src/vk/rt.rs",
+    "renderer/shaders/vk_composite.frag"
+   ],
+   "last_approach": "disabling depth test did not help",
+   "next": "MAP01 doorway grate (BLEND+ALPHA_THRESH mid-texture) mostly vanishes in RT mode: check composite ordering/alpha. Accept: grate visible with -rt at the same spot as -gl (tools/smoke.sh --renderer rt --newgame)"
+  },
+  {
+   "id": "T06",
+   "subsystem": "options pages",
+   "status": "verified",
+   "paths": [
+    "src/port/pc_options.c",
+    "src/doom64/m_main.c"
+   ],
+   "evidence": "Options>Graphics screenshot, values cycle (menu4 test)",
+   "next": null
+  },
+  {
+   "id": "T07",
+   "subsystem": "F7 debug page + stats overlay",
+   "status": "implemented",
+   "paths": [
+    "src/port/pc_options.c",
+    "src/doom64/p_tick.c",
+    "src/doom64/st_main.c"
+   ],
+   "evidence": "stats overlay screenshot (-set show_stats 1); F7 page itself not exercised headless (no key injection)",
+   "next": "add a D64_KEYS test hook if keyboard-only paths need automated tests"
+  },
+  {
+   "id": "T08",
+   "subsystem": "modern controls",
+   "status": "verified",
+   "paths": [
+    "src/port/input.c",
+    "src/doom64/p_user.c",
+    "src/doom64/p_pspr.c",
+    "src/doom64/r_main.c"
+   ],
+   "evidence": "D64_LOOK +/-30 deg screenshots; D64_PCACT jump raises view; weapon keys 1-8 untested",
+   "next": null
+  },
+  {
+   "id": "T09",
+   "subsystem": "60/120 fps interpolation",
+   "status": "verified",
+   "paths": [
+    "src/port/interp.c",
+    "src/port/i_main_pc.c",
+    "src/doom64/d_main.c"
+   ],
+   "evidence": "shot_NNNN_k sub-frames advance evenly; D64_TRACE identical at fps 30 and 120",
+   "next": null
+  },
+  {
+   "id": "T10",
+   "subsystem": "save/load",
+   "status": "verified",
+   "paths": [
+    "src/port/savegame.c",
+    "src/doom64/p_tick.c"
+   ],
+   "evidence": "save, walk away, load restores position/weapon/ammo; title Load Game works",
+   "known_gaps": "saves tied to struct sizes; lasers not saved",
+   "next": null
+  },
+  {
+   "id": "T11",
+   "subsystem": "Brutal Doom style extras",
+   "status": "implemented",
+   "paths": [
+    "src/doom64/p_user.c",
+    "src/doom64/p_pspr.c",
+    "src/doom64/p_mobj.c",
+    "src/doom64/p_tick.c"
+   ],
+   "evidence": "ADS zoom screenshot (ads2); kick runs without crash; gore/fast weapons/autosave untested",
+   "next": "verify kick damage and push near a monster; verify autosave slot written on MAP01 start"
+  },
+  {
+   "id": "T12",
+   "subsystem": "resource packs (pk3/wad)",
+   "status": "pending",
+   "paths": [
+    "addons/doom64-retribution/",
+    "src/doom64/w_wad.c"
+   ],
+   "next": "load pk3 (zip) resource packs from a packs/ folder; PNG texture/sprite replacement by lump name. Accept: a test pack replacing one wall texture shows in a screenshot"
+  },
+  {
+   "id": "T13",
+   "subsystem": "RT materials from doom64-rt",
+   "status": "pending",
+   "deps": [
+    "T12",
+    "T04"
+   ],
+   "paths": [
+    "addons/doom64-retribution/Retribution-RT-Materials/"
+   ],
+   "next": "feed _orm (G roughness, B metallic), _n, _e maps + rt/data/*.json to the RT shader"
+  },
+  {
+   "id": "T14",
+   "subsystem": "release build",
+   "status": "verified",
+   "paths": [
+    "tools/make_release.sh",
+    "releases/"
+   ],
+   "next": null,
+   "evidence": "0.2.0 archives built (tools/check.sh linux win OK, make_release.sh); fresh extractions reach MAP01 with ROM next to the exe: Linux native, Windows under Wine (audio WAV written on both)"
+  },
+  {
+   "id": "T15",
+   "subsystem": "workflow tooling",
+   "status": "implemented",
+   "paths": [
+    "CLAUDE.md",
+    "tools/check.sh",
+    "tools/smoke.sh",
+    "tools/setup_env.sh",
+    ".claude/",
+    ".github/workflows/build.yml"
+   ],
+   "evidence": "check.sh ok/code/link/env/refusal/repeat-warning exercised; fresh clone build 23 s with prebuilt SDL3; smoke PASS; setup --check 122 ms; status hook 165 ms",
+   "next": "watch the first CI run that uses tools/check.sh"
+  },
+  {
+   "id": "T16",
+   "subsystem": "MSVC build",
+   "status": "blocked",
+   "evidence": "experimental CI job, continue-on-error; game code relies on -ftrivial-auto-var-init (no MSVC equivalent)",
+   "next": "only if MSVC is required: zero-initialise the locals gcc -Wmaybe-uninitialized lists"
+  }
+ ]
 }

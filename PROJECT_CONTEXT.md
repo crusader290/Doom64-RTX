@@ -28,9 +28,10 @@ F7 debug page (no key injection in tests), weapon keys 1-8, kick damage/push, ex
 fast weapons, autosave slot.
 
 ## Build / test status
-- `tools/check.sh linux win` — OK at the last commit of this session (see git log).
+- `tools/check.sh linux win null` — OK at commit c4f74fc + release commit (0.2.0).
 - `tools/smoke.sh` — PASS (title 400 frames, GL); `--newgame` PASS.
-- Last known-good release: 0.1.1 (`releases/`). 0.2.0 being built (T14).
+- Last known-good release: 0.2.0 (`releases/`), both archives smoke-tested from fresh
+  extractions (Linux native, Windows under Wine).
 
 ## Known problems
 - RT: translucent mid-textures (MAP01 doorway grate) mostly vanish (T05).
