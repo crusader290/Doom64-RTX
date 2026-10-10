@@ -1,30 +1,30 @@
-Doom64-RTX @VERSION@ (preview), commit @COMMIT@
+Doom64-RTX @VERSION@, commit @COMMIT@
 
-No game data is included. Put your own Doom 64 ROM (.z64, .n64 or .v64; USA, USA Rev 1,
-Europe or Japan) next to the executable or in the folder you start it from.
+Requires your own Doom 64 ROM (.z64/.n64/.v64). No ROM is included.
 
-Working: ROM auto-detection, game, menus, Vulkan renderer, OpenGL fallback (automatic if
-Vulkan fails), keyboard/mouse/gamepad, sound and music (N64 synth), 4:3 / 16:9, log file
-with crash reports.
-New in 0.2: save/load anywhere (pause menu, title menu, F5 quicksave, F9 quickload, auto
-save at each level start), mouse look with free aim, jumping (Space), weapon keys 1-8,
-aim down sights (right mouse), kick (V), 30/60/120 fps (interpolated, game logic stays
-30 Hz), Options > Graphics and Options > Gameplay, F7 debug page + stats overlay,
-crosshair, extra gore, fast weapon switching.
-New in 0.4: ray tracing is on by default (falls back automatically when the GPU cannot ray
-trace; F10 or Options > Graphics to switch), the doom64-rt packs come bundled in packs/
-(RT materials, ray traced lost soul and fireball sprites) and are loaded automatically,
-glowing things and textures cast coloured light in the ray traced view.
-New in 0.3: resource packs (PNG texture/sprite replacements from .pk3 files or folders in
-packs/, or -pack <file>) and ray tracing materials (doom64-rt normal, roughness/metal and
-emissive maps; the archived set is Retribution-RT-Materials in the source repository).
-Preview: ray traced world (F10 or Options > Graphics; needs VK_KHR_ray_query).
+New in 0.5.0:
+- Fix MAP01 integer-divide crash in BSP bounding-box projection. Windows crash
+  reports include fault registers and module-relative addresses for diagnosis.
+- Immersive gore: bounded blood sprays, overkill gibs, wall/floor splashes,
+  gravity and fade. Cosmetic randomness does not alter gameplay RNG.
+- Aggressive defaults: 120 FPS, always run, faster weapon switching/firing,
+  stronger kick with more knockback and a shorter cooldown.
+- Cleaner retro main/settings menus with scalable Share Tech Mono text,
+  compact rows, contextual help, audio volume controls and PC key prompts.
+- Remove console password/storage/controller menus from PC flows. Use native
+  save/load slots, F5/F9 and level-start autosaves.
+- One auto-loaded packs/doom64rtx-visuals.pk3 combines compatible Retribution
+  sprites, ceiling-light textures and RT materials. Credits/manifest included.
+- Root build.sh/build.bat download dependencies and initiate builds.
 
-If something goes wrong, send doom64rtx.log (next to doom64rtx.ini: the program folder
-for this portable package, otherwise %APPDATA%\Doom64RTX\Doom64RTX on Windows or
-~/.local/share/Doom64RTX/Doom64RTX on Linux). doom64rtx.old.log is the previous run.
+Validation: Linux and MinGW Windows builds; sanitizer math/gore checks;
+GL combat traces; Vulkan and RT smoke; native Windows MAP01 run.
+Original reported crash camera state was unavailable for exact replay.
 
-Keys: F5/F9 quicksave/quickload, F7 debug, F10 ray tracing, F11 fullscreen, F12 screenshot.
-See README.md.
-Linux build needs glibc 2.39+ (built on Ubuntu 24.04); libSDL3 is bundled.
-Windows build: x86-64, MinGW-w64; SDL3.dll is bundled.
+Known limitations: general GZDoom ZScript/DECORATE/ACS and UDMF map support
+is not implemented in this milestone. Animation/sound upgrades and a bounded
+add-on compatibility layer are planned as subsequent tested releases.
+RT performance and lighting vary by GPU. MSVC remains experimental.
+
+Texture pack assets retain upstream attribution and licence status; see
+packs/CREDITS.txt. Share Tech Mono font is SIL OFL; see assets/fonts/.

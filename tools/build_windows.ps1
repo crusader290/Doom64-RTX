@@ -32,5 +32,7 @@ if ($LASTEXITCODE -ne 0) { throw 'MSYS2 update stopped. Run build.bat again to f
 & $bashPath '--login' '-c' 'pacman -Syu --noconfirm && pacman -S --noconfirm --needed git mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ninja mingw-w64-x86_64-rust mingw-w64-x86_64-sdl3 mingw-w64-x86_64-python'
 if ($LASTEXITCODE -ne 0) { throw 'Dependency installation failed. Run build.bat again after resolving the reported network/package error.' }
 if ($SetupOnly) { exit 0 }
-& $bashPath '--login' '-c' 'set -e; cd "$(cygpath -u "$1")"; cmake -S . -B build-native-win -G Ninja -DCMAKE_BUILD_TYPE=Release; cmake --build build-native-win --parallel; cp /mingw64/bin/SDL3.dll build-native-win/; for dll in libgcc_s_seh-1.dll libwinpthread-1.dll; do if test -f "/mingw64/bin/$dll"; then cp "/mingw64/bin/$dll" build-native-win/; fi; done' 'build-windows' $repoPath
+$env:D64_BUILD_ROOT = $repoPath
+$nativeScript = (Join-Path $PSScriptRoot 'build_native_windows.sh').Replace('\', '/')
+& $bashPath '--login' $nativeScript
 exit $LASTEXITCODE

@@ -451,6 +451,12 @@ static void test_hooks(void)
     {
         volatile int *bad = NULL;
         SDL_Log("D64_CRASH_AT: crashing on purpose to test the crash handler");
+        if (SDL_getenv("D64_CRASH_DIVIDE")) {
+            /* [PC] Test the exact exception class reported by the user. */
+            volatile int numerator = 1, denominator = 0;
+            volatile int result = numerator / denominator;
+            (void)result;
+        }
         *bad = 1;
     }
     if (q && frame_no >= (unsigned)SDL_strtoul(q, NULL, 10))

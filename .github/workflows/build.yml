@@ -49,6 +49,10 @@ jobs:
           cmake --build /tmp/sdl-build && cmake --install /tmp/sdl-build
       - name: Build
         run: D64_DEPS="$PWD/deps" tools/check.sh linux
+      - name: Regression checks
+        run: |
+          bash tools/test_bsp_math.sh
+          bash tools/test_gore.sh
       - name: Upload build log
         if: failure()
         uses: actions/upload-artifact@v4
@@ -61,6 +65,8 @@ jobs:
           cp build/doom64rtx dist/
           cp -L deps/sdl3-linux/lib/libSDL3.so.0 dist/
           cp README.md LICENSE dist/
+          cp -r assets dist/
+          python3 tools/pack_visuals.py dist/packs/doom64rtx-visuals.pk3
       - uses: actions/upload-artifact@v4
         with:
           name: doom64rtx-linux-x86_64
@@ -96,6 +102,8 @@ jobs:
         run: |
           mkdir -p dist
           cp build-win/doom64rtx.exe build-win/SDL3.dll README.md LICENSE dist/
+          cp -r assets dist/
+          python3 tools/pack_visuals.py dist/packs/doom64rtx-visuals.pk3
       - uses: actions/upload-artifact@v4
         with:
           name: doom64rtx-windows-x86_64
