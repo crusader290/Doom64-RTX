@@ -21,11 +21,11 @@ cp build-win/doom64rtx.exe build-win/SDL3.dll "$W/"
 x86_64-w64-mingw32-strip "$W/doom64rtx.exe" "$W/SDL3.dll"
 # Bundled resource packs (auto-loaded from packs/): the doom64-rt sprite packs that
 # replace Doom 64 lumps, and the doom64-rt RT materials as one pk3.
-A=addons/doom64-retribution
-python3 tools/pack_materials.py "$A/Retribution-RT-Materials" "$TMP/doom64rt-materials.pk3"
+python3 tools/pack_visuals.py "$TMP/doom64rtx-visuals.pk3"
 for d in "$L" "$W"; do
+  cp -r assets "$d/"
   mkdir -p "$d/packs"
-  cp "$A/d64r-lostsoul-rt.pk3" "$A/d64r-caco-ball-recolor.pk3" "$TMP/doom64rt-materials.pk3" "$d/packs/"
+  cp "$TMP/doom64rtx-visuals.pk3" "$d/packs/"
   cp tools/release/PACKS_CREDITS.txt "$d/packs/CREDITS.txt"
 done
 for d in "$L" "$W"; do

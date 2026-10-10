@@ -1,6 +1,10 @@
 /* r_main.c */
 
 #include "doomdef.h"
+#ifdef D64_PC
+#include "gore.h" /* [PC] */
+#include "interp.h"
+#endif
 #include "r_local.h"
 #ifdef D64_PC
 #include "rtlights.h"
@@ -294,6 +298,10 @@ void R_RenderPlayerView(void) // 80023448
 
     // Phase 3
     R_RenderAll();
+#ifdef D64_PC
+    /* [PC] cosmetic geometry uses the world camera and shared GL/VK/RT path. */
+    I_PCGoreDraw((float)I_PCInterpDrawFraction());
+#endif
 
     if (cameratarget == viewplayer->mo)
         R_RenderPSprites();

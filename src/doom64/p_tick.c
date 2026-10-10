@@ -4,6 +4,7 @@
 #include "pc_options.h" /* [PC] */
 #include "savegame.h"
 #include "config.h"
+#include "gore.h" /* [PC] */
 #endif
 #include "st_main.h"
 
@@ -294,6 +295,9 @@ int P_Ticker (void)//80021A00
 		P_RunMacros();
 
 		ST_Ticker(); // update status bar
+#ifdef D64_PC
+        I_PCGoreTick(); /* [PC] once per unpaused logic tic */
+#endif
 	}
 
 	//ST_DebugPrint("%d",Z_FreeMemory (mainzone));
@@ -380,6 +384,9 @@ extern int end_time;    // 80063394
 void P_Start (void) // 80021C50
 {
     fadebright_t *fb;
+#ifdef D64_PC
+    I_PCGoreReset(); /* [PC] no cosmetic pointers survive level/load changes */
+#endif
 
     DrawerStatus = 1;
 
@@ -419,6 +426,9 @@ void P_Start (void) // 80021C50
 
 void P_Stop (int exit) // 80021D58
 {
+#ifdef D64_PC
+    I_PCGoreReset(); /* [PC] before freeing sectors */
+#endif
     /* [d64] stop plasma buzz */
 	S_StopSound(0, sfx_electric);
 

@@ -383,10 +383,8 @@ void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, int damage) // 800192B8
 	mobj_t	*th;
 	int i, count = 3;
 
-#ifdef D64_PC
-	if (pc_config.gore && !demoplayback && !demorecording)
-		count = damage >= 20 ? 8 : 5; /* [PC] Extra Gore */
-#endif
+    /* [PC] Cosmetic extra gore is handled by src/port/gore.c without
+     * consuming gameplay RNG or creating additional game objects. */
 	for(i = 0; i < count; i++)
     {
         x += ((P_Random()-P_Random())<<12);

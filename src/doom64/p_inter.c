@@ -2,6 +2,9 @@
 
 
 #include "doomdef.h"
+#ifdef D64_PC
+#include "gore.h" /* [PC] cosmetic damage/death effects */
+#endif
 #include "p_local.h"
 #include "st_main.h"
 
@@ -823,6 +826,9 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 	/* */
 	/* do the damage */
 	/* */
+#ifdef D64_PC
+    I_PCGoreDamage(target, inflictor, damage); /* [PC] before health/death state changes */
+#endif
 	target->health -= damage;
 	if (target->health <= 0)
 	{

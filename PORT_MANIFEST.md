@@ -26,6 +26,8 @@ Legend: ✅ done & verified at runtime · 🟡 compiles/runs, needs more verific
 | interp.c/.h | ✅ | 60/120 fps: snapshot before each tic, blend things/sectors/view/weapon while drawing, restore after |
 | savegame.c/.h | ✅ | full level save/load with pointer references; 9 slots (7 = quick F5/F9, 8 = auto) |
 | respack.c/.h, third_party/stb_image.h | ✅ | PNG resource packs (pk3 zip or folders) replacing textures/sprites by lump name; lump memory registry for gbi.c |
+| gore.c/.h | ✅ | bounded cosmetic particles/gibs and floor/wall stains; own RNG, no game actors or save changes; demo/recording disabled |
+| pc_text.c/.h, third_party/stb_truetype.h | ✅ | scalable Share Tech Mono atlas and ordered overlay rectangles/text; original art fallback when font unavailable |
 | s_sound_stub.c | ✅ | silent sound API, only for -DD64_WITH_AUDIO=OFF |
 
 ## Graphics (src/gfx, renderer/)
@@ -58,7 +60,7 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | m_password.c | 🟡 | N64 byte order for password words (compatible passwords) |
 | f_main.c, m_main.c, r_phase1/2/3.c, st_main.c | ✅ | BE16() on asset header fields |
 | p_user.c | 🟡 | mouse turning hook |
-| m_main.c (Display menu) | 🟡 | [PC] Aspect Ratio 4:3/16:9 item |
+| m_main.c, st_main.c, in_main.c, d_screens.c (PC UI) | ✅ | modern retro menus, Graphics/Gameplay/Audio/Controls, PC prompts/save slots; console storage/password screens bypassed |
 | r_phase1.c, r_main.c | 🟡 | [PC] R_PCFovInvScale widens BSP culling for 16:9; RT_CollectLights hook |
 | g_game.c | 🟡 | [PC] map load logging |
 | g_game.c, r_local.h | ✅ | extern fixes |
@@ -78,5 +80,7 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | tools/check.sh | ✅ | build entry point: preflight, incremental build, first-error excerpt, failure class, repeat guard, build-logs/ |
 | tools/smoke.sh | ✅ | headless runtime test (Xvfb, ROM, presses, shots, WAV); PASS/FAIL/SKIPPED |
 | tools/setup_env.sh | ✅ | idempotent environment setup (apt, rust target, prebuilt SDL3 in ../deps); `--check` |
+| build.sh, build.bat, tools/build_windows.ps1 | 🟡 | root launchers; Linux/Windows cross build verified; native Windows SHA256-verified portable MSYS2 setup verified, native compile being tested |
+| tools/pack_visuals.py | ✅ | reproducible single PK3: sprites, two ceiling-light replacements, RT maps/defaults; per-entry origins, no ROM required |
 | tools/session_status.sh, .claude/ | ✅ | SessionStart status hook; skills build-diagnose, runtime-test, session-handoff |
 | tools/dm64ex.c | ref | Erick194's ROM extractor (reference for ROM offsets), not built |

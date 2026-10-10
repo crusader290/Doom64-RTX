@@ -276,6 +276,10 @@ void D_CreditDrawer(void) // 8002BBE4
 
 void D_OpenControllerPak(void) // 8002BE28
 {
+#ifdef D64_PC
+    /* [PC] Startup uses PC save slots, with no console storage manager. */
+    return;
+#else
     unsigned int oldbuttons;
 
     oldbuttons = I_GetControllerData();
@@ -290,4 +294,5 @@ void D_OpenControllerPak(void) // 8002BE28
         I_WIPE_FadeOutScreen();
     }
     return;
+#endif
 }

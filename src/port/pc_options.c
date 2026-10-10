@@ -57,13 +57,14 @@ static int step_choice(int cur, const int *vals, int n, int dir)
 /* ---- Graphics ------------------------------------------------------------ */
 
 enum { G_RT, G_RT_SPP, G_RT_BOUNCES, G_RT_DENOISE, G_FPS, G_ASPECT, G_VSYNC, G_FULLSCREEN, G_RENDERER, G_PACKS,
+       G_BRIGHTNESS, G_FILTER,
        G_COUNT };
 
 static const char *gfx_label(int i)
 {
     static const char *l[G_COUNT] = { "Ray Tracing", "RT Samples", "RT Bounces", "RT Denoiser",
                                       "Frame Rate", "Aspect Ratio", "VSync", "Fullscreen", "Renderer",
-                                      "Texture Packs" };
+                                      "Texture Packs", "Brightness", "Texture Filter" };
     return l[i];
 }
 
@@ -96,6 +97,8 @@ static const char *gfx_value(int i, char *buf, int len)
         return pc_config_file.renderer == RENDERER_OPENGL ? "OpenGL" : "Vulkan";
     case G_PACKS:
         return onoff(pc_config.respacks);
+    case G_BRIGHTNESS: SDL_snprintf(buf, len, "%d%%", pc_config.brightness); return buf;
+    case G_FILTER: return pc_config.filter ? "Nearest" : "Smooth";
     }
     return NULL;
 }
@@ -108,6 +111,12 @@ static int gfx_change(int i, int dir)
 
     switch (i)
     {
+    case G_BRIGHTNESS:
+        CONFIG_SET(brightness, SDL_clamp(pc_config.brightness + (dir < 0 ? -5 : 5), 0, 100));
+        brightness = pc_config.brightness;
+        P_RefreshBrightness();
+        break;
+    case G_FILTER: CONFIG_SET(filter, !pc_config.filter); break;
     case G_RT:
         I_PCToggleRaytracing();
         break;
@@ -153,13 +162,13 @@ static int gfx_change(int i, int dir)
 /* ---- Gameplay ------------------------------------------------------------ */
 
 enum { P_MOUSELOOK, P_INVERT, P_SENS, P_RUN, P_AUTOAIM, P_CROSSHAIR, P_JUMP, P_BOB, P_ADS, P_FASTWEAP,
-       P_GORE, P_COUNT };
+       P_GORE, P_AUTOSAVE, P_COUNT };
 
 static const char *play_label(int i)
 {
     static const char *l[P_COUNT] = { "Mouse Look", "Invert Mouse", "Mouse Speed", "Always Run",
                                       "Autoaim", "Crosshair", "Jumping", "Bobbing", "Aim Sights",
-                                      "Fast Weapons", "Extra Gore" };
+                                      "Fast Weapons", "Immersive Gore", "Autosave" };
     return l[i];
 }
 
@@ -182,6 +191,7 @@ static const char *play_value(int i, char *buf, int len)
     case P_ADS: return onoff(pc_config.ads);
     case P_FASTWEAP: return onoff(pc_config.fast_weapons);
     case P_GORE: return onoff(pc_config.gore);
+    case P_AUTOSAVE: return onoff(pc_config.autosave);
     }
     return NULL;
 }
@@ -215,6 +225,7 @@ static int play_change(int i, int dir)
     case P_ADS: CONFIG_SET(ads, !pc_config.ads); break;
     case P_FASTWEAP: CONFIG_SET(fast_weapons, !pc_config.fast_weapons); break;
     case P_GORE: CONFIG_SET(gore, !pc_config.gore); break;
+    case P_AUTOSAVE: CONFIG_SET(autosave, !pc_config.autosave); break;
     }
     Config_Save();
     return 0;
@@ -383,6 +394,8 @@ int PCOpt_Count(int page)
     case PCPAGE_GRAPHICS: return G_COUNT;
     case PCPAGE_GAMEPLAY: return P_COUNT;
     case PCPAGE_DEBUG: return D_COUNT;
+    case PCPAGE_AUDIO: return 3;
+    case PCPAGE_CONTROLS: return 10;
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return PC_SAVE_SLOTS;
     }
@@ -396,6 +409,8 @@ const char *PCOpt_Title(int page)
     case PCPAGE_GRAPHICS: return "Graphics";
     case PCPAGE_GAMEPLAY: return "Gameplay";
     case PCPAGE_DEBUG: return "Debug";
+    case PCPAGE_AUDIO: return "Audio";
+    case PCPAGE_CONTROLS: return "Controls";
     case PCPAGE_SAVE: return "Save Game";
     case PCPAGE_LOAD: return "Load Game";
     }
@@ -404,6 +419,8 @@ const char *PCOpt_Title(int page)
 
 const char *PCOpt_Label(int page, int i)
 {
+    static const char *audio[] = {"Music Volume", "Effects Volume", "Output Rate"};
+    static const char *controls[] = {"Move / Strafe", "Fire", "Aim Sights", "Use / Open", "Jump", "Kick", "Weapons", "Quick Save / Load", "Debug / Ray Tracing", "Fullscreen / Capture"};
     if (i < 0 || i >= PCOpt_Count(page))
         return "";
     switch (page)
@@ -411,6 +428,8 @@ const char *PCOpt_Label(int page, int i)
     case PCPAGE_GRAPHICS: return gfx_label(i);
     case PCPAGE_GAMEPLAY: return play_label(i);
     case PCPAGE_DEBUG: return dbg_label(i);
+    case PCPAGE_AUDIO: return audio[i];
+    case PCPAGE_CONTROLS: return controls[i];
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return slot_label(i);
     }
@@ -419,6 +438,7 @@ const char *PCOpt_Label(int page, int i)
 
 const char *PCOpt_Value(int page, int i, char *buf, int len)
 {
+    static const char *keys[] = {"W A S D", "LMB / Ctrl", "RMB", "E / MMB", "Space", "V / Mouse4", "1-8 / Wheel", "F5 / F9", "F7 / F10", "F11 / F12"};
     if (i < 0 || i >= PCOpt_Count(page))
         return NULL;
     switch (page)
@@ -426,6 +446,11 @@ const char *PCOpt_Value(int page, int i, char *buf, int len)
     case PCPAGE_GRAPHICS: return gfx_value(i, buf, len);
     case PCPAGE_GAMEPLAY: return play_value(i, buf, len);
     case PCPAGE_DEBUG: return dbg_value(i, buf, len);
+    case PCPAGE_CONTROLS: return keys[i];
+    case PCPAGE_AUDIO:
+        SDL_snprintf(buf, len, i == 2 ? "%d Hz" : "%d%%",
+                     i == 0 ? pc_config.music_volume : i == 1 ? pc_config.sfx_volume : pc_config.audio_rate);
+        return buf;
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return slot_value(i, buf, len);
     }
@@ -441,6 +466,18 @@ int PCOpt_Change(int page, int i, int dir)
     case PCPAGE_GRAPHICS: return gfx_change(i, dir);
     case PCPAGE_GAMEPLAY: return play_change(i, dir);
     case PCPAGE_DEBUG: return dbg_change(i, dir);
+    case PCPAGE_AUDIO:
+        if (i == 0) {
+            CONFIG_SET(music_volume, SDL_clamp(pc_config.music_volume + (dir < 0 ? -5 : 5), 0, 100));
+            MusVolume = pc_config.music_volume; S_SetMusicVolume(MusVolume);
+        } else if (i == 1) {
+            CONFIG_SET(sfx_volume, SDL_clamp(pc_config.sfx_volume + (dir < 0 ? -5 : 5), 0, 100));
+            SfxVolume = pc_config.sfx_volume; S_SetSoundVolume(SfxVolume);
+        } else {
+            static const int rates[] = {22050, 44100, 48000};
+            CONFIG_SET(audio_rate, step_choice(pc_config.audio_rate, rates, 3, dir));
+        }
+        Config_Save(); return 0;
     case PCPAGE_SAVE: return save_change(i, dir);
     case PCPAGE_LOAD: return load_change(i, dir);
     }
@@ -458,4 +495,31 @@ int PCOpt_IsAction(int page, int i)
 int PCOpt_ValueX(int page)
 {
     return (page == PCPAGE_SAVE || page == PCPAGE_LOAD) ? 140 : 214;
+}
+
+const char *PCOpt_Help(int page, int item)
+{
+    if (page == PCPAGE_GRAPHICS) {
+        static const char *help[] = {
+            "F10 toggles tracing on supported Vulkan GPUs.", "More samples reduce noise and cost GPU time.",
+            "Indirect light bounces. Higher costs GPU time.", "Smooth noisy lighting across frames.",
+            "30 Hz logic; 60/120 fps interpolate motion.", "Wider view; menus and HUD retain proportions.",
+            "Sync presentation to the display refresh.", "F11 or Alt+Enter toggles fullscreen.",
+            "Renderer changes apply after restarting.", "Bundled sprite and RT material upgrades.",
+            "Lift visibility while preserving sector light.", "Nearest is crisp; Smooth blends texels."};
+        return item >= 0 && item < G_COUNT ? help[item] : "";
+    }
+    if (page == PCPAGE_GAMEPLAY) {
+        if (item == P_FASTWEAP) return "Faster switching and attack recovery. Demos stay classic.";
+        if (item == P_GORE) return "Blood spray, wall splashes, floor stains and overkill gibs.";
+        if (item == P_AUTOSAVE) return "Keep an Auto slot at each level start. F5/F9 quicksave/load.";
+        if (item == P_RUN) return "Run by default; hold Shift to walk.";
+        if (item == P_ADS) return "Hold RMB to focus your view. V kicks without switching.";
+        return "Changes apply immediately and are saved to your configuration.";
+    }
+    if (page == PCPAGE_AUDIO) return item == 2 ? "Output rate changes apply after restarting." : "Separate music and effects levels; changes apply immediately.";
+    if (page == PCPAGE_CONTROLS) return "Keyboard / mouse shortcuts. Standard gamepads supported.";
+    if (page == PCPAGE_SAVE) return "Confirm to save. The Auto slot is managed by the game.";
+    if (page == PCPAGE_LOAD) return "Confirm a populated slot to restore the level.";
+    return "Developer tools for testing gameplay and renderer behavior.";
 }

@@ -5,6 +5,7 @@
 #include "st_main.h"
 #ifdef D64_PC
 #include "pc_options.h" /* [PC] */
+#include "pc_text.h"
 #endif
 
 //intermission
@@ -89,6 +90,8 @@ char *ControlText[] =   //8007517C
 #define M_TXT53 "Gameplay"      // [PC]
 #define M_TXT54 "Save Game"     // [PC]
 #define M_TXT55 "Load Game"     // [PC]
+#define M_TXT56 "Audio"         // [PC]
+#define M_TXT57 "Controls"      // [PC]
 
 char *MenuText[] =   // 8005ABA0
 {
@@ -104,7 +107,7 @@ char *MenuText[] =   // 8005ABA0
     M_TXT45, M_TXT46, M_TXT47,
     M_TXT48, M_TXT49, M_TXT50,  // [GEC] NEW
     M_TXT51, M_TXT52, M_TXT53,  // [PC]
-    M_TXT54, M_TXT55            // [PC]
+    M_TXT54, M_TXT55, M_TXT56, M_TXT57 // [PC]
 };
 
 #ifdef D64_PC
@@ -141,17 +144,14 @@ menuitem_t Menu_Skill[4] = // 8005A990
 };
 
 #ifdef D64_PC
-#define OPTIONS_ITEMS 8 /* [PC] +Graphics, +Gameplay */
+#define OPTIONS_ITEMS 5 /* [PC] Native settings and saves replace console menus. */
 menuitem_t Menu_Options[OPTIONS_ITEMS] = // 8005A9C0
 {
-    {  0, 102, 50 },    // Control Pad
-    { 41, 102, 68 },    // Control Stick
-    {  1, 102, 86 },    // Volume
-    {  2, 102, 104},    // Display
-    { 52, 102, 122},    // [PC] Graphics
-    { 53, 102, 140},    // [PC] Gameplay
-    {  3, 102, 158},    // Password
-    {  6, 102, 176},    // Return
+    { 52, 102, 64 },    // [PC] Graphics
+    { 53, 102, 88 },    // [PC] Gameplay
+    { 56, 102, 112},    // [PC] Audio
+    { 57, 102, 136},    // [PC] Controls
+    {  6, 102, 172},    // Return
 };
 #else
 #define OPTIONS_ITEMS 6
@@ -411,6 +411,10 @@ int M_RunTitle(void) // 80007630
 
 int M_ControllerPak(void) // 80007724
 {
+#ifdef D64_PC
+    /* [PC] PC save slots own persistence; no console storage dialogs. */
+    return ga_exit;
+#else
     int exit;
     int ret;
     boolean PakBad;
@@ -508,6 +512,7 @@ int M_ControllerPak(void) // 80007724
     }
 
     return exit;
+#endif /* D64_PC */
 }
 
 #define MAXSENSIVITY    20
@@ -668,7 +673,7 @@ extern int gobalcheats; // [GEC]
  * src/port/pc_options.c; left/right change a value, confirm cycles it or
  * runs an action, Start/B go back.
  */
-#define PCPAGE_ROWS 9
+#define PCPAGE_ROWS 8
 static int pc_page;
 
 static int M_PCPageTicker(void)
@@ -725,28 +730,37 @@ static int M_PCPageTicker(void)
 
 static void M_PCPageDrawer(void)
 {
-    char buf[32];
+    char buf[96], position[32];
     const char *val;
     int i, y, count;
 
-    ST_DrawString(-1, 20, (char *)PCOpt_Title(pc_page), text_alpha | 0xc0000000);
+    M_DrawOverlay(20, 10, 300, 232, 176);
+    PCText_Draw(32, 18, 19, PCOpt_Title(pc_page), text_alpha | 0xd9c2a000);
+    PCText_Box(32, 40, 256, .5f, 0x55463aff);
 
     count = PCOpt_Count(pc_page);
+    sprintf(position, "%02d / %02d", cursorpos + 1, count);
+    PCText_Draw(251, 24, 9, position, text_alpha | 0x81766b00);
     for (i = linepos; i < count && i < linepos + PCPAGE_ROWS; i++)
     {
-        y = 46 + (i - linepos) * 18;
-        ST_DrawString(52, y, (char *)PCOpt_Label(pc_page, i), text_alpha | 0xc0000000);
+        unsigned color = text_alpha | (i == cursorpos ? 0xffe2b700 : 0xb9afa300);
+        y = 47 + (i - linepos) * 18;
+        if (i == cursorpos) {
+            PCText_Box(28, y, 264, 17, 0x241b19b0);
+            PCText_Box(28, y + 3, 1.5f, 11, text_alpha | 0xd84c3900);
+        }
+        PCText_Draw(36, y + 2, 11, PCOpt_Label(pc_page, i), color);
         val = PCOpt_Value(pc_page, i, buf, sizeof(buf));
-        if (val)
-            ST_DrawString(PCOpt_ValueX(pc_page), y, (char *)val, text_alpha | 0xc0000000);
+        if (val) {
+            float size = pc_page == PCPAGE_SAVE || pc_page == PCPAGE_LOAD ? 9 : 11;
+            float x = 283 - PCText_Width(size, val);
+            if (x < 155) x = 155;
+            PCText_Draw(x, y + 2, size, val, color);
+        }
     }
-
-    if (linepos > 0)
-        ST_DrawString(-1, 32, "- more -", text_alpha | 0xffffff00);
-    if (linepos + PCPAGE_ROWS < count)
-        ST_DrawString(-1, 210, "- more -", text_alpha | 0xffffff00);
-
-    ST_DrawSymbol(52 - 37, 46 + (cursorpos - linepos) * 18 - 9, MenuAnimationTic + 70, text_alpha | 0xffffff00);
+    PCText_Box(32, 193, 256, .5f, 0x55463aff);
+    PCText_Draw(32, 201, 8, PCOpt_Help(pc_page, cursorpos), text_alpha | 0xb19b8000);
+    PCText_Draw(32, 218, 8, "UP/DOWN SELECT   LEFT/RIGHT CHANGE   ESC BACK", text_alpha | 0x8e857900);
 }
 
 int M_PCOptionsPage(int page)
@@ -1482,6 +1496,13 @@ int M_MenuTicker(void) // 80007E0C
                         return M_PCOptionsPage(PCPAGE_LOAD);
                     break;
 
+                case 56: // [PC] Audio
+                    if (truebuttons) return M_PCOptionsPage(PCPAGE_AUDIO);
+                    break;
+                case 57: // [PC] Keyboard/mouse control reference
+                    if (truebuttons) return M_PCOptionsPage(PCPAGE_CONTROLS);
+                    break;
+
                 case 35: // LOCK MONSTERS
                     /* Not available in the release code */
                     /*
@@ -1690,6 +1711,34 @@ void M_MenuTitleDrawer(void) // 80008E7C
 {
     menuitem_t *item;
     int i;
+#ifdef D64_PC
+    /* [PC] Keep the original title art with scalable, restrained retro UI. */
+    if (PCText_Available() && (MenuItem == Menu_Title || MenuItem == Menu_Options ||
+                              MenuItem == Menu_Game || MenuItem == Menu_Skill)) {
+        if (MenuItem != Menu_Title) {
+            M_DrawOverlay(24, 10, 296, 232, 120);
+            PCText_Draw(38, 18, 19, MenuItem == Menu_Options ? "Settings" :
+                        MenuItem == Menu_Game ? "Paused" : "Choose Your Skill", text_alpha | 0xd9c2a000);
+            PCText_Box(38, 41, 244, .5f, 0x55463aff);
+        } else PCText_Draw(-1, 121, 8, "R A Y   T R A C E D", text_alpha | 0x99857400);
+        for (i = 0; i < itemlines; i++) {
+            menuitem_t *pc_item = &MenuItem[i];
+            unsigned color = text_alpha | (i == cursorpos ? 0xffe2b700 : 0xb9afa300);
+            int pc_y = MenuItem == Menu_Title ? 148 + i * 23 : pc_item->y + 3;
+            int pc_x = MenuItem == Menu_Title ? 93 : 51;
+            if (i == cursorpos) {
+                PCText_Box(pc_x - 10, pc_y - 3, MenuItem == Menu_Title ? 154 : 226, 20, 0x211a18c0);
+                PCText_Box(pc_x - 10, pc_y + 1, 1.5f, 12, text_alpha | 0xba493700);
+            }
+            PCText_Draw(pc_x, pc_y, MenuItem == Menu_Title ? 15 : 12,
+                        pc_item->casepos == 6 ? "Back" : MenuText[pc_item->casepos], color);
+        }
+        PCText_Draw(-1, MenuItem == Menu_Title ? 229 : 219, 7,
+                    MenuItem == Menu_Game ? "ESC  RESUME    F5/F9  QUICK SAVE/LOAD" :
+                    "UP/DOWN  SELECT    ENTER  CONFIRM    ESC  BACK", text_alpha | 0x92877700);
+        return;
+    }
+#endif
 
     if (MenuItem == Menu_Game)
     {
@@ -1933,6 +1982,13 @@ void M_DrawBackground(int x, int y, int color, char *name) // 80009A68
     int yh, xh, t;
     int offset;
     byte *data;
+#ifdef D64_PC
+    /* [PC] Make space for the title menu rather than crowding full-size art. */
+    float pc_scale = 1;
+    if (MenuItem == Menu_Title && !strcmp(name, "TITLE") && PCText_Available()) {
+        pc_scale = .68f; x = 89; y = 29; color = 160;
+    }
+#endif
 
     data = (byte *)W_CacheLumpName(name, PU_CACHE, dec_jag);
 
@@ -2008,14 +2064,26 @@ void M_DrawBackground(int x, int y, int color, char *name) // 80009A68
 
         gSPTextureRectangle(GFX1++,
             (x << 2), (y << 2),
+#ifdef D64_PC
+            ((x + (int)(width * pc_scale)) << 2), ((y + (int)(yh * pc_scale)) << 2),
+#else
             ((width + x) << 2), ((yh + y) << 2),
+#endif
             G_TX_RENDERTILE,
             (0 << 5), (t << 5),
+#ifdef D64_PC
+            (int)(1024 / pc_scale), (int)(1024 / pc_scale));
+#else
             (1 << 10), (1 << 10));
+#endif
 
         height -= yh;
         t += yh;
+#ifdef D64_PC
+        y += (int)(yh * pc_scale);
+#else
         y += yh;
+#endif
     }
 
     globallump = -1;

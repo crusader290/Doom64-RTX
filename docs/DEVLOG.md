@@ -80,3 +80,12 @@ to docs/DISCOVERIES.md, task state to docs/tasks.json.
   (default audio_rate=44100, pitch ratios scale automatically), reverb params approximated.
 - Container setup used: `apt-get install glslang-tools mingw-w64 wine64 wine patchelf libvulkan-dev libx11-dev
   libxext-dev libwayland-dev libxkbcommon-dev libgl-dev libegl-dev libasound2-dev libpulse-dev`.
+
+### 2026-10-10 — Codex 0.5.0 milestone
+- Separate branch codex/immersive-gore-crash-fix; c08e42a crash fix already pushed.
+- Bounded cosmetic gore with demo-safe RNG and collision; stronger kick/fast combat defaults, 120 FPS.
+- Retro TrueType UI revised after user feedback; removed PC password/console storage/controller menus.
+- Consolidated compatible Retribution art into one reproducible PK3 with per-file provenance.
+- Added root Linux/Windows build launchers with dependency downloads; native setup verified.
+- Sanitizer tests, both platform builds and GL/Vulkan/RT smoke passed; final packaging/native build pending.
+- Remaining requested milestones: animations/sounds, broader QoL, add-on script compatibility.

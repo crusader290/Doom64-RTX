@@ -16,7 +16,7 @@ SDL_PREFIX="$DEPS/sdl3-linux"
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1
 
-APT_PKGS="cmake ninja-build build-essential pkg-config glslang-tools mingw-w64 patchelf xvfb
+APT_PKGS="git curl ca-certificates python3 cmake ninja-build build-essential pkg-config glslang-tools mingw-w64 patchelf xvfb
 mesa-vulkan-drivers libgl1-mesa-dri libvulkan-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev
 libxi-dev libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev libegl-dev libgl-dev libdecor-0-dev
 libasound2-dev libpulse-dev libudev-dev libdbus-1-dev"

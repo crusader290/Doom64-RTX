@@ -4,6 +4,7 @@
 #include "st_main.h"
 #ifdef D64_PC
 #include "config.h" /* [PC] */
+#include "pc_text.h"
 #endif
 #include "r_local.h"
 
@@ -520,6 +521,26 @@ void ST_DrawNumber(int x, int y, int value, int mode, int color) // 8002A79C
 
 void ST_DrawString(int x, int y, char *text, int color) // 8002A930
 {
+#ifdef D64_PC
+    /* [PC] Replace console glyph prompts with readable PC key names. */
+    if (PCText_Available()) {
+        char pc_text[256];
+        size_t pc_n = 0;
+        const unsigned char *pc_s = (const unsigned char *)text;
+        while (*pc_s && pc_n < sizeof(pc_text) - 1) {
+            if (*pc_s < 128) pc_text[pc_n++] = (char)*pc_s;
+            else {
+                const char *key = *pc_s == 0x8d ? "Esc" : *pc_s == 0x85 ? "Esc" :
+                                  *pc_s == 0x84 ? "Enter" : "Arrow";
+                while (*key && pc_n < sizeof(pc_text) - 1) pc_text[pc_n++] = *key++;
+            }
+            pc_s++;
+        }
+        pc_text[pc_n] = 0;
+        PCText_Draw((float)x, (float)y, 15, pc_text, (unsigned)color);
+        return;
+    }
+#endif
     byte c;
     int xpos, ypos, index;
 

@@ -32,3 +32,4 @@ target/
 
 # tools/check.sh logs
 /build-logs/
+/build-logs-*.txt

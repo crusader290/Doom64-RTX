@@ -17,6 +17,7 @@
 #include "gbi.h"
 #include "d64gfx.h"
 #include "respack.h"
+#include "pc_text.h"
 
 #define MAX_VERTS_OUT   (1 << 18)
 #define MAX_CMDS_OUT    (1 << 14)
@@ -867,6 +868,40 @@ static void begin_draw(uint32_t extra_flags, int textured, int tile_index)
         world_first_cmd = out_cn;
 }
 
+void GBI_OverlayQuad(uint32_t tex, float x, float y, float w, float h,
+                     float u0, float v0, float u1, float v1, unsigned color)
+{
+    static const int corner[6] = {0, 1, 2, 0, 2, 3};
+    D64GfxDrawCmd c = {0};
+    float px[4] = {x, x+w, x+w, x}, py[4] = {y, y, y+h, y+h};
+    float u[4] = {u0, u1, u1, u0}, v[4] = {v0, v0, v1, v1};
+    int i;
+    if (out_vn + 6 > MAX_VERTS_OUT || out_cn + 1 >= MAX_CMDS_OUT) return;
+    c.tex[0] = tex;
+    c.flags = D64GFX_CMD_BLEND | D64GFX_CMD_FILTER;
+    c.wrap[0] = D64GFX_WRAP_CLAMP | (D64GFX_WRAP_CLAMP << 2);
+    c.cc[0] = D64GFX_CC_TEXEL0; c.cc[1] = D64GFX_CC_ZERO;
+    c.cc[2] = D64GFX_CC_SHADE; c.cc[3] = D64GFX_CC_ZERO;
+    c.cc[4] = D64GFX_CC_TEXEL0_A; c.cc[5] = D64GFX_CC_ZERO;
+    c.cc[6] = D64GFX_CC_SHADE_A; c.cc[7] = D64GFX_CC_ZERO;
+    memcpy(c.cc + 8, c.cc, 8);
+    c.scissor[2] = (int16_t)(vw + .999f); c.scissor[3] = 240;
+    if (!cur_cmd_valid || !same_state(&cur_cmd, &c)) {
+        flush_cmd(); c.first_vertex = out_vn; cur_cmd = c; cur_cmd_valid = 1;
+    }
+    for (i = 0; i < 6; i++) {
+        int k = corner[i];
+        D64GfxVertex *vert = &out_v[out_vn++];
+        memset(vert, 0, sizeof(*vert));
+        vert->pos[0] = (px[k] / 160 - 1) * 320 / vw;
+        vert->pos[1] = 1 - py[k] / 120; vert->pos[3] = 1;
+        vert->uv[0] = u[k]; vert->uv[1] = v[k];
+        vert->shade[0] = color >> 24; vert->shade[1] = color >> 16;
+        vert->shade[2] = color >> 8; vert->shade[3] = color;
+        cur_cmd.vertex_count++;
+    }
+}
+
 static void tile_uv(const tile_t *tl, float s, float t, float *u, float *v)
 {
     int w, h;
@@ -1309,6 +1344,9 @@ static void run_dl(Gfx *dl, int depth)
             }
             break;
 
+        case G_PC_TEXT:
+            PCText_Emit((const void *)w1);
+            break;
         case G_VTX:
             load_vertices((const Vtx *)w1, (int)((w0 >> 8) & 0xff), (int)((w0 >> 16) & 0xff));
             break;

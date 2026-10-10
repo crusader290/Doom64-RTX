@@ -30,6 +30,7 @@
 #include "log.h"
 #include "interp.h"
 #include "respack.h"
+#include "pc_text.h"
 
 /* ------------------------------------------------------------------ */
 /* globals the game expects from i_main.c                             */
@@ -714,6 +715,7 @@ void I_CheckGFX(void)
 
 void I_ClearFrame(void)
 {
+    PCText_BeginFrame();
     NextFrameIdx += 1;
 
     GFX1 = Gfx_base[vid_side];
@@ -1026,6 +1028,8 @@ int main(int argc, char **argv)
     Config_Load();
     Config_Snapshot();
     Config_ParseArgs(argc, argv);
+    MusVolume = SDL_clamp(pc_config.music_volume, 0, 100);
+    SfxVolume = SDL_clamp(pc_config.sfx_volume, 0, 100);
     Log_Init(argc, argv);
     apply_aspect();
 

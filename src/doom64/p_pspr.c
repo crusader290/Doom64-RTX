@@ -207,6 +207,12 @@ void P_SetPsprite (player_t *player, int position, statenum_t stnum) // 8001B3FC
 		state = &states[stnum];
 		psp->state = state;
 		psp->tics = state->tics;  /* could be 0 */
+#ifdef D64_PC
+        /* [PC] Aggressive combat shortens longer attack/flash states, but
+         * preserves zero-time actions and all demo timings. */
+        if (pc_config.fast_weapons && !demoplayback && !demorecording && psp->tics > 2)
+            psp->tics = (psp->tics * 3 + 3) / 4;
+#endif
 
 		/* call action routine */
 		if (state->action)

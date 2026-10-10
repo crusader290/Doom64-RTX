@@ -59,6 +59,8 @@ set(D64_PORT_SOURCES
   src/port/pak.c
   src/port/config.c
   src/port/gu.c
+  src/port/gore.c
+  src/port/pc_text.c
   src/port/rtlights.c
   src/port/log.c
   src/port/pc_options.c
@@ -77,6 +79,8 @@ else()
 endif()
 
 add_executable(doom64rtx ${D64_GAME_SOURCES} ${D64_PORT_SOURCES})
+add_custom_command(TARGET doom64rtx POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:doom64rtx>/assets)
 
 # ---------------------------------------------------------------- renderer (Rust)
 if(NOT D64_NULL_RENDERER)
@@ -143,7 +147,7 @@ target_include_directories(doom64rtx PRIVATE
   ${CMAKE_SOURCE_DIR}/src/port
   ${CMAKE_SOURCE_DIR}/src/gfx
   ${D64_GAME_DIR})
-set(D64_VERSION "0.4.0")
+set(D64_VERSION "0.5.0")
 find_package(Git QUIET)
 set(D64_GIT_HASH "unknown")
 if(GIT_FOUND)

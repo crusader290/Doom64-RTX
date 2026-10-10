@@ -5,7 +5,8 @@
 #ifndef D64_PC_OPTIONS_H
 #define D64_PC_OPTIONS_H
 
-enum { PCPAGE_GRAPHICS, PCPAGE_GAMEPLAY, PCPAGE_DEBUG, PCPAGE_SAVE, PCPAGE_LOAD, PCPAGE_COUNT };
+enum { PCPAGE_GRAPHICS, PCPAGE_GAMEPLAY, PCPAGE_DEBUG, PCPAGE_SAVE, PCPAGE_LOAD,
+       PCPAGE_AUDIO, PCPAGE_CONTROLS, PCPAGE_COUNT };
 
 int         PCOpt_Count(int page);
 const char *PCOpt_Title(int page);
@@ -16,5 +17,6 @@ const char *PCOpt_Value(int page, int i, char *buf, int len);
 int         PCOpt_Change(int page, int i, int dir);
 int         PCOpt_IsAction(int page, int i);
 int         PCOpt_ValueX(int page);  /* x of the value column */
+const char *PCOpt_Help(int page, int item);
 
 #endif

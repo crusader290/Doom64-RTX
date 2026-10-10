@@ -1,50 +1,65 @@
-# PROJECT_CONTEXT — Doom64-RTX (current state)
+# PROJECT_CONTEXT — Doom64-RTX
 
-Read this first; it is kept short on purpose. Durable facts: `docs/DISCOVERIES.md`.
-Per-file status / index: `PORT_MANIFEST.md`. Task ledger: `docs/tasks.json`.
-History: `docs/DEVLOG.md`. Update this file at milestones and before ending a session
-(replace, do not append).
+Read with `PORT_MANIFEST.md`, `docs/tasks.json`, `docs/DISCOVERIES.md` and `docs/DEVLOG.md`.
 
-## Goal (from the user)
-Native PC port of Doom 64 from DOOM64-RE (GPLv3): SDL3 platform layer, Rust renderer with
-Vulkan 1.1+ (ash) + toggleable ray tracing (ideas from jlrouzies-fr/doom64-rt, no shared
-code) + OpenGL 3.3 fallback (glow); x86-64 Windows and Linux; ROM auto-detected in the
-working directory (never commit ROMs). Modern-play extras in the spirit of Brutal Doom
-(ideas only, no code from GZDoom mods). Develop on branch `claude/amazing-archimedes-7wr3t5`;
-no PR unless asked. Releases go to `releases/` (`tools/make_release.sh <ver>`).
+## Goal and branch
+Native PC Doom 64 port: SDL3, Rust Vulkan/RT and OpenGL, Windows/Linux x64.
+User work continues on `codex/immersive-gore-crash-fix`, branched from Claude's
+`claude/amazing-archimedes-7wr3t5` at 4ef9999. No PR requested. Never commit ROMs.
+User requested regular pushes, manifest updates and releases at significant milestones.
 
-## Milestone
-Playable port with sound, RT preview with doom64-rt materials, resource packs, modern
-controls, 60/120 fps, save/load, QoL extras. Release 0.4.0: RT on by default, doom64-rt packs
-bundled in packs/ and auto-loaded, coloured RT lights from doom64-rt data.
+## Current milestone: 0.5.0
+MAP01 divide crash fixed: 0.4.0 RVA 0x7ebc resolves to FixedDiv2, caller 0x2736c
+to R_CheckBBox. Guard zero/negative projection depth and zero denominators;
+Windows reports fault registers and module-relative offsets. Exact user camera
+state is unavailable, so the original crash has not been replayed.
 
-## Verified working (evidence in docs/tasks.json)
-GL + Vulkan raster renderers, RT on lavapipe, ROM detection, sound/music, 16:9, logging +
-crash reports, options pages, mouse look/jump, interpolation (logic identical at 30/120 fps),
-save/load (pause menu, title, F5/F9), ADS zoom, resource packs (pk3 + folders, textures and
-sprites), RT materials (emissive/occlusion visible on lavapipe), Windows build under Wine.
+New bounded cosmetic gore: 128 particles/gibs + 128 floor/wall stains, collision,
+gravity, fade, independent RNG; no extra actors/save struct changes. Disabled
+during demos and recording. Defaults: 120 FPS, always run, fast switching and
+25% shorter positive weapon states. Kick has more damage/knockback and shorter
+cooldown. Modern extras are gated off for demos/recording.
 
-## Implemented, not fully verified
-F7 debug page (no key injection in tests), weapon keys 1-8, kick damage/push, extra gore,
-fast weapons, autosave slot.
+Retro UI uses Share Tech Mono (SIL OFL), baked TrueType atlas and ordered overlay
+geometry. Original title art resized; settings pages have compact rows, help,
+selection indicators and pagination. Audio volume controls added. Password,
+Controller Pak, Control Pad/Stick and console display menus removed from PC
+flows; native save/load slots remain. Missing font falls back to original art.
 
-## Build / test status
-- `tools/check.sh linux win` — OK at the 0.4.0 release commit.
-- `tools/smoke.sh` — PASS (GL, Vulkan, RT, with and without packs).
-- Last known-good release: 0.4.0 (`releases/`, ~29 MB each with the bundled packs), both
-  archives smoke-tested from fresh extractions with default settings (Linux, Windows/Wine).
+One `packs/doom64rtx-visuals.pk3` replaces three separate release packs; combines
+lost-soul/fireball sprites, SFLATC/SPACECE ceiling lights, RT maps and defaults.
+Per-file sources recorded; exclude broken/development/quarantine content and
+GZDoom scripts/maps. Most source images are material maps, not higher-res albedo.
+Existing Retribution assets have no upstream licence; retain owner-requested
+inclusion and attribution; do not relabel them GPL.
 
-## Known problems
-- MSVC build unsupported (needs zero-init of uninitialised locals) (T16).
-- Saves are tied to struct sizes; a build that changes `mobj_t`/`player_t`/`sector_t`/
-  `line_t` refuses older saves.
+Root `build.sh` downloads dependencies and builds Linux/MinGW Windows;
+`build.bat` downloads a SHA256-verified portable MSYS2 toolchain and builds native
+Windows. Downloads and outputs live under build-deps/build-*.
 
-## Environment notes
-- Prebuilt SDL3 in `../deps/sdl3-linux` (made by `tools/setup_env.sh`); without it CMake
-  fetches and builds SDL3 (slow). ROM for tests: `../run/*.z64` (or `D64_ROM`).
-- Xvfb does not survive container restarts; `tools/smoke.sh` starts it.
+## Evidence
+Linux and MinGW builds pass. ASan/UBSan fixed math + 396608 BSP cases pass;
+gore pool/collision/expiry/draw-purity/demo/reset tests pass. GL 2300-frame MAP01
+combat passes. Gore on/off 1400-frame gameplay traces match. Vulkan 680-frame
+and RT 620-frame smoke pass. Menu screenshots visually reviewed; initial large
+VT323 layout replaced following user feedback. Consolidated archive passes ZIP
+integrity and byte-for-byte reproducibility. Native MSYS2 dependency setup passes;
+native compilation and final release-extraction tests are in progress.
 
-## Next recommended task
-T17 follow-up: verify/tune the static lights from emissive wall/flat textures (placed, effect
-not yet isolated in a screenshot) — accept when a screenshot near an emissive panel shows its
-light on nearby surfaces with `-rt`.
+## Remaining requested work
+Publish milestone 0.5.0 after final package tests; update this evidence on success.
+Then implement smoother recoil/sway, visible kick and hit feedback; inspect/import
+Brutal Doom sounds with source/licence attribution (selected source files are only
+in work/sound-reference so far, not shipped). User also requested GZDoom script
+compatibility for archived add-ons. General ZScript/DECORATE/ACS/UDMF support is
+not implemented; inspect each script and implement supported behaviors with
+explicit compatibility reporting. Do not claim all add-ons work.
+Further QoL/texture/mechanics improvements remain to be reviewed and tested.
+
+## Environment and known limitations
+Build/test Docker container doom64-codex-build, /repo bind mount. SDL prefix
+/repo/build-deps/sdl3-linux; source ~/.cargo/env. Test ROM /tmp/test-rom.z64,
+copied outside Git. tools/smoke.sh starts Xvfb. User GPU crash-location validation
+still needed. MSVC remains experimental; MinGW supported. Saves tied to struct
+sizes; these changes do not change those structs. RT emitter lights still need
+isolated visual validation (T17).

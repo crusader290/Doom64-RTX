@@ -28,6 +28,7 @@ typedef struct {
     int   validation;        /* Vulkan validation layers */
     int   log;               /* write doom64rtx.log (default on) */
     int   sound;             /* 1 = sound and music (WESS synth) */
+    int   music_volume, sfx_volume; /* 0..100, applied by audio settings */
     int   fps;               /* frame rate cap: 30 (N64), 60 or 120 (interpolated) */
     int   mouselook;         /* free look with the mouse (pitch) */
     int   invert_mouse;      /* invert vertical mouse look */
@@ -37,7 +38,7 @@ typedef struct {
     int   jump;              /* allow jumping */
     int   weapon_bob;        /* 0..100 % of the N64 view/weapon bob */
     int   ads;               /* right mouse aims down the sights (zoom) */
-    int   fast_weapons;      /* twice as fast weapon switching */
+    int   fast_weapons;      /* faster switching and shorter attack states */
     int   gore;              /* extra blood */
     int   autosave;          /* save to the Auto slot at each level start */
     int   respacks;          /* use PNG resource packs (packs/ folders, packs =) */

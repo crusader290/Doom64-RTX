@@ -229,6 +229,67 @@
    ],
    "evidence": "Bundled 0.4.0 PE disassembly: RVA 0x7ebc = FixedDiv2 IDIV, return 0x2736c = first R_CheckBBox projection. Linux + MinGW builds OK; ASan/UBSan math and 396608 BSP cases PASS; GL 2300-frame MAP01 and Vulkan/RT smoke PASS. Exact user camera state unavailable.",
    "next": "Verify at the original MAP01 location on the user GPU; Windows crash logging runtime test in release validation."
+  },
+  {
+   "id": "T19",
+   "subsystem": "immersive cosmetic gore",
+   "status": "verified",
+   "paths": [
+    "src/port/gore.c",
+    "tests/test_gore.c",
+    "tools/test_gore.sh"
+   ],
+   "evidence": "ASan/UBSan pool/collision/expiry/draw purity/demo gating/reset PASS; GL combat PASS; 1400-frame on/off gameplay traces identical; Vulkan and RT smoke PASS.",
+   "next": null
+  },
+  {
+   "id": "T20",
+   "subsystem": "retro PC menus and aggressive defaults",
+   "status": "implemented",
+   "paths": [
+    "src/port/pc_text.c",
+    "src/port/pc_options.c",
+    "src/doom64/m_main.c"
+   ],
+   "evidence": "Linux/MinGW builds PASS; revised title/settings screenshots reviewed; 120 FPS, always-run, faster weapon cadence and stronger kick defaults; console menus removed.",
+   "next": "Final release extraction smoke, native Windows visual check."
+  },
+  {
+   "id": "T21",
+   "subsystem": "single visual pack",
+   "status": "verified",
+   "paths": [
+    "tools/pack_visuals.py",
+    "tools/make_release.sh"
+   ],
+   "evidence": "3958 entries, 22468931 bytes; two generated archives byte-identical; ZIP integrity PASS; compatible two ceiling-light textures and existing sprites/materials.",
+   "next": null
+  },
+  {
+   "id": "T22",
+   "subsystem": "root build launchers and dependency downloaders",
+   "status": "implemented",
+   "paths": [
+    "build.sh",
+    "build.bat",
+    "tools/build_windows.ps1"
+   ],
+   "evidence": "Root bash launcher built both targets; Windows portable archive SHA256 verification/extraction and package installation PASS; native compilation in progress.",
+   "next": "Complete native build.bat compile test."
+  },
+  {
+   "id": "T23",
+   "subsystem": "Brutal Doom inspired animations and sounds",
+   "status": "pending",
+   "evidence": "User requested recoil/kick animation improvements and sound imports. Inspected BDP sound declarations/credits; no new audio shipped yet.",
+   "next": "Implement original visual animation sidecars and attributed sound overrides, test and release."
+  },
+  {
+   "id": "T24",
+   "subsystem": "GZDoom add-on compatibility",
+   "status": "pending",
+   "evidence": "Archived packs require ZScript EventHandler/Actor APIs, DECORATE, ACS and UDMF. Current loader supports only PNG art and RT material JSON.",
+   "next": "Implement a clearly bounded compatibility layer; document per-addon supported and unsupported features."
   }
  ]
 }

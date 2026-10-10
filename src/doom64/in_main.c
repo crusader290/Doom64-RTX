@@ -135,11 +135,13 @@ void IN_Start(void) // 80004AF0
 	last_ticon = 0;
 	text_alpha = 255;
 
+#ifndef D64_PC
     if ((nextmap >= 2) && (nextmap < LASTLEVEL))
 	{
 		M_EncodePassword(Passwordbuff);
         CurPasswordSlot = 16;
 	}
+#endif
 
 	S_StartMusic(114);
 }
@@ -148,12 +150,14 @@ void IN_Stop(void) // 80004DB0
 {
 	S_StopMusic();
 
+#ifndef D64_PC
     if ((nextmap >= 2) && (nextmap < LASTLEVEL))
     {
         if (EnableExpPak) {
             MiniLoop(M_SavePakStart,M_SavePakStop,M_SavePakTicker,M_SavePakDrawer);
         }
     }
+#endif
 
     I_WIPE_FadeOutScreen();
 }
@@ -319,6 +323,7 @@ void IN_Drawer(void) // 80005164
         ST_DrawString(-1, 145, "Entering", PACKRGBA(255, 255, 255, text_alpha));
         ST_DrawString(-1, 161, MapInfo[nextmap].name, PACKRGBA(255, 255, 255, text_alpha));
 
+#ifndef D64_PC
         ST_DrawString(-1, 187, "Password", PACKRGBA(255, 255, 255, text_alpha));
 
         pbuff = password;
@@ -337,6 +342,10 @@ void IN_Drawer(void) // 80005164
 		*pbuff = 0;
 
 		ST_DrawString(-1, 203, password, PACKRGBA(255, 255, 255, text_alpha));
+#else
+        /* [PC] The next level autosaves; console passwords are obsolete. */
+        ST_DrawString(-1, 203, "Enter to continue", PACKRGBA(170, 150, 125, text_alpha));
+#endif
 	}
 
 	I_DrawFrame();

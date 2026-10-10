@@ -31,5 +31,8 @@ typedef struct {
     uint32_t cmds, vertices, tex_uploads, tex_cached, dl_words;
 } gbistats_t;
 const gbistats_t *GBI_Stats(void);
+/* PC text atlas: resolved overlay geometry without disturbing N64 RDP state. */
+void GBI_OverlayQuad(uint32_t tex, float x, float y, float w, float h,
+                     float u0, float v0, float u1, float v1, unsigned color);
 
 #endif

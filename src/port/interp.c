@@ -32,6 +32,7 @@ int I_PCPeekMousePitch(void);
 static unsigned gen;          /* snapshot generation */
 static Uint64 tic_start_ns;
 static int applied;
+static double draw_fraction = 1.0;
 
 /* saved live values while a blended frame is drawn */
 typedef struct { mobj_t *mo; fixed_t x, y, z; angle_t angle; } savedmobj_t;
@@ -61,6 +62,11 @@ double I_PCInterpTicFraction(void)
         return 0.0; /* deterministic tests: main frames show the previous tic */
     double f = (double)(SDL_GetTicksNS() - tic_start_ns) / (1e9 / 30.0);
     return f < 0.0 ? 0.0 : f > 1.0 ? 1.0 : f;
+}
+
+double I_PCInterpDrawFraction(void)
+{
+    return applied ? draw_fraction : 1.0;
 }
 
 void I_PCInterpSnapshot(void)
@@ -124,6 +130,7 @@ void I_PCInterpBegin(double frac)
     if (frac > 1.0)
         frac = 1.0;
     f = (fixed_t)(frac * 65536.0);
+    draw_fraction = frac;
     applied = 1;
 
     /* things */

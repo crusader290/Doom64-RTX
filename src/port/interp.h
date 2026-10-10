@@ -9,6 +9,7 @@ extern void (*I_PCCurrentDrawer)(void); /* set by MiniLoop */
 int    I_PCInterpEnabled(void);
 void   I_PCInterpSnapshot(void);          /* before each game tic */
 double I_PCInterpTicFraction(void);       /* time since the tic, 0..1 */
+double I_PCInterpDrawFraction(void);      /* fraction actually applied to this draw */
 void   I_PCInterpBegin(double frac);      /* blend into the live state */
 void   I_PCInterpEnd(void);               /* restore the live state */
 

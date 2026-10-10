@@ -1,12 +1,15 @@
-Resource packs bundled with Doom64-RTX (loaded automatically from this folder; turn them
-off in Options > Graphics > Texture Packs or with respacks = 0 in doom64rtx.ini).
+Doom64-RTX consolidated visual pack: doom64rtx-visuals.pk3
 
-  doom64rt-materials.pk3     ray tracing materials (normal, roughness/metal, emissive maps,
-                             light colours) from Retribution-RT-Materials
-  d64r-lostsoul-rt.pk3       lost soul sprites for ray tracing
-  d64r-caco-ball-recolor.pk3 cacodemon fireball sprites
+Contains lost-soul sprites from d64r-lostsoul-rt.pk3, cacodemon fireballs from
+ d64r-caco-ball-recolor.pk3, SFLATC and SPACECE ceiling-light textures from
+ d64r-bulb-textures.wad, plus normal, roughness/metallic, emissive maps and
+ material defaults from Retribution-RT-Materials.
 
-Source: doom64-rt by jlrouzies (https://github.com/jlrouzies-fr/doom64-rt, commit
-750c1d84f87546de38fe8ad774da59ff6a606ed0), made for Doom 64: Retribution by Nevander.
-These files are not covered by Doom64-RTX's GPLv3 licence; the doom64-rt repository ships
-no licence file. Included at the Doom64-RTX repository owner's request.
+Source: doom64-rt by jlrouzies (https://github.com/jlrouzies-fr/doom64-rt),
+commit 750c1d84f87546de38fe8ad774da59ff6a606ed0, for Doom 64: Retribution
+by Nevander. These assets are not covered by Doom64-RTX's GPLv3 licence;
+the source repository ships no licence file. Included at the repository
+owner's request. Per-file origins are recorded in the pack's manifest.json.
+
+Development/quarantine materials, unused height maps, broken texture tests,
+GZDoom scripts and replacement maps are omitted from the release pack.

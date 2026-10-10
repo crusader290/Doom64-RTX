@@ -250,3 +250,19 @@ described in [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md).
 - Doom 64 © id Software / Midway. This project contains no game assets.
 
 Licensed under the **GNU GPL v3**, the same as DOOM64-RE. See [LICENSE](LICENSE).
+
+## One-command builds
+
+Run `bash build.sh` on Debian/Ubuntu to download missing dependencies and build
+Linux and Windows x64. Select a target with `bash build.sh linux` or
+`bash build.sh win`. System packages may need sudo; SDL and dependency build
+outputs stay in `build-deps/`. Existing CMake FetchContent and Cargo download
+SDL3 and renderer dependencies when needed.
+
+On Windows, run `build.bat`. It downloads and verifies a portable official MSYS2
+archive into `build-deps/`, installs the MinGW compiler, CMake, Ninja, Rust and
+SDL3, then builds `build-native-win/doom64rtx.exe`. No system-wide PATH changes
+are required. `build.bat -SetupOnly` installs dependencies without compiling.
+Linux builds from Windows require Ubuntu/WSL and `bash build.sh linux` there.
+Network access is required for first-time downloads. Full logs from cross builds
+are in `build-logs/`; native Windows tools print diagnostics directly.

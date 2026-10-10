@@ -794,7 +794,7 @@ static void P_PCKick(player_t *player)
 	int damage;
 	mobj_t *mo = player->mo;
 
-	damage = ((P_Random() & 7) + 2) * 3;
+	damage = ((P_Random() & 7) + 3) * 5; /* [PC] stronger close-range kick */
 	if (player->powers[pw_strength])
 		damage *= 5;
 	angle = mo->angle;
@@ -806,9 +806,9 @@ static void P_PCKick(player_t *player)
 		S_StartSound(mo, sfx_punch);
 		if (!(t->flags & MF_NOCLIP) && t->info->mass < 1000)
 		{
-			fixed_t push = (12 * FRACUNIT * 100) / (t->info->mass > 0 ? t->info->mass : 100);
-			if (push > 16 * FRACUNIT)
-				push = 16 * FRACUNIT;
+			fixed_t push = (18 * FRACUNIT * 100) / (t->info->mass > 0 ? t->info->mass : 100);
+			if (push > 24 * FRACUNIT)
+				push = 24 * FRACUNIT;
 			t->momx += FixedMul(push, finecosine[angle >> ANGLETOFINESHIFT]);
 			t->momy += FixedMul(push, finesine[angle >> ANGLETOFINESHIFT]);
 		}
@@ -835,7 +835,7 @@ static void P_PCPlayerThink(player_t *player)
 		player->pc_kicktics--;
 	if (player->playerstate == PST_LIVE && (player->pc_buttons & PCACT_KICK) && !player->pc_kicktics)
 	{
-		player->pc_kicktics = 18;
+		player->pc_kicktics = 14;
 		P_PCKick(player);
 	}
 }
@@ -859,7 +859,9 @@ void P_PlayerThink (player_t *player) // 80022D60
 	cbutton = BT_DATA[0];
 
 #ifdef D64_PC
-	P_PCPlayerThink(player);
+    /* [PC] Modern combat must not alter recorded or played-back demos. */
+    if (!demoplayback && !demorecording && !gamepaused)
+	    P_PCPlayerThink(player);
 #endif
 
 	/* */

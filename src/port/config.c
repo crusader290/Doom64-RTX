@@ -29,7 +29,11 @@ void Config_Defaults(void)
     pc_config.mouse = 1;
     pc_config.brightness = 50;
     pc_config.sound = 1;
-    pc_config.fps = 30;
+    pc_config.music_volume = 70;
+    pc_config.sfx_volume = 90;
+    pc_config.fps = 120;
+    pc_config.fast_weapons = 1;
+    pc_config.always_run = 1;
     pc_config.mouselook = 1;
     pc_config.autoaim = 1;
     pc_config.crosshair = 1;
@@ -71,6 +75,8 @@ static const cvar_t cvars[] = {
     { "validation",     CV_INT,      &pc_config.validation, 0 },
     { "log",            CV_INT,      &pc_config.log, 0 },
     { "sound",          CV_INT,      &pc_config.sound, 0 },
+    { "music_volume",   CV_INT,      &pc_config.music_volume, 0 },
+    { "sfx_volume",     CV_INT,      &pc_config.sfx_volume, 0 },
     { "audio_rate",     CV_INT,      &pc_config.audio_rate, 0 },
     { "fps",            CV_INT,      &pc_config.fps, 0 },
     { "mouselook",      CV_INT,      &pc_config.mouselook, 0 },
