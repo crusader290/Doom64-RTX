@@ -265,10 +265,12 @@ are required. `build.bat -SetupOnly` installs dependencies without compiling.
 Linux builds from Windows require Ubuntu/WSL and `bash build.sh linux` there.
 Network access is required for first-time downloads. Full logs from cross builds
 are in `build-logs/`; native Windows tools print diagnostics directly.
-## Native combat and add-on ports (0.5.2)
+## Native combat and add-on ports (0.5.3)
 
 Default combat uses faster weapons, a stronger timed kick, recoil/inertia animations, impact feedback, heavy gore and attributed PCM sound upgrades. All modern gameplay effects are disabled for demo playback/recording. Settings > Key Bindings captures 12 primary keyboard actions, swaps conflicts and offers Reset Bindings. Arrow/Enter/Esc, number weapon slots and function shortcuts stay fixed.
 
-The release loads one packs/doom64rtx-visuals.pk3. It includes compatible sprite/ceiling art, RT materials, boot frames, sounds and selected native add-on definitions. Native adapters port persistent colored blood and a flashlight battery/HUD; F toggles a shadowed cone in the RT renderer. Battery charge resets on level/save loads. General GZDoom scripts and replacement maps require conversion; see [the capability matrix](docs/ADDON_COMPATIBILITY.md).
+The release loads one packs/doom64rtx-visuals.pk3. It includes compatible sprite/ceiling art, RT materials, boot frames, sounds and selected native add-on definitions. Native adapters port persistent colored blood, a reactive face HUD, bounded poison/lava effects and a flashlight battery/HUD; F toggles a shadowed cone in the RT renderer. Battery charge resets on level/save loads. General GZDoom scripts and replacement maps require conversion; see [the capability matrix](docs/ADDON_COMPATIBILITY.md).
 
 Blood Lifetime and Blood Limit control new stains (0 means permanent, hard cap 128). Native Add-ons disables the behavior ports. Both imported audio and combat animation have independent switches. Imported assets retain upstream attribution and licence status.
+
+Face HUD and Liquid Effects have independent settings. Poison bubbles map to native slime; lava sparks require compatible HLAVA/D64LAVA textures. At most 48 cosmetic particles and eight small lights are active. `-warp 7 -skill 1` starts a map directly (maps 1..32, skills 1..5), without persisting the startup choice.

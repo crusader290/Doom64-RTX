@@ -10,6 +10,7 @@ enum { B_FORWARD,B_BACK,B_LEFT,B_RIGHT,B_USE,B_JUMP,B_KICK,B_LIGHT,
        B_FIRE,B_MAP,B_RUN,B_PREV,B_COUNT };
 
 typedef struct {
+    int startup_map, startup_skill; /* command line only; never persisted */
     char  rom[512];          /* explicit ROM path, empty = auto detect */
     int   renderer;          /* renderer_t */
     int   raytracing;        /* 1 = use the Vulkan ray traced path when supported */
@@ -43,7 +44,7 @@ typedef struct {
     int   ads;               /* right mouse aims down the sights (zoom) */
     int   fast_weapons;      /* faster switching and shorter attack states */
     int   gore;              /* extra blood */
-    int   native_addons, flashlight; /* native ports of selected add-on behaviors */
+    int   native_addons, flashlight, mugshot, environment_fx; /* native ports of selected add-on behaviors */
     int   gore_life, gore_limit; /* stain tics: -1 pack default, 0 permanent; cap <=128 */
     int   autosave;          /* save to the Auto slot at each level start */
     int   respacks;          /* use PNG resource packs (packs/ folders, packs =) */

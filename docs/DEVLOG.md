@@ -107,3 +107,17 @@ Validation complete: actual MAP01 slot 0 save/load passed (117 actors, 38 thinke
 
 ## 2026-10-10 — 0.5.2 final validation
 Windows RT cone off/on captures show increased world illumination; fixed intermediate GPU record packing to match the 64-byte shader record. Added 12-key rebinding, conflict swaps, persistence/cancel/reset, consistent confirmation pages, native capability matrix and alphabetical pack discovery. Adapter, battery, permanent-stain, binding and configuration sanitizer checks pass. Remaining production add-on behaviors are tracked explicitly; no general VM claim.
+
+## 2026-10-10 — 0.5.3 native face HUD and liquid effects
+0.5.2 archives/checksums published. Native DrawMugShot profile, unmodified reactive
+portraits and HP/armor/ammo/key/battery layout added. Poison/lava ports use bounded
+cosmetic particles, own RNG, portal visibility, ceiling/floor collision, growing
+frame geometry, interpolated depth-tested billboards and up to eight small RT
+lights. Native ROM has slime floors but no matching lava flats. Original burst,
+fragment and saturation CVars are not interpreted. One PK3 now holds the art and
+selected descriptors. Face HUD/Liquid Effects can be toggled independently.
+Transient -warp/-skill starts native maps directly; headless-only fixture position
+and liquid-center diagnostics support regression captures. Seven sanitizer suites
+PASS; MAP01/MAP07 GL, all 32 native-map startups, 550-frame on/off gameplay/RNG
+trace equality and Windows RT on/off captures PASS. Windows RT changed 2557 pixels
+with stronger green channel near bubbles; no full script/map VM claim.

@@ -5,6 +5,7 @@
 #ifdef D64_PC
 #include "config.h" /* [PC] */
 #include "pc_text.h"
+#include "pc_hud.h"
 #endif
 #include "r_local.h"
 
@@ -243,7 +244,13 @@ void ST_Drawer (void) // 80029DC0
         ST_Message(20, 20, players[0].message, ms_alpha | 0xffffff00);
     }
 
+
+#ifdef D64_PC
+    if (enable_statusbar && PCHud_Active()) PCHud_Draw();
+    if (enable_statusbar && !PCHud_Active())
+#else
     if (enable_statusbar)
+#endif
     {
         I_CheckGFX();
 

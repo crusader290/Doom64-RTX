@@ -2,12 +2,13 @@
  * Share Tech Mono by Carrois (SIL OFL); stb_truetype by Sean Barrett et al (MIT/PD). */
 #include <SDL3/SDL.h>
 #include "doomdef.h"
+#include "r_local.h"
 #include "gbi.h"
 #include "pc_text.h"
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "third_party/stb_truetype.h"
 
-typedef struct { float x, y, size, w, h; unsigned color, texture; char text[192]; } textcmd_t;
+typedef struct { float x, y, size, w, h,z,rx,ry; unsigned color, texture; int world;char text[192]; } textcmd_t;
 static textcmd_t commands[256];
 static unsigned command_count, atlas, solid;
 static int attempted;
@@ -76,6 +77,14 @@ void PCText_Emit(const void *command)
 {
     const textcmd_t *cmd = command;
     int pass;
+    if(cmd->world) {
+        float sx=cmd->rx*cmd->w*.5f,sy=cmd->ry*cmd->w*.5f;
+        float vertices[4][3]={{cmd->x-sx,cmd->z+cmd->h*.5f,-(cmd->y-sy)},
+            {cmd->x+sx,cmd->z+cmd->h*.5f,-(cmd->y+sy)},
+            {cmd->x+sx,cmd->z-cmd->h*.5f,-(cmd->y+sy)},
+            {cmd->x-sx,cmd->z-cmd->h*.5f,-(cmd->y-sy)}};
+        GBI_WorldQuad(cmd->texture,vertices,cmd->color);return;
+    }
     if (cmd->w > 0) {
         GBI_OverlayQuad(cmd->texture ? cmd->texture : solid, cmd->x, cmd->y, cmd->w, cmd->h, 0, 0, 1, 1, cmd->color);
         return;
@@ -107,4 +116,13 @@ void PCText_Image(unsigned texture, float x, float y, float w, float h, unsigned
     cmd->texture=texture;cmd->x=x;cmd->y=y;cmd->w=w;cmd->h=h;cmd->color=color;
     I_CheckGFX();
     _gW(GFX1++,_SHIFTL(G_PC_TEXT,24,8),(uintptr_t)cmd);
+}
+void PCText_WorldImage(unsigned texture,float x,float y,float z,float w,float h,unsigned color)
+{
+    textcmd_t *cmd;
+    if(!texture || command_count>=256) return;
+    cmd=&commands[command_count++];memset(cmd,0,sizeof(*cmd));
+    cmd->texture=texture;cmd->x=x;cmd->y=y;cmd->z=z;cmd->w=w;cmd->h=h;cmd->color=color;
+    cmd->world=1;cmd->rx=viewsin/(float)FRACUNIT;cmd->ry=-viewcos/(float)FRACUNIT;
+    I_CheckGFX();_gW(GFX1++,_SHIFTL(G_PC_TEXT,24,8),(uintptr_t)cmd);
 }

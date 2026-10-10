@@ -12,6 +12,9 @@ the source repository ships no licence file. Included at the repository
 owner's request. Per-file origins are recorded in the pack's manifest.json.
 
 Development/quarantine materials, unused height maps, broken texture tests,
-Replacement maps and general scripts are omitted. Selected blood/flashlight declarations are retained under native/ for documented C adapters, not executed.
+Replacement maps and general scripts are omitted. Selected blood, flashlight,
+liquid effect and face HUD declarations are retained under native/ for documented
+C adapters, not executed. Mugface portraits and poison/lava sprites are retained
+unmodified from d64r-mugshot, d64r-poison-fx and d64r-lava-fx.
 
 Brutal Doom Platinum boot/PCM imports: pinned commit 423b7167849a4b1f87975a81f43410f0189d9e9e. See credits/brutaldoom inside the PK3 for sources, upstream declared GPLv3, and DetailedCredits. No individual authorship or independent rights for uncredited assets is asserted.

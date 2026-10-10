@@ -24,6 +24,7 @@ void Config_ResetBindings(void)
 void Config_Defaults(void)
 {
     memset(&pc_config, 0, sizeof(pc_config));
+    pc_config.startup_skill=3;
     memcpy(pc_config.bind_keys,default_keys,sizeof(default_keys));
     pc_config.renderer = RENDERER_VULKAN;
     pc_config.raytracing = 1; /* falls back to raster when the GPU cannot ray trace */
@@ -51,7 +52,7 @@ void Config_Defaults(void)
     pc_config.weapon_bob = 100;
     pc_config.ads = 1;
     pc_config.gore = 1;
-    pc_config.native_addons = pc_config.flashlight = 1;
+    pc_config.native_addons = pc_config.flashlight = pc_config.mugshot = pc_config.environment_fx = 1;
     pc_config.gore_life = -1;pc_config.gore_limit = 128;
     pc_config.autosave = 1;
     pc_config.respacks = 1;
@@ -79,6 +80,8 @@ static const cvar_t cvars[] = {
     { "bind_prev", CV_INT, &pc_config.bind_keys[B_PREV], 0 },
     { "native_addons", CV_INT, &pc_config.native_addons, 0 },
     { "flashlight", CV_INT, &pc_config.flashlight, 0 },
+    { "mugshot", CV_INT, &pc_config.mugshot, 0 },
+    { "environment_fx", CV_INT, &pc_config.environment_fx, 0 },
     { "gore_life", CV_INT, &pc_config.gore_life, 0 },
     { "gore_limit", CV_INT, &pc_config.gore_limit, 0 },
     { "rom",            CV_STR,      pc_config.rom, sizeof(pc_config.rom) },
@@ -257,6 +260,12 @@ void Config_ParseArgs(int argc, char **argv)
     {
         const char *a = argv[i];
         if (!SDL_strcmp(a, "-rom") && i + 1 < argc)        set_cvar("rom", argv[++i]);
+        else if (!SDL_strcmp(a,"-warp") && i+1<argc) {
+            int map=SDL_atoi(argv[++i]);if(map>=1 && map<=32) pc_config.startup_map=map;
+        }
+        else if (!SDL_strcmp(a,"-skill") && i+1<argc) {
+            int skill=SDL_atoi(argv[++i]);if(skill>=1 && skill<=5) pc_config.startup_skill=skill;
+        }
         else if (!SDL_strcmp(a, "-pack") && i + 1 < argc)
         {
             if (pc_config.packs[0])

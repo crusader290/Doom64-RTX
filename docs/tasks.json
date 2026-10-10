@@ -282,21 +282,34 @@
       "subsystem": "Brutal Doom inspired animations and sounds",
       "status": "verified",
       "evidence": "Combat recoil/inertia, 13 kick sprites, timed kick impact and hit marker. Four attributed PCM imports, bounded 16-voice mixer. Sanitizer animation/audio checks PASS; 1050-frame gameplay traces identical on/off; native Windows RT 1000 frames PASS. Real MAP01 slot 0 save/load and 1400-frame crash replay PASS.",
-      "next": "Publish 0.5.1 archives."
+      "next": null
     },
     {
       "id": "T24",
       "subsystem": "GZDoom add-on compatibility",
       "status": "in_progress",
-      "evidence": "Native blood/color/flashlight ports verified: lexer/battery/ABI/caps sanitizers PASS, Linux RT 760 frames and Windows RT off/on captures PASS. Unknown classes/descriptors logged. Matrix documents production/test packs still requiring ports/conversion.",
-      "next": "Publish 0.5.2 and continue selected environmental/HUD/visual behavior ports."
+      "evidence": "0.5.2 blood/color/flashlight/key ports published. Native face HUD and bounded liquid effects verified with seven sanitizer suites, real MAP07 GL and Windows RT captures. General scripts/maps remain unsupported.",
+      "next": "Publish 0.5.3; continue composite sky/title native visual ports."
     },
     {
       "id": "T25",
       "subsystem": "Keyboard rebinding and PC confirmation polish",
       "status": "verified",
       "evidence": "12 primary keys, conflict swaps, cancel/reset/persistence and reserved shortcuts. Actual binding config save/reload sanitizer PASS. Menu screenshot captured; confirmation flow QA in progress.",
-      "next": "Package with 0.5.2."
+      "next": null
+    },
+    {
+      "id": "T26",
+      "subsystem": "Native portrait HUD, liquid FX and direct map startup",
+      "status": "verified",
+      "paths": [
+        "src/port/pc_hud.c",
+        "src/port/env_fx.c",
+        "src/gfx/gbi.c",
+        "tools/pack_visuals.py"
+      ],
+      "evidence": "Reactive portraits and bounded liquid mapping/collision/draw purity sanitizer PASS; 550 on/off gameplay/RNG traces identical; all 32 native map startups PASS; MAP07 GL and Windows hardware RT paired captures differ as expected. Transient warp/skill config tests PASS.",
+      "next": "Publish 0.5.3 archives."
     }
   ]
 }

@@ -169,14 +169,14 @@ static int gfx_change(int i, int dir)
 /* ---- Gameplay ------------------------------------------------------------ */
 
 enum { P_MOUSELOOK, P_INVERT, P_SENS, P_RUN, P_AUTOAIM, P_CROSSHAIR, P_JUMP, P_BOB, P_ADS, P_FASTWEAP,
-       P_GORE, P_AUTOSAVE, P_ANIMS, P_NATIVE, P_LIGHT, P_LIFE, P_LIMIT, P_COUNT };
+       P_GORE, P_AUTOSAVE, P_ANIMS, P_NATIVE, P_LIGHT, P_LIFE, P_LIMIT, P_FACE, P_ENV, P_COUNT };
 
 static const char *play_label(int i)
 {
     static const char *l[P_COUNT] = { "Mouse Look", "Invert Mouse", "Mouse Speed", "Always Run",
                                       "Autoaim", "Crosshair", "Jumping", "Bobbing", "Aim Sights",
                                       "Fast Weapons", "Immersive Gore", "Autosave", "Combat Animation",
-                                      "Native Add-ons", "Flashlight", "Blood Lifetime", "Blood Limit" };
+                                      "Native Add-ons", "Flashlight", "Blood Lifetime", "Blood Limit", "Face HUD", "Liquid Effects" };
     return l[i];
 }
 
@@ -203,6 +203,8 @@ static const char *play_value(int i, char *buf, int len)
     case P_ANIMS: return onoff(pc_config.combat_anims);
     case P_NATIVE: return onoff(pc_config.native_addons);
     case P_LIGHT: return onoff(pc_config.flashlight);
+    case P_ENV: return onoff(pc_config.environment_fx);
+    case P_FACE: return onoff(pc_config.mugshot);
     case P_LIFE:
         if(pc_config.gore_life<0) return "Pack Default";
         if(!pc_config.gore_life) return "Permanent";
@@ -245,6 +247,8 @@ static int play_change(int i, int dir)
     case P_ANIMS: CONFIG_SET(combat_anims, !pc_config.combat_anims); break;
     case P_NATIVE: CONFIG_SET(native_addons,!pc_config.native_addons);break;
     case P_LIGHT: CONFIG_SET(flashlight,!pc_config.flashlight);break;
+    case P_ENV: CONFIG_SET(environment_fx,!pc_config.environment_fx);break;
+    case P_FACE: CONFIG_SET(mugshot,!pc_config.mugshot);break;
     case P_LIFE: {
         static const int lives[]={-1,0,300,900,1800};
         CONFIG_SET(gore_life,step_choice(pc_config.gore_life,lives,5,dir));break;
@@ -564,7 +568,9 @@ const char *PCOpt_Help(int page, int item)
         if (item == P_FASTWEAP) return "Faster switching and attack recovery. Demos stay classic.";
         if (item == P_GORE) return "Blood spray, wall splashes, floor stains and overkill gibs.";
         if (item == P_NATIVE) return "Ported pack behaviors. General GZDoom scripts need conversion.";
-        if (item == P_LIGHT) return "F toggles a shadowed RT cone. Battery drains and recharges.";
+        if (item == P_LIGHT) return "Flashlight key toggles an RT beam. Battery recharges when off.";
+        if (item == P_FACE) return "Reactive portraits, health, armor, ammo and key indicators.";
+        if (item == P_ENV) return "Poison bubbles and compatible lava sparks, with small RT lights.";
         if (item == P_LIFE) return "Pack Default uses persistent blood when its adapter is loaded.";
         if (item == P_LIMIT) return "Oldest stains are replaced. Native hard cap: 128.";
         if (item == P_AUTOSAVE) return "Keep an Auto slot at each level start. F5/F9 quicksave/load.";

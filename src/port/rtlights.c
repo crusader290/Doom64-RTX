@@ -24,6 +24,7 @@
 #include "rtlights.h"
 #include "respack.h"
 #include "native_addons.h"
+#include "env_fx.h"
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -325,6 +326,10 @@ void RT_CollectLights(void)
                   def->r, def->g, def->b, def->intensity, def->radius, px, py, pz, &count);
     }
 
+    for(int fx=0;fx<8;fx++) {
+        float position[3],color[3];if(!PCEnv_Light(fx,position,color)) break;
+        add_light(position[0],position[1],position[2],color[0],color[1],color[2],.35f,32,px,py,pz,&count);
+    }
     /* muzzle flash */
     if (pl->psprites[ps_flash].state)
     {

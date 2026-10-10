@@ -5,6 +5,7 @@
 #include "gore.h" /* [PC] */
 #include "combat_fx.h"
 #include "native_addons.h"
+#include "env_fx.h"
 #include "interp.h"
 #endif
 #include "r_local.h"
@@ -303,6 +304,7 @@ void R_RenderPlayerView(void) // 80023448
 #ifdef D64_PC
     /* [PC] cosmetic geometry uses the world camera and shared GL/VK/RT path. */
     I_PCGoreDraw((float)I_PCInterpDrawFraction());
+    PCEnv_Draw();
 #endif
 
     if (cameratarget == viewplayer->mo) {

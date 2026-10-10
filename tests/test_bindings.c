@@ -32,5 +32,11 @@ int main(void)
     pc_config.bind_keys[B_KICK]=INT_MAX;assert(!bound(keys,B_KICK));
     Config_ResetBindings();assert(pc_config.bind_keys[B_KICK]==SDL_SCANCODE_V);
     assert(pc_config_file.bind_keys[B_KICK]==SDL_SCANCODE_V);
-    puts("PASS: binding conflicts, save/reload, cancellation, repeats and reserved/invalid keys");return 0;
+    char *args[]={"doom64rtx","-warp","7","-skill","1"};Config_ParseArgs(5,args);
+    assert(pc_config.startup_map==7 && pc_config.startup_skill==1);
+    assert(pc_config_file.startup_map==0);
+    char *bad[]={"doom64rtx","-warp","33","-skill","9"};Config_ParseArgs(5,bad);
+    assert(pc_config.startup_map==7 && pc_config.startup_skill==1);
+    Config_Save();Config_Defaults();Config_Load();assert(pc_config.startup_map==0 && pc_config.startup_skill==3);
+    puts("PASS: binding conflicts, save/reload, cancellation, repeats, reserved/invalid keys and transient warp/skill");return 0;
 }

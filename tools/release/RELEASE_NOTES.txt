@@ -1,30 +1,30 @@
 Doom64-RTX @VERSION@, commit @COMMIT@
 Requires your own Doom 64 ROM. No ROM is included.
 
-New in 0.5.2:
-- Native ports of persistent blood and monster BloodColor properties. Lifetime
-  settings and FIFO limits; permanent stains remain bounded to 128.
-- Flashlight battery/HUD and shadowed RT spotlight: F toggles, 30s drain, 15s
-  recharge, low-charge flicker, switch/burnout cues. Charge resets on map/load.
-- Native Add-ons, Flashlight, Blood Lifetime/Limit settings. Selected upstream
-  declarations consolidated into the same single PK3; no extra packs required.
-- Key Bindings page: capture 12 movement/combat keys, swap conflicts, cancel,
-  restore defaults and save. Core menu/weapon/function shortcuts stay fixed.
-- Matching restart/return confirmation menus and accurate contextual prompts.
-- Deterministic alphabetical pack discovery and explicit unsupported-descriptor logs.
+New in 0.5.3:
+- Native Retribution face HUD: portraits react to damage, death, invulnerability,
+  firing and weapon pickups. Clean health/armor/ammo/key and battery layout.
+- Native poison bubbles and compatible lava sparks: 48-particle cap, separate
+  cosmetic RNG, portal visibility, ceiling/floor collision, growing frames,
+  interpolated depth-tested billboards and at most eight small RT lights.
+  Native slime floors work; the ROM has no matching HLAVA/D64LAVA lava flats.
+- Face HUD and Liquid Effects settings; original art and selected declarations
+  consolidated into the same single PK3, with per-file provenance.
+- Direct map startup: -warp 1..32 -skill 1..5. Choices are not saved in the ini.
 
-Retains 0.5.1 boot/recoil animations and four attributed sound imports; 0.5.0 divide
-crash fixes, heavy cosmetic gore, aggressive weapons/kick and 120 FPS defaults.
+Retains 0.5.2 persistent colored blood, flashlight battery/shadowed RT cone,
+key rebinding and confirmation polish; 0.5.1 boot/recoil animations and four
+attributed sounds; crash fixes, aggressive combat and 120 FPS defaults.
 
-Validation: Linux/Windows builds; sanitizer math, gore, animation, PCM, native
-adapter/ABI/battery and binding save/reload tests. GL menu/gameplay smoke; Windows
-RT flashlight off/on image comparison and Linux RT smoke. Prior save/load and
-weapon crash replays passed. Exact original crash camera was unavailable.
+Validation: seven sanitizer suites, Linux/Windows builds, all 32 native map
+startups, MAP01/MAP07 GL and Windows hardware RT on/off captures. 550-frame
+environmental on/off gameplay/RNG traces match. Original crash camera unavailable.
 
-These are native behavior adaptations, not a GZDoom VM. General ZScript/DECORATE
-states/ACS/UDMF/SBARINFO and other archived handlers/maps require conversion.
-See docs/ADDON_COMPATIBILITY.md for supported behaviors and differences.
-Flashlight cone requires RT; modern combat effects are disabled in demos/recording.
+Native adaptations, not a GZDoom VM. General ZScript/DECORATE states, ACS,
+UDMF/SBARINFO and replacement maps require conversion. Composite sky/title
+handlers, original environmental fragment/saturation CVars and diagnostic
+add-ons remain unported. See docs/ADDON_COMPATIBILITY.md for exact limits.
 
-Credits/provenance: packs/CREDITS.txt, credits/brutaldoom in the PK3, assets/sounds/
-SOURCES.txt. Imported resources retain upstream licence status. Share Tech Mono: OFL.
+F toggles the RT flashlight; V kicks. Settings > Key Bindings changes 12 primary
+actions. Arrow/Enter/Esc, weapon number slots and function shortcuts stay fixed.
+F5/F9 quicksave/load, F7 debug, F8 RT toggle, F11 fullscreen, F12 capture.

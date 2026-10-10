@@ -4,6 +4,7 @@
 #include "doomdef.h"
 #ifdef D64_PC
 #include "interp.h" /* [PC] */
+#include "config.h"
 #endif
 #include "p_spec.h"
 #include "r_local.h"
@@ -38,7 +39,13 @@ void D_DoomMain(void) // 800027C0
     ticbuttons[0] = 0;
     oldticbuttons[0] = 0;
 
-    D_SplashScreen();
+#ifdef D64_PC
+    if(pc_config.startup_map>0) {
+        G_InitNew((skill_t)(pc_config.startup_skill-1),pc_config.startup_map,ga_nothing);
+        G_RunGame();
+    } else
+#endif
+        D_SplashScreen();
 
     while(true)
     {

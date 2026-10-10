@@ -7,7 +7,8 @@ docs/ADDON_COMPATIBILITY.md. History lives in DEVLOG; this file is current state
 Separate branch codex/immersive-gore-crash-fix from Claude 4ef9999. User authorized
 regular pushes, builds and milestone releases; no PR requested. Never commit ROMs.
 Published GitHub releases: 0.5.0 crash/gore/menu/pack/build launchers; 0.5.1 combat
-animation/audio and weapon/save bugs. 0.5.2 native ports/key bindings in final QA.
+animation/audio and weapon/save bugs; 0.5.2 native blood/flashlight ports/key bindings.
+0.5.3 native portrait HUD/liquid effects is being packaged after validation.
 
 ## Implemented behavior
 0.4.0 fault RVA 0x7ebc was FixedDiv2, caller 0x2736c was R_CheckBBox. Fixed divide
@@ -60,8 +61,16 @@ build-win. Root build.sh builds Linux/cross Windows. Native SDL/GCC versions dif
 from the pinned cross SDL. Logs/captures/build trees ignored; do not stage ROMs.
 
 ## Next work
-Publish tested 0.5.2 archives/checksums with exact binary hash, push manifests.
-Remaining add-on behaviors include environmental effects, composite sky/title and
-face HUD. Do not claim every archived script/map is compatible. Keep attribution;
+Publish tested 0.5.3 archives/checksums with exact binary hash, push manifests.
+Remaining production add-on visual behaviors include composite sky/title.
+Native portrait HUD and bounded poison/lava particles are implemented/validated. Do not claim every archived script/map is compatible. Keep attribution;
 Retribution source assets have no upstream file licence, owner requested inclusion.
 BDP declares GPLv3 but DetailedCredits does not identify every asset author.
+
+0.5.3: native DrawMugShot profile uses 42 unmodified portrait PNGs, reactive damage,
+death/god/fire/pickup states and clean stat/key/battery layout. Liquid FX use a
+48-particle pool and separate RNG, portal trace, native texture mappings, depth
+billboards and up to eight small RT lights. Native maps lack matching lava flats.
+Linux GL/MAP07 and Windows hardware RT on/off captures show effects; all seven
+sanitizer suites pass. Transient -warp/-skill startup and headless fixture position
+added. No new actors or save fields. 550-frame gameplay/RNG on/off trace matches.

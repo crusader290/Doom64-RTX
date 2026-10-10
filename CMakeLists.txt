@@ -62,6 +62,8 @@ set(D64_PORT_SOURCES
   src/port/gore.c
   src/port/combat_fx.c
   src/port/native_addons.c
+  src/port/pc_hud.c
+  src/port/env_fx.c
   src/port/pc_text.c
   src/port/rtlights.c
   src/port/log.c
@@ -149,7 +151,7 @@ target_include_directories(doom64rtx PRIVATE
   ${CMAKE_SOURCE_DIR}/src/port
   ${CMAKE_SOURCE_DIR}/src/gfx
   ${D64_GAME_DIR})
-set(D64_VERSION "0.5.2")
+set(D64_VERSION "0.5.3")
 find_package(Git QUIET)
 set(D64_GIT_HASH "unknown")
 if(GIT_FOUND)

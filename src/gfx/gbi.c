@@ -902,6 +902,35 @@ void GBI_OverlayQuad(uint32_t tex, float x, float y, float w, float h,
     }
 }
 
+/* Native cosmetic billboard. Shares the current world camera and depth, but
+ * remains a translucent raster draw (never an RT shadow caster). */
+static void viewport_adjust(float c[4]);
+void GBI_WorldQuad(uint32_t tex,const float corners[4][3],unsigned color)
+{
+    static const int indices[6]={0,1,2,0,2,3};
+    static const float uv[4][2]={{0,0},{1,0},{1,1},{0,1}};
+    D64GfxDrawCmd c={0};
+    if(!have_camera || !tex || out_vn+6>MAX_VERTS_OUT || out_cn+1>=MAX_CMDS_OUT) return;
+    c.tex[0]=tex;c.flags=D64GFX_CMD_WORLD|D64GFX_CMD_DEPTH_TEST|D64GFX_CMD_BLEND|D64GFX_CMD_FILTER;
+    c.wrap[0]=D64GFX_WRAP_CLAMP|(D64GFX_WRAP_CLAMP<<2);
+    c.cc[0]=D64GFX_CC_TEXEL0;c.cc[1]=D64GFX_CC_ZERO;
+    c.cc[2]=D64GFX_CC_SHADE;c.cc[3]=D64GFX_CC_ZERO;
+    c.cc[4]=D64GFX_CC_TEXEL0_A;c.cc[5]=D64GFX_CC_ZERO;
+    c.cc[6]=D64GFX_CC_SHADE_A;c.cc[7]=D64GFX_CC_ZERO;
+    memcpy(c.cc+8,c.cc,8);c.scissor[2]=(int16_t)(vw+.999f);c.scissor[3]=240;
+    if(!cur_cmd_valid || !same_state(&cur_cmd,&c)) {
+        flush_cmd();c.first_vertex=out_vn;cur_cmd=c;cur_cmd_valid=1;
+    }
+    for(int i=0;i<6;i++) {
+        int k=indices[i];float eye[4]={0};D64GfxVertex *v=&out_v[out_vn++];memset(v,0,sizeof(*v));
+        for(int j=0;j<4;j++) eye[j]=corners[k][0]*cam_mv[0][j]+corners[k][1]*cam_mv[1][j]+corners[k][2]*cam_mv[2][j]+cam_mv[3][j];
+        for(int j=0;j<4;j++) for(int n=0;n<4;n++) v->pos[j]+=eye[n]*rsp.proj[n][j];
+        viewport_adjust(v->pos);v->pos[0]*=ndc_xscale;memcpy(v->world,corners[k],sizeof(v->world));
+        memcpy(v->uv,uv[k],sizeof(v->uv));v->shade[0]=color>>24;v->shade[1]=color>>16;
+        v->shade[2]=color>>8;v->shade[3]=color;cur_cmd.vertex_count++;
+    }
+}
+
 static void tile_uv(const tile_t *tl, float s, float t, float *u, float *v)
 {
     int w, h;

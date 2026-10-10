@@ -6,6 +6,7 @@ int PCText_Available(void);
 void PCText_Draw(float x, float y, float size, const char *text, unsigned color);
 void PCText_Box(float x, float y, float w, float h, unsigned color);
 void PCText_Image(unsigned texture, float x, float y, float w, float h, unsigned color);
+void PCText_WorldImage(unsigned texture,float x,float y,float z,float w,float h,unsigned color);
 float PCText_Width(float size, const char *text);
 void PCText_Emit(const void *command);
 #endif

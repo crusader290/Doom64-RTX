@@ -20,10 +20,10 @@ def add(name, data, origin):
     entries[name] = data
     origins[name] = origin
 
-for pack in ('d64r-lostsoul-rt.pk3', 'd64r-caco-ball-recolor.pk3'):
+for pack in ('d64r-lostsoul-rt.pk3', 'd64r-caco-ball-recolor.pk3', 'd64r-mugshot.pk3','d64r-lava-fx.pk3','d64r-poison-fx.pk3'):
     with zipfile.ZipFile(source / pack) as archive:
         for name in sorted(archive.namelist()):
-            if name.startswith('sprites/') and name.endswith('.png'):
+            if (name.startswith('sprites/') or name.startswith('mugface/')) and name.endswith('.png'):
                 add(name, archive.read(name), pack)
 
 # These PNG lumps match original N64 ceiling-light texture names. Do not include
@@ -47,9 +47,9 @@ for path in sorted((materials / 'rt/data').glob('*.json')):
     add(path.relative_to(materials).as_posix(), path.read_bytes(), 'Retribution-RT-Materials')
 add('CREDITS.txt', (root / 'tools/release/PACKS_CREDITS.txt').read_bytes(), 'Doom64-RTX')
 # Native adapters inspect selected declarations. They do not execute scripts.
-for pack in ('d64r-blood-persist.pk3','d64r-rt-flashlight.pk3'):
+for pack in ('d64r-blood-persist.pk3','d64r-rt-flashlight.pk3','d64r-mugshot.pk3','d64r-lava-fx.pk3','d64r-poison-fx.pk3'):
     with zipfile.ZipFile(source / pack) as archive:
-        for name in ('DECORATE','ZSCRIPT'):
+        for name in ('DECORATE','ZSCRIPT','SBARINFO'):
             if name in archive.namelist():
                 add('native/' + pack[:-4] + '/' + name,archive.read(name),pack)
 for path in sorted((root / 'assets/combat/kick').glob('*.png')):

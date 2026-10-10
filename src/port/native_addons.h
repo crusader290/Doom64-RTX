@@ -12,4 +12,6 @@ int PCAddon_GoreLife(void);
 int PCAddon_GoreLimit(void);
 uint32_t PCAddon_BloodColor(int type);
 float PCAddon_Flashlight(void);
+int PCAddon_Mugshot(void);
+int PCAddon_Environment(void);
 #endif

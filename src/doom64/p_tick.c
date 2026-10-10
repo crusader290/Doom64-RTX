@@ -7,6 +7,9 @@
 #include "gore.h" /* [PC] */
 #include "combat_fx.h"
 #include "native_addons.h"
+#include "pc_hud.h"
+#include "env_fx.h"
+#include <SDL3/SDL.h>
 #endif
 #include "st_main.h"
 
@@ -292,6 +295,8 @@ int P_Ticker (void)//80021A00
 #ifdef D64_PC
         PCCombat_Tick(); /* [PC] advance once before this tic's events */
         PCAddon_Tick();
+        PCHud_Tick();
+        PCEnv_Tick();
 #endif
 	    P_RunThinkers();
 		P_CheckSights();
@@ -391,9 +396,24 @@ void P_Start (void) // 80021C50
 {
     fadebright_t *fb;
 #ifdef D64_PC
+    /* Opt-in fixed-timestep headless fixture positioning, never normal play. */
+    const char *position=SDL_getenv("D64_TEST_POSITION");
+    float px,py,degrees;
+    if(position && SDL_getenv("D64_HEADLESS") && SDL_getenv("D64_FIXED_TIMESTEP") &&
+       sscanf(position,"%f,%f,%f",&px,&py,&degrees)==3 &&
+       px>=-30000 && px<=30000 && py>=-30000 && py<=30000 && degrees>=0 && degrees<360 && players[0].mo) {
+        mobj_t *mo=players[0].mo;P_UnsetThingPosition(mo);
+        mo->x=(fixed_t)(px*FRACUNIT);mo->y=(fixed_t)(py*FRACUNIT);
+        mo->angle=(angle_t)(degrees*(4294967296.0/360.0));P_SetThingPosition(mo);
+        mo->z=mo->floorz=mo->subsector->sector->floorheight;
+        mo->ceilingz=mo->subsector->sector->ceilingheight;
+        mo->momx=mo->momy=mo->momz=0;players[0].viewz=mo->z+players[0].viewheight;
+    }
     I_PCGoreReset(); /* [PC] no cosmetic pointers survive level/load changes */
     PCCombat_Reset();
     PCAddon_ResetLevel();
+    PCHud_Reset();
+    PCEnv_Reset();
 #endif
 
     DrawerStatus = 1;
