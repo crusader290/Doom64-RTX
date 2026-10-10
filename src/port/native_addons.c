@@ -58,13 +58,19 @@ int PCAddon_IsDefinition(const char *name)
     const char *base=SDL_strrchr(name,'/');base=base ? base+1 : name;
     return !SDL_strcasecmp(base,"DECORATE") || !SDL_strcasecmp(base,"ZSCRIPT") ||
            !SDL_strcasecmp(base,"MAPINFO") || !SDL_strcasecmp(base,"SBARINFO") ||
-           !SDL_strcasecmp(base,"GLDEFS") || !SDL_strcasecmp(base,"TEXTURES");
+           !SDL_strcasecmp(base,"GLDEFS") || !SDL_strcasecmp(base,"TEXTURES") ||
+           !SDL_strcasecmp(base,"CVARINFO") || !SDL_strcasecmp(base,"LOADACS");
 }
 void PCAddon_Definition(const char *name,const void *data,size_t size)
 {
     lexer_t l={(const char *)data,(const char *)data+size,{0},0};
     int type=-1,depth=0,recognized=0,unknown=0,classes=0;
-    if(!pc_config.native_addons || !pc_config.respacks || size>1024*1024) return;
+    if(size>1024*1024) return;
+    const char *base=SDL_strrchr(name,'/');base=base ? base+1 : name;
+    if(SDL_strcasecmp(base,"ZSCRIPT") && SDL_strcasecmp(base,"DECORATE")) {
+        SDL_Log("native add-on: %s requires a native behavior/map conversion; declaration execution skipped",name);
+        return;
+    }
     while(token(&l)) {
         if(l.quoted) continue;
         if(!SDL_strcasecmp(l.token,"class")) {
@@ -132,6 +138,8 @@ void PCAddon_Draw(void)
 {
     if(!active() || !flashlight || !pc_config.flashlight) return;
     unsigned color=burning ? (charge<120 ? 0xdc7648ffu : 0xdfd1adffu) : 0x867964ffu;
-    PCText_Draw(132,194,7,"F  LIGHT",color);
+    char label[32];
+    SDL_snprintf(label,sizeof(label),"%s  LIGHT",SDL_GetScancodeName((SDL_Scancode)pc_config.bind_keys[B_LIGHT]));
+    PCText_Draw(132,194,7,label,color);
     for(int i=0;i<5;i++) PCText_Box(139+i*9,204,7,3,charge>i*180 ? color : 0x39332cffu);
 }

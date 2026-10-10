@@ -358,18 +358,27 @@ static void add_pack(const char *path)
     }
 }
 
+typedef struct { char path[1024]; } packpath_t;
+typedef struct { packpath_t *items; int count; } packlist_t;
+static int compare_packpaths(const void *a,const void *b)
+{
+    int order=SDL_strcasecmp(((const packpath_t *)a)->path,((const packpath_t *)b)->path);
+    return order ? order : SDL_strcmp(((const packpath_t *)a)->path,((const packpath_t *)b)->path);
+}
 static SDL_EnumerationResult SDLCALL packs_dir_cb(void *userdata, const char *dirname, const char *fname)
 {
     char full[1024];
     const char *dot = SDL_strrchr(fname, '.');
     SDL_PathInfo info;
-    (void)userdata;
+    packlist_t *list=userdata;
     SDL_snprintf(full, sizeof(full), "%s%s", dirname, fname);
     if (!SDL_GetPathInfo(full, &info))
         return SDL_ENUM_CONTINUE;
     if (info.type == SDL_PATHTYPE_DIRECTORY ||
-        (dot && (!SDL_strcasecmp(dot, ".pk3") || !SDL_strcasecmp(dot, ".zip"))))
-        add_pack(full);
+        (dot && (!SDL_strcasecmp(dot, ".pk3") || !SDL_strcasecmp(dot, ".zip") || !SDL_strcasecmp(dot,".wad")))) {
+        if(list->count<256) SDL_strlcpy(list->items[list->count++].path,full,sizeof(full));
+        else SDL_Log("resource packs: directory limit of 256 reached; skipped %s",full);
+    }
     return SDL_ENUM_CONTINUE;
 }
 
@@ -379,7 +388,12 @@ static void scan_packs_dir(const char *base)
     if (!base)
         return;
     SDL_snprintf(dir, sizeof(dir), "%spacks/", base);
-    SDL_EnumerateDirectory(dir, packs_dir_cb, NULL); /* alphabetical order not guaranteed: fine, names rarely clash */
+    packlist_t list={SDL_calloc(256,sizeof(packpath_t)),0};
+    if(!list.items) return;
+    SDL_EnumerateDirectory(dir, packs_dir_cb, &list);
+    qsort(list.items,(size_t)list.count,sizeof(packpath_t),compare_packpaths);
+    for(int i=0;i<list.count;i++) add_pack(list.items[i].path);
+    SDL_free(list.items);
 }
 
 void ResPack_Init(void)

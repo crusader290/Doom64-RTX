@@ -1,79 +1,67 @@
 # PROJECT_CONTEXT — Doom64-RTX
 
-Read with `PORT_MANIFEST.md`, `docs/tasks.json`, `docs/DISCOVERIES.md` and `docs/DEVLOG.md`.
+Read PORT_MANIFEST.md, docs/tasks.json, docs/DISCOVERIES.md, docs/DEVLOG.md and
+docs/ADDON_COMPATIBILITY.md. History lives in DEVLOG; this file is current state.
 
-## Goal and branch
-Native PC Doom 64 port: SDL3, Rust Vulkan/RT and OpenGL, Windows/Linux x64.
-User work continues on `codex/immersive-gore-crash-fix`, branched from Claude's
-`claude/amazing-archimedes-7wr3t5` at 4ef9999. No PR requested. Never commit ROMs.
-User requested regular pushes, manifest updates and releases at significant milestones.
+## Branch and publishing
+Separate branch codex/immersive-gore-crash-fix from Claude 4ef9999. User authorized
+regular pushes, builds and milestone releases; no PR requested. Never commit ROMs.
+Published GitHub releases: 0.5.0 crash/gore/menu/pack/build launchers; 0.5.1 combat
+animation/audio and weapon/save bugs. 0.5.2 native ports/key bindings in final QA.
 
-## Current milestone: 0.5.0
-MAP01 divide crash fixed: 0.4.0 RVA 0x7ebc resolves to FixedDiv2, caller 0x2736c
-to R_CheckBBox. Guard zero/negative projection depth and zero denominators;
-Windows reports fault registers and module-relative offsets. Exact user camera
-state is unavailable, so the original crash has not been replayed.
+## Implemented behavior
+0.4.0 fault RVA 0x7ebc was FixedDiv2, caller 0x2736c was R_CheckBBox. Fixed divide
+boundaries, projection depth and INT_MIN/shift hazards. Windows logs fault
+registers, module-relative frames and cause; exact user camera unavailable.
 
-New bounded cosmetic gore: 128 particles/gibs + 128 floor/wall stains, collision,
-gravity, fade, independent RNG; no extra actors/save struct changes. Disabled
-during demos and recording. Defaults: 120 FPS, always run, fast switching and
-25% shorter positive weapon states. Kick has more damage/knockback and shorter
-cooldown. Modern extras are gated off for demos/recording.
+Aggressive defaults: 120 FPS, always run, faster switch/attack recovery and stronger
+kick. Native render-only recoil/inertia/breathing, hit feedback and attributed
+13-frame BDP boot animation. Kick lands 3 tics after start. Four attributed PCM
+clips (pistol, melee impact, slop, kick), fixed 16-voice mixer, pan/volume/reverb.
+Modern combat and cosmetic effects are gated off during demos/recording.
 
-Retro UI uses Share Tech Mono (SIL OFL), baked TrueType atlas and ordered overlay
-geometry. Original title art resized; settings pages have compact rows, help,
-selection indicators and pagination. Audio volume controls added. Password,
-Controller Pak, Control Pad/Stick and console display menus removed from PC
-flows; native save/load slots remain. Missing font falls back to original art.
+Gore has 128 particles/gibs and 128 floor/wall stains, collision/gravity, own RNG,
+no game actors or save struct changes. Persistent-blood adapter adds permanent
+stains and literal monster colors; lifetime/cap configurable. Flashlight adapter
+adds battery/HUD/cues and a shadowed RT cone; toggle F, 30s drain/15s recharge,
+manual switch, charge resets on map/load. C/Rust/GPU lights all have 64-byte stride.
 
-One `packs/doom64rtx-visuals.pk3` replaces three separate release packs; combines
-lost-soul/fireball sprites, SFLATC/SPACECE ceiling lights, RT maps and defaults.
-Per-file sources recorded; exclude broken/development/quarantine content and
-GZDoom scripts/maps. Most source images are material maps, not higher-res albedo.
-Existing Retribution assets have no upstream licence; retain owner-requested
-inclusion and attribution; do not relabel them GPL.
+User selected native behavior ports, not another engine. No general ZScript,
+DECORATE states, ACS, UDMF or SBARINFO runtime. Loader recognizes selected upstream
+handlers and mapped BloodColor literals, logs unsupported descriptors/classes.
+Capability matrix records remaining unported production/test add-ons. One PK3
+contains selected declarations, compatible sprites/ceiling art/RT materials,
+boot frames/PCM and per-file credits. Most material PNGs are not new albedo.
 
-Root `build.sh` downloads dependencies and builds Linux/MinGW Windows;
-`build.bat` downloads a SHA256-verified portable MSYS2 toolchain and builds native
-Windows. Downloads and outputs live under build-deps/build-*.
+Menus use Share Tech Mono (OFL), scalable atlas and ordered overlay geometry.
+Settings: Graphics, Gameplay, Audio, Key Bindings, Controls. 12 primary key actions,
+conflict swap, cancel/reset/persistence; core menu/weapon/function shortcuts fixed.
+Confirmation pages match; console password/storage/controller screens bypassed.
+Native slots/F5/F9/autosave stay. Macro globals reset at level start; load repairs
+macro line vertices. Backward weapon scan uses signed index to avoid underflow.
 
-## Evidence
-Linux and MinGW builds pass. ASan/UBSan fixed math + 396608 BSP cases pass;
-gore pool/collision/expiry/draw-purity/demo/reset tests pass. GL 2300-frame MAP01
-combat passes. Gore on/off 1400-frame gameplay traces match. Vulkan 680-frame
-and RT 620-frame smoke pass. Menu screenshots visually reviewed; initial large
-VT323 layout replaced following user feedback. Consolidated archive passes ZIP
-integrity and byte-for-byte reproducibility. Native MSYS2 dependency setup passes;
-native compilation and fresh Linux/Windows release-extraction tests pass. Windows
-Vulkan RT/audio/MAP01 verified on RX 7900 XTX; Linux on Mesa. Forced Windows
-0xc0000094 report includes fault/module offsets, registers and division reason.
+## Validation
+Linux, cross MinGW and downloaded native Windows builds. Sanitizer math (396608
+BSP cases), gore, PCM, animation, native lexer/battery/ABI and binding persistence
+checks. 1050-frame animation/audio on/off combat traces identical. Actual MAP01
+slot save/load passed, backward weapon crash replay passed 1400 frames. GL/Vulkan/
+RT smoke, native Windows RT combat and flashlight off/on illumination captures.
+0.5.1 fresh Windows default RT/audio passed; Linux software RT needed 320x240/30fps
+for timeout (default full-resolution run was slow, not a crash).
 
-## Remaining requested work
-Milestone 0.5.0 archives and checksums verified; GitHub release publication next.
-Then implement smoother recoil/sway, visible kick and hit feedback; inspect/import
-Brutal Doom sounds with source/licence attribution (selected source files are only
-in work/sound-reference so far, not shipped). User also requested GZDoom script
-compatibility for archived add-ons. General ZScript/DECORATE/ACS/UDMF support is
-not implemented; inspect each script and implement supported behaviors with
-explicit compatibility reporting. Do not claim all add-ons work.
-Further QoL/texture/mechanics improvements remain to be reviewed and tested.
+## Build environment
+Container doom64-codex-build binds this repo at /repo. D64_DEPS=/repo/build-deps;
+SDL prefix /repo/build-deps/sdl3-linux; source ~/.cargo/env. ROM /tmp/test-rom.z64
+is external/user-owned. Native Windows portable MSYS under build-deps/msys64;
+MSYSTEM=MINGW64 and D64_BUILD_ROOT=absolute repo, invoke tools/build_native_windows.sh
+with its absolute /c/... path in login bash. build.bat handles this setup/download.
+Native SDL also needs libiconv-2.dll; launcher copies it. Release Windows uses
+build-win. Root build.sh builds Linux/cross Windows. Native SDL/GCC versions differ
+from the pinned cross SDL. Logs/captures/build trees ignored; do not stage ROMs.
 
-## Environment and known limitations
-Build/test Docker container doom64-codex-build, /repo bind mount. SDL prefix
-/repo/build-deps/sdl3-linux; source ~/.cargo/env. Test ROM /tmp/test-rom.z64,
-copied outside Git. tools/smoke.sh starts Xvfb. User GPU crash-location validation
-still needed. MSVC remains experimental; MinGW supported. Saves tied to struct
-sizes; these changes do not change those structs. RT emitter lights still need
-isolated visual validation (T17).
-
-## 2026-10-10 — combat animation/audio milestone in validation
-Native recoil/inertia/breathing, attributed BDP kick frames, hit marker and delayed
-kick impact; four attributed PCM overrides with fixed voice/tail limits. Audio
-and animation sanitizer checks pass; 1050-frame GL traces match with both effects
-on/off. Native Windows RT ran 1000 frames normally. Its downloaded SDL dependency
-now also bundles libiconv. Save/load navigation exposed a separate unsigned-enum
-underflow in backward weapon selection; fixed signed loop index, replay pending.
-Level-start macro globals reset and loaded macro line vertices repaired without
-changing save structs. User selected native add-on behavior ports, not a new engine.
-## 2026-10-10 — 0.5.1 published; native ports in validation
-0.5.1 is published with both archives/checksums. Fresh Windows default RT/audio passed; fresh Linux RT/audio passed at 320x240/30fps because full-resolution software Vulkan exceeded the timeout. Native adapters now recognize selected blood/flashlight declarations and literal BloodColor properties. Persistent stains remain hard-capped at 128. A native battery/HUD and actual cone-light shader are implemented; C, Rust FFI and GPU packing all use a 64-byte light record. Unknown script classes are logged. No general VM or map compatibility is claimed.
+## Next work
+Publish tested 0.5.2 archives/checksums with exact binary hash, push manifests.
+Remaining add-on behaviors include environmental effects, composite sky/title and
+face HUD. Do not claim every archived script/map is compatible. Keep attribution;
+Retribution source assets have no upstream file licence, owner requested inclusion.
+BDP declares GPLv3 but DetailedCredits does not identify every asset author.

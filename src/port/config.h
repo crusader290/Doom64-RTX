@@ -6,6 +6,8 @@
 #define D64_CONFIG_H
 
 typedef enum { RENDERER_VULKAN = 0, RENDERER_OPENGL = 1 } renderer_t;
+enum { B_FORWARD,B_BACK,B_LEFT,B_RIGHT,B_USE,B_JUMP,B_KICK,B_LIGHT,
+       B_FIRE,B_MAP,B_RUN,B_PREV,B_COUNT };
 
 typedef struct {
     char  rom[512];          /* explicit ROM path, empty = auto detect */
@@ -48,6 +50,7 @@ typedef struct {
     char  packs[1024];       /* extra packs, ';' separated (also -pack <file>) */
     int   show_stats;        /* F7 debug overlay: fps / position */
     int   audio_rate;        /* synth output rate in Hz (N64: 22050) */
+    int   bind_keys[B_COUNT]; /* primary keyboard actions, SDL scancodes */
 } pcconfig_t;
 
 extern pcconfig_t pc_config;   /* effective settings (file + command line) */
@@ -59,6 +62,7 @@ extern pcconfig_t pc_config_file;  /* what doom64rtx.ini holds; Config_Save writ
     do { pc_config.field = (value); pc_config_file.field = pc_config.field; } while (0)
 
 void Config_Defaults(void);
+void Config_ResetBindings(void);
 void Config_Load(void);
 void Config_Save(void);
 void Config_Snapshot(void);

@@ -12,10 +12,19 @@
 pcconfig_t pc_config;
 pcconfig_t pc_config_file;
 static char config_path[1024];
+static const int default_keys[B_COUNT]={SDL_SCANCODE_W,SDL_SCANCODE_S,SDL_SCANCODE_A,SDL_SCANCODE_D,
+    SDL_SCANCODE_E,SDL_SCANCODE_SPACE,SDL_SCANCODE_V,SDL_SCANCODE_F,SDL_SCANCODE_LCTRL,
+    SDL_SCANCODE_TAB,SDL_SCANCODE_LSHIFT,SDL_SCANCODE_Q};
+void Config_ResetBindings(void)
+{
+    memcpy(pc_config.bind_keys,default_keys,sizeof(default_keys));
+    memcpy(pc_config_file.bind_keys,default_keys,sizeof(default_keys));
+}
 
 void Config_Defaults(void)
 {
     memset(&pc_config, 0, sizeof(pc_config));
+    memcpy(pc_config.bind_keys,default_keys,sizeof(default_keys));
     pc_config.renderer = RENDERER_VULKAN;
     pc_config.raytracing = 1; /* falls back to raster when the GPU cannot ray trace */
     pc_config.rt_spp = 1;
@@ -56,6 +65,18 @@ typedef enum { CV_INT, CV_FLOAT, CV_STR, CV_RENDERER } cvtype_t;
 typedef struct { const char *name; cvtype_t type; void *ptr; size_t len; } cvar_t;
 
 static const cvar_t cvars[] = {
+    { "bind_forward", CV_INT, &pc_config.bind_keys[B_FORWARD], 0 },
+    { "bind_back", CV_INT, &pc_config.bind_keys[B_BACK], 0 },
+    { "bind_left", CV_INT, &pc_config.bind_keys[B_LEFT], 0 },
+    { "bind_right", CV_INT, &pc_config.bind_keys[B_RIGHT], 0 },
+    { "bind_use", CV_INT, &pc_config.bind_keys[B_USE], 0 },
+    { "bind_jump", CV_INT, &pc_config.bind_keys[B_JUMP], 0 },
+    { "bind_kick", CV_INT, &pc_config.bind_keys[B_KICK], 0 },
+    { "bind_light", CV_INT, &pc_config.bind_keys[B_LIGHT], 0 },
+    { "bind_fire", CV_INT, &pc_config.bind_keys[B_FIRE], 0 },
+    { "bind_map", CV_INT, &pc_config.bind_keys[B_MAP], 0 },
+    { "bind_run", CV_INT, &pc_config.bind_keys[B_RUN], 0 },
+    { "bind_prev", CV_INT, &pc_config.bind_keys[B_PREV], 0 },
     { "native_addons", CV_INT, &pc_config.native_addons, 0 },
     { "flashlight", CV_INT, &pc_config.flashlight, 0 },
     { "gore_life", CV_INT, &pc_config.gore_life, 0 },

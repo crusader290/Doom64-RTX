@@ -1,27 +1,30 @@
 Doom64-RTX @VERSION@, commit @COMMIT@
-Requires your own Doom 64 ROM (.z64/.n64/.v64). No ROM is included.
+Requires your own Doom 64 ROM. No ROM is included.
 
-New in 0.5.1:
-- Native recoil, turn inertia, breathing, impact feedback and a 13-frame boot
-  animation adapted from Brutal Doom Platinum. Kick impact matches extension.
-- Four attributed sound upgrades: pistol, melee impact, flesh/slop and kick.
-  Preloaded PCM, stereo positioning, volume/pause controls and bounded reverb.
-- Combat Animation and Immersion Sounds settings; both default to enabled.
-- Main menu gains Quit Game. Console password/storage controls remain removed.
-- Fix backward weapon selection underflow when the chainsaw is not owned.
-- Reset stale macro references between maps and restore loaded macro geometry.
-- Bound ZIP decompression; native Windows downloader bundles SDL's libiconv.
+New in 0.5.2:
+- Native ports of persistent blood and monster BloodColor properties. Lifetime
+  settings and FIFO limits; permanent stains remain bounded to 128.
+- Flashlight battery/HUD and shadowed RT spotlight: F toggles, 30s drain, 15s
+  recharge, low-charge flicker, switch/burnout cues. Charge resets on map/load.
+- Native Add-ons, Flashlight, Blood Lifetime/Limit settings. Selected upstream
+  declarations consolidated into the same single PK3; no extra packs required.
+- Key Bindings page: capture 12 movement/combat keys, swap conflicts, cancel,
+  restore defaults and save. Core menu/weapon/function shortcuts stay fixed.
+- Matching restart/return confirmation menus and accurate contextual prompts.
+- Deterministic alphabetical pack discovery and explicit unsupported-descriptor logs.
 
-Retains 0.5.0: divide-crash fix/diagnostic logs, heavy cosmetic gore, faster weapons,
-stronger kick, 120 FPS default, retro text/settings and one consolidated PK3.
+Retains 0.5.1 boot/recoil animations and four attributed sound imports; 0.5.0 divide
+crash fixes, heavy cosmetic gore, aggressive weapons/kick and 120 FPS defaults.
 
-Validation: Linux, MinGW Windows and native Windows builds; sanitizer math/gore,
-animation and audio tests; 1050-frame on/off gameplay traces match; native Windows
-RT combat 1000 frames; actual slot save/load and backward weapon crash replay pass.
+Validation: Linux/Windows builds; sanitizer math, gore, animation, PCM, native
+adapter/ABI/battery and binding save/reload tests. GL menu/gameplay smoke; Windows
+RT flashlight off/on image comparison and Linux RT smoke. Prior save/load and
+weapon crash replays passed. Exact original crash camera was unavailable.
 
-General ZScript/DECORATE/ACS execution and UDMF maps remain unsupported. Subsequent
-milestones will port selected add-on behaviors to this native engine. Demo playback
-and recording disable modern combat effects. RT performance varies by GPU.
+These are native behavior adaptations, not a GZDoom VM. General ZScript/DECORATE
+states/ACS/UDMF/SBARINFO and other archived handlers/maps require conversion.
+See docs/ADDON_COMPATIBILITY.md for supported behaviors and differences.
+Flashlight cone requires RT; modern combat effects are disabled in demos/recording.
 
-Imported assets retain upstream provenance/licence status. See packs/CREDITS.txt,
-credits/brutaldoom in the PK3 and assets/sounds/SOURCES.txt. Share Tech Mono is SIL OFL.
+Credits/provenance: packs/CREDITS.txt, credits/brutaldoom in the PK3, assets/sounds/
+SOURCES.txt. Imported resources retain upstream licence status. Share Tech Mono: OFL.

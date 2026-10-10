@@ -5,6 +5,7 @@
 #include "st_main.h"
 #ifdef D64_PC
 #include "pc_options.h" /* [PC] */
+#include "input.h"
 #include "pc_text.h"
 #endif
 
@@ -93,6 +94,10 @@ char *ControlText[] =   //8007517C
 #define M_TXT56 "Audio"         // [PC]
 #define M_TXT57 "Controls"      // [PC]
 #define M_TXT58 "Quit Game"     // [PC]
+#define M_TXT59 "Key Bindings"  // [PC]
+#ifdef D64_PC
+static const char *pc_confirmation="Quit Game?";
+#endif
 
 char *MenuText[] =   // 8005ABA0
 {
@@ -108,7 +113,7 @@ char *MenuText[] =   // 8005ABA0
     M_TXT45, M_TXT46, M_TXT47,
     M_TXT48, M_TXT49, M_TXT50,  // [GEC] NEW
     M_TXT51, M_TXT52, M_TXT53,  // [PC]
-    M_TXT54, M_TXT55, M_TXT56, M_TXT57, M_TXT58 // [PC]
+    M_TXT54, M_TXT55, M_TXT56, M_TXT57, M_TXT58, M_TXT59 // [PC]
 };
 
 #ifdef D64_PC
@@ -146,14 +151,15 @@ menuitem_t Menu_Skill[4] = // 8005A990
 };
 
 #ifdef D64_PC
-#define OPTIONS_ITEMS 5 /* [PC] Native settings and saves replace console menus. */
+#define OPTIONS_ITEMS 6 /* [PC] Native settings replace console menus. */
 menuitem_t Menu_Options[OPTIONS_ITEMS] = // 8005A9C0
 {
     { 52, 102, 64 },    // [PC] Graphics
     { 53, 102, 88 },    // [PC] Gameplay
     { 56, 102, 112},    // [PC] Audio
-    { 57, 102, 136},    // [PC] Controls
-    {  6, 102, 172},    // Return
+    { 59, 102, 136},    // [PC] Key Bindings
+    { 57, 102, 160},    // [PC] Controls
+    {  6, 102, 188},    // Return
 };
 #else
 #define OPTIONS_ITEMS 6
@@ -762,7 +768,9 @@ static void M_PCPageDrawer(void)
     }
     PCText_Box(32, 193, 256, .5f, 0x55463aff);
     PCText_Draw(32, 201, 8, PCOpt_Help(pc_page, cursorpos), text_alpha | 0xb19b8000);
-    PCText_Draw(32, 218, 8, "UP/DOWN SELECT   LEFT/RIGHT CHANGE   ESC BACK", text_alpha | 0x8e857900);
+    PCText_Draw(32, 218, 8, pc_page==PCPAGE_BINDINGS ? "UP/DOWN SELECT   ENTER REBIND   ESC BACK" :
+        pc_page==PCPAGE_SAVE || pc_page==PCPAGE_LOAD ? "UP/DOWN SELECT   ENTER CONFIRM   ESC BACK" :
+        "UP/DOWN SELECT   LEFT/RIGHT CHANGE   ESC BACK", text_alpha | 0x8e857900);
 }
 
 int M_PCOptionsPage(int page)
@@ -778,6 +786,7 @@ int M_PCOptionsPage(int page)
     linepos = 0;
 
     exit = MiniLoop(M_FadeInStart, M_FadeOutStart, M_PCPageTicker, M_MenuGameDrawer);
+    IN_CancelBinding();
     M_RestoreMenuData((exit == ga_exit));
 
     if (exit == ga_exit)
@@ -970,6 +979,9 @@ int M_MenuTicker(void) // 80007E0C
                     break;
 
                 case 4: // Main Menu
+#ifdef D64_PC
+                    pc_confirmation="Return to Main Menu?";
+#endif
                     if (truebuttons)
                     {
                         S_StartSound(NULL, sfx_pistol);
@@ -991,6 +1003,9 @@ int M_MenuTicker(void) // 80007E0C
                     break;
 
                 case 5: // Restart Level
+#ifdef D64_PC
+                    pc_confirmation="Restart This Level?";
+#endif
                     if (truebuttons)
                     {
                         S_StartSound(NULL, sfx_pistol);
@@ -1242,6 +1257,10 @@ int M_MenuTicker(void) // 80007E0C
                     break;
 
                 case 22: // Features
+#ifdef D64_PC
+                    if(truebuttons) return M_PCOptionsPage(PCPAGE_DEBUG);
+                    break;
+#else
                     if (truebuttons)
                     {
                         S_StartSound(NULL, sfx_pistol);
@@ -1265,6 +1284,7 @@ int M_MenuTicker(void) // 80007E0C
                     }
                     break;
 
+#endif
                 case 23: // WARP TO LEVEL
                     if (buttons ^ oldbuttons)
                     {
@@ -1509,6 +1529,9 @@ int M_MenuTicker(void) // 80007E0C
                 case 57: // [PC] Keyboard/mouse control reference
                     if (truebuttons) return M_PCOptionsPage(PCPAGE_CONTROLS);
                     break;
+                case 59:
+                    if(truebuttons) return M_PCOptionsPage(PCPAGE_BINDINGS);
+                    break;
 
                 case 35: // LOCK MONSTERS
                     /* Not available in the release code */
@@ -1721,11 +1744,11 @@ void M_MenuTitleDrawer(void) // 80008E7C
 #ifdef D64_PC
     /* [PC] Keep the original title art with scalable, restrained retro UI. */
     if (PCText_Available() && (MenuItem == Menu_Title || MenuItem == Menu_Options ||
-                              MenuItem == Menu_Game || MenuItem == Menu_Skill)) {
+                              MenuItem == Menu_Game || MenuItem == Menu_Skill || MenuItem == Menu_Quit)) {
         if (MenuItem != Menu_Title) {
             M_DrawOverlay(24, 10, 296, 232, 120);
             PCText_Draw(38, 18, 19, MenuItem == Menu_Options ? "Settings" :
-                        MenuItem == Menu_Game ? "Paused" : "Choose Your Skill", text_alpha | 0xd9c2a000);
+                        MenuItem == Menu_Game ? "Paused" : MenuItem == Menu_Quit ? pc_confirmation : "Choose Your Skill", text_alpha | 0xd9c2a000);
             PCText_Box(38, 41, 244, .5f, 0x55463aff);
         } else PCText_Draw(-1, 121, 8, "R A Y   T R A C E D", text_alpha | 0x99857400);
         for (i = 0; i < itemlines; i++) {
@@ -1738,6 +1761,7 @@ void M_MenuTitleDrawer(void) // 80008E7C
                 PCText_Box(pc_x - 10, pc_y + 1, 1.5f, 12, text_alpha | 0xba493700);
             }
             PCText_Draw(pc_x, pc_y, MenuItem == Menu_Title ? 15 : 12,
+                        MenuItem == Menu_Quit ? (i==0 ? "Confirm" : "Cancel") :
                         pc_item->casepos == 6 ? "Back" : pc_item->casepos == 11 ? "Settings" : MenuText[pc_item->casepos], color);
         }
         PCText_Draw(-1, MenuItem == Menu_Title ? 229 : 219, 7,

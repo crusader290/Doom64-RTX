@@ -20,12 +20,12 @@ temporal accumulation and denoising). No code is shared with that project.
 
 ## Download
 
-Preview builds are in [`releases/`](releases/):
+Download the latest milestone from [GitHub Releases](https://github.com/crusader290/Doom64-RTX/releases). Archived builds are in [`releases/`](releases/):
 
 | File | Platform |
 |---|---|
-| `doom64rtx-0.4.0-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
-| `doom64rtx-0.4.0-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
+| `doom64rtx-0.5.2-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
+| `doom64rtx-0.5.2-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
 
 Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 `.github/workflows/build.yml` are built the same way.
@@ -46,8 +46,8 @@ Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 | Mouse look, jumping, weapon keys, aim down sights, kick | working |
 | 30 / 60 / 120 fps (interpolated; game logic stays 30 Hz) | working |
 | Options > Graphics / Gameplay, F7 debug page | working |
-| Controller Pak notes / passwords | working, needs more testing |
-| 4:3 / 16:9 (Options › Display › Aspect Ratio) | working: wider field of view, HUD and menus keep their proportions |
+| Native save/load, quicksave and autosave | working; console storage/password menus removed |
+| 4:3 / 16:9 (Settings › Graphics › Aspect Ratio) | working: wider field of view, HUD and menus keep their proportions |
 | Log file + crash reports | working, on by default |
 
 See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
@@ -99,7 +99,7 @@ See [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for the detailed log and
 | F11, Alt+Enter | fullscreen |
 | F12 | screenshot |
 
-Gamepads use an N64-like layout: left stick moves and turns, right stick turns, right
+Gamepads use the standard controller layout: left stick moves and turns, right stick turns, right
 trigger fires, shoulders strafe, A/B confirm and back, X uses, Y opens the map.
 
 ### Settings (`doom64rtx.ini`)
@@ -110,11 +110,11 @@ preference directory (`%APPDATA%\Doom64RTX\Doom64RTX\` or `~/.local/share/Doom64
 ```ini
 renderer = vulkan        # vulkan | opengl
 raytracing = 1           # ray traced world when the GPU supports it (F10 toggles)
-widescreen = 0           # 1 = 16:9 (also in Options > Display > Aspect Ratio)
+widescreen = 0           # 1 = 16:9 (also in Settings > Graphics > Aspect Ratio)
 brightness = 50          # starting value of the game's Brightness option (0..100)
 log = 1                  # write doom64rtx.log
 sound = 1                # sound and music
-fps = 30                 # 30 (N64), 60 or 120 (interpolated)
+fps = 120                # 30, 60 or 120 (interpolated)
 mouselook = 1            # also: invert_mouse, always_run, autoaim, crosshair, jump,
 ads = 1                  #   weapon_bob (0-100), fast_weapons, gore, autosave
 
@@ -133,8 +133,7 @@ gpu_index = -1           # -1 = pick automatically
 validation = 0           # Vulkan validation layers
 ```
 
-Save games (`save0.d64s` ... `save8.d64s`; 7 = quick, 8 = auto) and Controller Pak notes
-(`controller.pak`) are stored in the preference directory.
+Save games (`save0.d64s` ... `save8.d64s`; 7 = quick, 8 = auto) are stored in the preference directory.
 Settings changed in game (F10, F11, Aspect Ratio) are saved; command-line options are not.
 
 ### Resource packs (texture and sprite replacements)
@@ -266,3 +265,10 @@ are required. `build.bat -SetupOnly` installs dependencies without compiling.
 Linux builds from Windows require Ubuntu/WSL and `bash build.sh linux` there.
 Network access is required for first-time downloads. Full logs from cross builds
 are in `build-logs/`; native Windows tools print diagnostics directly.
+## Native combat and add-on ports (0.5.2)
+
+Default combat uses faster weapons, a stronger timed kick, recoil/inertia animations, impact feedback, heavy gore and attributed PCM sound upgrades. All modern gameplay effects are disabled for demo playback/recording. Settings > Key Bindings captures 12 primary keyboard actions, swaps conflicts and offers Reset Bindings. Arrow/Enter/Esc, number weapon slots and function shortcuts stay fixed.
+
+The release loads one packs/doom64rtx-visuals.pk3. It includes compatible sprite/ceiling art, RT materials, boot frames, sounds and selected native add-on definitions. Native adapters port persistent colored blood and a flashlight battery/HUD; F toggles a shadowed cone in the RT renderer. Battery charge resets on level/save loads. General GZDoom scripts and replacement maps require conversion; see [the capability matrix](docs/ADDON_COMPATIBILITY.md).
+
+Blood Lifetime and Blood Limit control new stains (0 means permanent, hard cap 128). Native Add-ons disables the behavior ports. Both imported audio and combat animation have independent switches. Imported assets retain upstream attribution and licence status.

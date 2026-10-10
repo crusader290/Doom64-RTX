@@ -31,22 +31,13 @@
 typedef struct { SDL_Scancode key; uint16_t button; } keybind_t;
 
 static const keybind_t keybinds[] = {
-    { SDL_SCANCODE_W,         CONT_UP },
     { SDL_SCANCODE_UP,        CONT_UP },
-    { SDL_SCANCODE_S,         CONT_DOWN },
     { SDL_SCANCODE_DOWN,      CONT_DOWN },
     { SDL_SCANCODE_LEFT,      CONT_LEFT },
     { SDL_SCANCODE_RIGHT,     CONT_RIGHT },
-    { SDL_SCANCODE_A,         CONT_L },
-    { SDL_SCANCODE_D,         CONT_R },
-    { SDL_SCANCODE_LCTRL,     CONT_G },
     { SDL_SCANCODE_RCTRL,     CONT_G },
-    { SDL_SCANCODE_E,         CONT_F },
-    { SDL_SCANCODE_LSHIFT,    CONT_C },
     { SDL_SCANCODE_RSHIFT,    CONT_C },
     { SDL_SCANCODE_LALT,      CONT_D },
-    { SDL_SCANCODE_TAB,       CONT_E },
-    { SDL_SCANCODE_Q,         CONT_A },
     { SDL_SCANCODE_RETURN,    CONT_A },
     { SDL_SCANCODE_KP_ENTER,  CONT_A },
     { SDL_SCANCODE_BACKSPACE, CONT_B },
@@ -60,6 +51,22 @@ static int weapon_key;
 static int wheel_pulse_up, wheel_pulse_down;
 static uint16_t mouse_buttons;
 static int input_grab;
+static int capture=-1,release_key;
+void IN_BeginBinding(int index) { if(index>=0 && index<B_COUNT) capture=index; }
+void IN_CancelBinding(void) { capture=-1; }
+int IN_BindingIndex(void) { return capture; }
+static int bound(const bool *keys,int index)
+{
+    int key=pc_config.bind_keys[index];
+    return key>SDL_SCANCODE_UNKNOWN && key<SDL_SCANCODE_COUNT && keys[key];
+}
+static int reserved(SDL_Scancode key)
+{
+    return key==SDL_SCANCODE_RETURN || key==SDL_SCANCODE_KP_ENTER || key==SDL_SCANCODE_BACKSPACE ||
+        (key>=SDL_SCANCODE_1 && key<=SDL_SCANCODE_8) ||
+        (key>=SDL_SCANCODE_F5 && key<=SDL_SCANCODE_F12) ||
+        (key>=SDL_SCANCODE_RIGHT && key<=SDL_SCANCODE_UP);
+}
 
 void IN_Init(void)
 {
@@ -85,6 +92,17 @@ void IN_SetGrab(SDL_Window *window, int grab)
 
 void IN_HandleEvent(const SDL_Event *ev)
 {
+    if(capture>=0 && ev->type==SDL_EVENT_KEY_DOWN) {
+        if(ev->key.repeat) return;
+        SDL_Scancode key=ev->key.scancode;
+        if(key==SDL_SCANCODE_ESCAPE) { capture=-1;release_key=key;return; }
+        if(key<=SDL_SCANCODE_UNKNOWN || key>=SDL_SCANCODE_COUNT || reserved(key)) return;
+        int old=pc_config.bind_keys[capture];
+        for(int i=0;i<B_COUNT;i++) if(i!=capture && pc_config.bind_keys[i]==(int)key)
+            CONFIG_SET(bind_keys[i],old); /* swap conflicting actions */
+        CONFIG_SET(bind_keys[capture],(int)key);Config_Save();
+        capture=-1;release_key=key;return;
+    }
     switch (ev->type)
     {
     case SDL_EVENT_MOUSE_MOTION:
@@ -143,11 +161,16 @@ int IN_ReadPad(void)
     uint16_t buttons = 0;
     int sx = 0, sy = 0;
     size_t i;
+    if(capture>=0) return 0;
+    if(release_key) { if(keys[release_key]) return 0;release_key=0; }
 
     for (i = 0; i < sizeof(keybinds) / sizeof(keybinds[0]); i++)
         if (keys[keybinds[i].key])
             buttons |= keybinds[i].button;
     buttons |= mouse_buttons;
+    static const uint16_t bind_buttons[B_COUNT]={CONT_UP,CONT_DOWN,CONT_L,CONT_R,CONT_F,0,0,0,
+                                                CONT_G,CONT_E,CONT_C,CONT_A};
+    for(i=0;i<B_COUNT;i++) if(bound(keys,(int)i)) buttons|=bind_buttons[i];
 
     /* number keys / wheel: weapon cycling pulses */
     if (wheel_pulse_up > 0) { buttons |= CONT_B; wheel_pulse_up--; }
@@ -217,12 +240,12 @@ int I_PCActions(void)
     extern int I_PCTestActions(void);
     int a = I_PCTestActions();
 
-    if (keys[SDL_SCANCODE_SPACE])
+    if (bound(keys,B_JUMP))
         a |= PCACT_JUMP;
-    if (keys[SDL_SCANCODE_F]) a |= 8; /* native flashlight toggle edge */
+    if (bound(keys,B_LIGHT)) a |= 8; /* native flashlight toggle edge */
     if (input_grab && (mb & SDL_BUTTON_RMASK))
         a |= PCACT_ADS;
-    if (keys[SDL_SCANCODE_V] || (input_grab && (mb & SDL_BUTTON_X1MASK)))
+    if (bound(keys,B_KICK) || (input_grab && (mb & SDL_BUTTON_X1MASK)))
         a |= PCACT_KICK;
     if (gamepad)
     {

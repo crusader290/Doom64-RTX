@@ -12,6 +12,7 @@
 #include "doomdef.h"
 #include "p_local.h"
 #include "config.h"
+#include "input.h"
 #include "d64gfx.h"
 #include "pc_options.h"
 #include "savegame.h"
@@ -422,6 +423,7 @@ int PCOpt_Count(int page)
     case PCPAGE_DEBUG: return D_COUNT;
     case PCPAGE_AUDIO: return 4;
     case PCPAGE_CONTROLS: return 11;
+    case PCPAGE_BINDINGS: return B_COUNT+1;
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return PC_SAVE_SLOTS;
     }
@@ -437,6 +439,7 @@ const char *PCOpt_Title(int page)
     case PCPAGE_DEBUG: return "Debug";
     case PCPAGE_AUDIO: return "Audio";
     case PCPAGE_CONTROLS: return "Controls";
+    case PCPAGE_BINDINGS: return "Key Bindings";
     case PCPAGE_SAVE: return "Save Game";
     case PCPAGE_LOAD: return "Load Game";
     }
@@ -446,6 +449,8 @@ const char *PCOpt_Title(int page)
 const char *PCOpt_Label(int page, int i)
 {
     static const char *audio[] = {"Music Volume", "Effects Volume", "Output Rate", "Immersion Sounds"};
+    static const char *bindings[B_COUNT]={"Forward","Backward","Strafe Left","Strafe Right","Use / Open",
+        "Jump","Kick","Flashlight","Fire","Automap","Run / Walk","Previous Weapon"};
     static const char *controls[] = {"Move / Strafe", "Fire", "Aim Sights", "Use / Open", "Jump", "Kick", "Weapons", "Quick Save / Load", "Debug / Ray Tracing", "Fullscreen / Capture", "Flashlight"};
     if (i < 0 || i >= PCOpt_Count(page))
         return "";
@@ -456,6 +461,7 @@ const char *PCOpt_Label(int page, int i)
     case PCPAGE_DEBUG: return dbg_label(i);
     case PCPAGE_AUDIO: return audio[i];
     case PCPAGE_CONTROLS: return controls[i];
+    case PCPAGE_BINDINGS: return i==B_COUNT ? "Reset Bindings" : bindings[i];
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return slot_label(i);
     }
@@ -472,7 +478,20 @@ const char *PCOpt_Value(int page, int i, char *buf, int len)
     case PCPAGE_GRAPHICS: return gfx_value(i, buf, len);
     case PCPAGE_GAMEPLAY: return play_value(i, buf, len);
     case PCPAGE_DEBUG: return dbg_value(i, buf, len);
-    case PCPAGE_CONTROLS: return keys[i];
+    case PCPAGE_CONTROLS:
+        switch(i) {
+        case 0: SDL_snprintf(buf,len,"%s %s %s %s",SDL_GetScancodeName(pc_config.bind_keys[B_FORWARD]),
+            SDL_GetScancodeName(pc_config.bind_keys[B_LEFT]),SDL_GetScancodeName(pc_config.bind_keys[B_BACK]),
+            SDL_GetScancodeName(pc_config.bind_keys[B_RIGHT]));return buf;
+        case 1: SDL_snprintf(buf,len,"LMB / %s",SDL_GetScancodeName(pc_config.bind_keys[B_FIRE]));return buf;
+        case 3: SDL_snprintf(buf,len,"%s / MMB",SDL_GetScancodeName(pc_config.bind_keys[B_USE]));return buf;
+        case 4: return SDL_GetScancodeName(pc_config.bind_keys[B_JUMP]);
+        case 5: SDL_snprintf(buf,len,"%s / Mouse4",SDL_GetScancodeName(pc_config.bind_keys[B_KICK]));return buf;
+        case 10: SDL_snprintf(buf,len,"%s (RT)",SDL_GetScancodeName(pc_config.bind_keys[B_LIGHT]));return buf;
+        default:return keys[i];
+        }
+    case PCPAGE_BINDINGS: if(i==B_COUNT) return NULL;return IN_BindingIndex()==i ? "Press a key..." :
+        SDL_GetScancodeName((SDL_Scancode)pc_config.bind_keys[i]);
     case PCPAGE_AUDIO:
         SDL_snprintf(buf, len, i == 2 ? "%d Hz" : "%d%%",
                      i == 0 ? pc_config.music_volume : i == 1 ? pc_config.sfx_volume : pc_config.audio_rate);
@@ -493,6 +512,9 @@ int PCOpt_Change(int page, int i, int dir)
     case PCPAGE_GRAPHICS: return gfx_change(i, dir);
     case PCPAGE_GAMEPLAY: return play_change(i, dir);
     case PCPAGE_DEBUG: return dbg_change(i, dir);
+    case PCPAGE_BINDINGS:
+        if(!dir) { if(i==B_COUNT) { Config_ResetBindings();Config_Save(); } else IN_BeginBinding(i); }
+        return 0;
     case PCPAGE_AUDIO:
         if (i == 0) {
             CONFIG_SET(music_volume, SDL_clamp(pc_config.music_volume + (dir < 0 ? -5 : 5), 0, 100));
@@ -516,7 +538,7 @@ int PCOpt_Change(int page, int i, int dir)
 /* Items that only act on confirm (no left/right cycling). */
 int PCOpt_IsAction(int page, int i)
 {
-    if (page == PCPAGE_SAVE || page == PCPAGE_LOAD)
+    if (page == PCPAGE_SAVE || page == PCPAGE_LOAD || page == PCPAGE_BINDINGS)
         return 1;
     return page == PCPAGE_DEBUG && (i == D_GIVE || i == D_KILL || i == D_NEXTMAP);
 }
@@ -554,6 +576,7 @@ const char *PCOpt_Help(int page, int item)
         item == 3 ? "Upgraded impacts and weapon sounds. Off restores original audio." :
         "Separate music and effects levels; changes apply immediately.";
     if (page == PCPAGE_CONTROLS) return "Keyboard / mouse shortcuts. Standard gamepads supported.";
+    if (page == PCPAGE_BINDINGS) return "Enter to rebind; Esc cancels. Conflicts swap. Menu keys stay fixed.";
     if (page == PCPAGE_SAVE) return "Confirm to save. The Auto slot is managed by the game.";
     if (page == PCPAGE_LOAD) return "Confirm a populated slot to restore the level.";
     return "Developer tools for testing gameplay and renderer behavior.";

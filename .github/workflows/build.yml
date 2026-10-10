@@ -56,6 +56,7 @@ jobs:
           D64_DEPS="$PWD/deps" bash tools/test_soundpack.sh
           D64_DEPS="$PWD/deps" bash tools/test_combat_fx.sh
           D64_DEPS="$PWD/deps" bash tools/test_native_addons.sh
+          D64_DEPS="$PWD/deps" bash tools/test_bindings.sh
       - name: Upload build log
         if: failure()
         uses: actions/upload-artifact@v4

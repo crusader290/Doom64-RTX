@@ -11,6 +11,9 @@ void IN_Shutdown(void);
 void IN_HandleEvent(const SDL_Event *ev);
 void IN_SetGrab(SDL_Window *window, int grab);
 int  IN_ReadPad(void);
+void IN_BeginBinding(int index);
+void IN_CancelBinding(void);
+int IN_BindingIndex(void);
 
 #ifndef PCACT_JUMP
 #define PCACT_JUMP 1

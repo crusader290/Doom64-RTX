@@ -89,3 +89,5 @@ Combat milestone: combat_fx.c/.h (recoil, boot overlay, hit feedback), soundpack
 
 ## 2026-10-10 — 0.5.1 published; native ports in validation
 0.5.1 is published with both archives/checksums. Fresh Windows default RT/audio passed; fresh Linux RT/audio passed at 320x240/30fps because full-resolution software Vulkan exceeded the timeout. Native adapters now recognize selected blood/flashlight declarations and literal BloodColor properties. Persistent stains remain hard-capped at 128. A native battery/HUD and actual cone-light shader are implemented; C, Rust FFI and GPU packing all use a 64-byte light record. Unknown script classes are logged. No general VM or map compatibility is claimed.
+
+Key bindings: input/config capture, conflict swap, cancel/reset and persistence verified under sanitizers. Modern confirmation pages added. Native blood/color/flashlight ports verified; remaining add-on ports explicitly tracked in docs/ADDON_COMPATIBILITY.md. 0.5.2 packaging underway.

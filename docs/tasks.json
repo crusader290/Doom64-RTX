@@ -287,9 +287,16 @@
     {
       "id": "T24",
       "subsystem": "GZDoom add-on compatibility",
-      "status": "implemented",
-      "evidence": "User chose native behavior ports. Bounded declaration lexer maps persistent blood, monster BloodColor and flashlight battery/HUD to native C. True RT spotlight cone added to C/Rust/GPU light ABI. Sanitizer lexer/battery/ABI and persistent stain caps PASS. Linux and Windows RT smoke passed; cone image comparison pending.",
-      "next": "Verify cone illumination, document capability matrix and release next milestone."
+      "status": "in_progress",
+      "evidence": "Native blood/color/flashlight ports verified: lexer/battery/ABI/caps sanitizers PASS, Linux RT 760 frames and Windows RT off/on captures PASS. Unknown classes/descriptors logged. Matrix documents production/test packs still requiring ports/conversion.",
+      "next": "Publish 0.5.2 and continue selected environmental/HUD/visual behavior ports."
+    },
+    {
+      "id": "T25",
+      "subsystem": "Keyboard rebinding and PC confirmation polish",
+      "status": "verified",
+      "evidence": "12 primary keys, conflict swaps, cancel/reset/persistence and reserved shortcuts. Actual binding config save/reload sanitizer PASS. Menu screenshot captured; confirmation flow QA in progress.",
+      "next": "Package with 0.5.2."
     }
   ]
 }
