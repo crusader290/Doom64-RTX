@@ -1,6 +1,6 @@
 {
  "_schema": "status: pending | in_progress | blocked | implemented (code done, not proven) | verified (evidence recorded). Update at milestones; keep entries short.",
- "updated": "2026-10-09",
+ "updated": "2026-10-10",
  "tasks": [
   {
    "id": "T01",
@@ -216,6 +216,19 @@
    ],
    "next": "verify static emitter lights in a room with an emissive wall (e.g. screenshot near a lit panel); tune intensity/radius",
    "evidence": "-rt MAP01 with materials: barrel (BAR1 lightColorHEX) casts green light on the wall/floor behind it; 25 static lights placed from emissive wall/flat textures (log) but their visual effect was not isolated"
+  },
+  {
+   "id": "T18",
+   "subsystem": "MAP01 integer divide crash",
+   "status": "implemented",
+   "paths": [
+    "src/doom64/m_fixed.c",
+    "src/doom64/r_phase1.c",
+    "src/port/log.c",
+    "tests/test_bsp_math.c"
+   ],
+   "evidence": "Bundled 0.4.0 PE disassembly: RVA 0x7ebc = FixedDiv2 IDIV, return 0x2736c = first R_CheckBBox projection. Linux + MinGW builds OK; ASan/UBSan math and 396608 BSP cases PASS; GL 2300-frame MAP01 and Vulkan/RT smoke PASS. Exact user camera state unavailable.",
+   "next": "Verify at the original MAP01 location on the user GPU; Windows crash logging runtime test in release validation."
   }
  ]
 }

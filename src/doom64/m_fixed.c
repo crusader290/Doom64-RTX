@@ -16,6 +16,14 @@
 
 fixed_t FixedDiv(fixed_t a, fixed_t b) // 80002BF8
 {
+#ifdef D64_PC
+    /* [PC] Magnitudes must also handle INT_MIN without signed negation. */
+    uint32_t aa = a < 0 ? (uint32_t)(-(int64_t)a) : (uint32_t)a;
+    uint32_t bb = b < 0 ? (uint32_t)(-(int64_t)b) : (uint32_t)b;
+    if ((aa >> 14) >= bb)
+        return (a ^ b) < 0 ? MININT : MAXINT;
+    return FixedDiv2(a, b);
+#else
     fixed_t     aa, bb;
     unsigned    c;
     int         sign;
@@ -43,6 +51,7 @@ fixed_t FixedDiv(fixed_t a, fixed_t b) // 80002BF8
         c = (fixed_t) FixedDiv2(a, b);
 
     return c;
+#endif
 }
 
 /*
@@ -93,7 +102,15 @@ s64 FixedMul2(s64 a, s64 b) // 800044D0
 
 fixed_t FixedDiv2(fixed_t a, fixed_t b) // 800044E4
 {
+#ifdef D64_PC
+    /* [PC] BSP clipping can reach zero depth. Avoid host IDIV faults and
+     * undefined left shifts of negative numerators; keep ordinary quotients. */
+    if (!b)
+        return a < 0 ? MININT : MAXINT;
+    s64 result = ((s64)a * FRACUNIT) / (s64)b;
+#else
     s64 result = ((s64) a << 16) / (s64)b;
+#endif
 
     return (fixed_t) result;
 }

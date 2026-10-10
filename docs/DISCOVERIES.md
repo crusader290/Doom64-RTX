@@ -112,3 +112,8 @@ soundorg/line(+low bit)/side/state/function/state-action/macro). Tied to struct 
 - Classic bug classes found so far: BE masks in `W_CheckNumForName`; `total*4` pointer
   arrays (`P_GroupLines`); stale `uls` in LoadTLUT; texrect shade alpha with the fog
   blender; freed mobjs in `RT_CollectLights` after `P_Stop`.
+
+## MAP01 divide-by-zero report (2026-10-10)
+- The shipped 0.4.0 Windows PE at RVA `0x7ebc` is `FixedDiv2` (`idiv rcx`); caller return RVA `0x2736c` is the first X projection in `R_CheckBBox`, reached through recursive BSP traversal. Build string in the user report is `0.4.0 (f48f2d8)`, although branch HEAD is `4ef9999`.
+- Bounding boxes with non-positive depth after clipping must be visited conservatively, without projecting their corners. `FixedDiv2` also guards zero divisors; signed numerators use multiplication instead of undefined negative left shifts.
+- The exact camera position was not captured by the old log; broad regression coverage and long smoke tests do not constitute replay of that exact crash.

@@ -107,6 +107,19 @@ static void crash_header(const char *what)
 }
 
 #if defined(_WIN32)
+static void crash_address(const char *label, const void *address)
+{
+    HMODULE mod = NULL;
+    char name[MAX_PATH] = "(unknown)";
+    if (!log_file) return;
+    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                          GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                          (LPCSTR)address, &mod))
+        GetModuleFileNameA(mod, name, sizeof(name));
+    fprintf(log_file, "%s %p %s +0x%llx\n", label, address, name,
+            (unsigned long long)((uintptr_t)address - (uintptr_t)mod));
+}
+
 static LONG WINAPI crash_filter(EXCEPTION_POINTERS *ep)
 {
     char what[256];
@@ -129,9 +142,26 @@ static LONG WINAPI crash_filter(EXCEPTION_POINTERS *ep)
                     (unsigned long long)((char *)ep->ExceptionRecord->ExceptionAddress - (char *)mod));
         }
         n = CaptureStackBackTrace(0, 48, frames, NULL);
+#if defined(_WIN64)
+        /* The exception context identifies the fault; CaptureStackBackTrace
+         * starts in this handler and also contains dispatcher frames. */
+        crash_address("fault:", (void *)(uintptr_t)ep->ContextRecord->Rip);
+        fprintf(log_file, "registers: RAX=%llx RCX=%llx RDX=%llx RSP=%llx RBP=%llx\n",
+                (unsigned long long)ep->ContextRecord->Rax,
+                (unsigned long long)ep->ContextRecord->Rcx,
+                (unsigned long long)ep->ContextRecord->Rdx,
+                (unsigned long long)ep->ContextRecord->Rsp,
+                (unsigned long long)ep->ContextRecord->Rbp);
+#endif
+        if (ep->ExceptionRecord->ExceptionCode == EXCEPTION_INT_DIVIDE_BY_ZERO)
+            fprintf(log_file, "reason: integer division by zero\n");
         fprintf(log_file, "backtrace (exe base %p):\n", (void *)GetModuleHandleA(NULL));
         for (i = 0; i < n; i++)
-            fprintf(log_file, "  #%u %p\n", (unsigned)i, frames[i]);
+        {
+            char label[24];
+            snprintf(label, sizeof(label), "  #%u", (unsigned)i);
+            crash_address(label, frames[i]);
+        }
         fprintf(log_file, "===============================================\n");
         fflush(log_file);
     }

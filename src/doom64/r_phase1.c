@@ -188,6 +188,11 @@ boolean R_CheckBBox(fixed_t bspcoord[4]) // 80024170
     if (vx1 < -vy1)
     {
         delta = (vx1 + vy1);
+#ifdef D64_PC
+        /* [PC] Degenerate clip: conservatively visit this subtree. */
+        if (((int64_t)delta - vx2 - vy2) == 0)
+            return true;
+#endif
         delta = FixedDiv2(delta, ((delta - vx2) - vy2));
         delta = FixedMul(delta, (vy2 - vy1));
 
@@ -198,12 +203,24 @@ boolean R_CheckBBox(fixed_t bspcoord[4]) // 80024170
     if (vy2 < vx2)
     {
         delta = (vx1 - vy1);
+#ifdef D64_PC
+        /* [PC] Do not project a parallel bounding-box edge. */
+        if (((int64_t)delta - vx2 + vy2) == 0)
+            return true;
+#endif
         delta = FixedDiv2(delta, ((delta - vx2) + vy2));
         delta = FixedMul(delta, (vy2 - vy1));
         vx2 = delta + vy1;
         vy2 = vx2;
     }
 
+#ifdef D64_PC
+    /* [PC] A clipped corner can lie exactly on the eye plane (MAP01
+     * crash +0x7ebc). Keep the subtree rather than dividing by zero or
+     * indexing solidcols with a projection behind the camera. */
+    if (vy1 <= 0 || vy2 <= 0)
+        return true;
+#endif
     Xstart = ((FixedDiv2(vx1, vy1) * 160) >> 16) + 160;
     Xend   = ((FixedDiv2(vx2, vy2) * 160) >> 16) + 160;
 
@@ -212,6 +229,12 @@ boolean R_CheckBBox(fixed_t bspcoord[4]) // 80024170
 
     if (Xend >= 320)
         Xend = 320;
+
+#ifdef D64_PC
+    /* [PC] Clamp both ends before forming a solidcols pointer. */
+    if (Xstart > 320) Xstart = 320;
+    if (Xend < 0) Xend = 0;
+#endif
 
     solid_cols = &solidcols[Xstart];
     while (Xstart < Xend)
