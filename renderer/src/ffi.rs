@@ -90,6 +90,10 @@ pub struct D64GfxLight {
     pub radius: f32,
     pub color: [f32; 3],
     pub intensity: f32,
+    pub direction: [f32; 3],
+    pub cos_outer: f32,
+    pub cos_inner: f32,
+    pub pad: [f32; 3],
 }
 
 #[repr(C)]

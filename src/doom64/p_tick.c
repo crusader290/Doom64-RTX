@@ -6,6 +6,7 @@
 #include "config.h"
 #include "gore.h" /* [PC] */
 #include "combat_fx.h"
+#include "native_addons.h"
 #endif
 #include "st_main.h"
 
@@ -290,6 +291,7 @@ int P_Ticker (void)//80021A00
 	{
 #ifdef D64_PC
         PCCombat_Tick(); /* [PC] advance once before this tic's events */
+        PCAddon_Tick();
 #endif
 	    P_RunThinkers();
 		P_CheckSights();
@@ -391,6 +393,7 @@ void P_Start (void) // 80021C50
 #ifdef D64_PC
     I_PCGoreReset(); /* [PC] no cosmetic pointers survive level/load changes */
     PCCombat_Reset();
+    PCAddon_ResetLevel();
 #endif
 
     DrawerStatus = 1;

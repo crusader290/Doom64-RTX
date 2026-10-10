@@ -4,6 +4,10 @@
 
 pcconfig_t pc_config;
 boolean demoplayback, demorecording;
+static int stain_life=900,stain_limit=128;
+int PCAddon_GoreLife(void) { return stain_life; }
+int PCAddon_GoreLimit(void) { return stain_limit; }
+uint32_t PCAddon_BloodColor(int type) { (void)type;return 0x9654b4; }
 fixed_t viewsin, viewcos;
 static sector_t test_sector;
 static subsector_t test_subsector;
@@ -30,7 +34,7 @@ boolean P_PathTraverse(fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2,
 static int live_particles(void)
 { int i, n = 0; for (i = 0; i < PARTICLES; i++) n += particles[i].life > 0; return n; }
 static int live_stains(void)
-{ int i, n = 0; for (i = 0; i < STAINS; i++) n += stains[i].life > 0; return n; }
+{ int i, n = 0; for (i = 0; i < STAINS; i++) n += stains[i].life != 0; return n; }
 int main(void)
 {
     mobj_t target = {0}, source = {0};
@@ -56,6 +60,11 @@ int main(void)
     assert(live_particles() == 0 && live_stains() > 0);
     for (i = 0; i < 901; i++) I_PCGoreTick();
     assert(live_stains() == 0);
+    stain_life=0;stain_limit=32;
+    for(i=0;i<1000;i++) stain(0,0,1,0,0,1,&test_sector);
+    for(i=0;i<1000;i++) I_PCGoreTick();
+    assert(live_stains()==32);
+    I_PCGoreReset();stain_life=900;stain_limit=128;
     I_PCGoreDamage(&target, &source, 20); wall_collision = 1;
     I_PCGoreTick();
     assert(live_particles() == 0 && live_stains() > 0);

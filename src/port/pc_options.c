@@ -168,13 +168,14 @@ static int gfx_change(int i, int dir)
 /* ---- Gameplay ------------------------------------------------------------ */
 
 enum { P_MOUSELOOK, P_INVERT, P_SENS, P_RUN, P_AUTOAIM, P_CROSSHAIR, P_JUMP, P_BOB, P_ADS, P_FASTWEAP,
-       P_GORE, P_AUTOSAVE, P_ANIMS, P_COUNT };
+       P_GORE, P_AUTOSAVE, P_ANIMS, P_NATIVE, P_LIGHT, P_LIFE, P_LIMIT, P_COUNT };
 
 static const char *play_label(int i)
 {
     static const char *l[P_COUNT] = { "Mouse Look", "Invert Mouse", "Mouse Speed", "Always Run",
                                       "Autoaim", "Crosshair", "Jumping", "Bobbing", "Aim Sights",
-                                      "Fast Weapons", "Immersive Gore", "Autosave", "Combat Animation" };
+                                      "Fast Weapons", "Immersive Gore", "Autosave", "Combat Animation",
+                                      "Native Add-ons", "Flashlight", "Blood Lifetime", "Blood Limit" };
     return l[i];
 }
 
@@ -199,6 +200,13 @@ static const char *play_value(int i, char *buf, int len)
     case P_GORE: return onoff(pc_config.gore);
     case P_AUTOSAVE: return onoff(pc_config.autosave);
     case P_ANIMS: return onoff(pc_config.combat_anims);
+    case P_NATIVE: return onoff(pc_config.native_addons);
+    case P_LIGHT: return onoff(pc_config.flashlight);
+    case P_LIFE:
+        if(pc_config.gore_life<0) return "Pack Default";
+        if(!pc_config.gore_life) return "Permanent";
+        SDL_snprintf(buf,len,"%d s",pc_config.gore_life/30);return buf;
+    case P_LIMIT: SDL_snprintf(buf,len,"%d",pc_config.gore_limit);return buf;
     }
     return NULL;
 }
@@ -234,6 +242,16 @@ static int play_change(int i, int dir)
     case P_GORE: CONFIG_SET(gore, !pc_config.gore); break;
     case P_AUTOSAVE: CONFIG_SET(autosave, !pc_config.autosave); break;
     case P_ANIMS: CONFIG_SET(combat_anims, !pc_config.combat_anims); break;
+    case P_NATIVE: CONFIG_SET(native_addons,!pc_config.native_addons);break;
+    case P_LIGHT: CONFIG_SET(flashlight,!pc_config.flashlight);break;
+    case P_LIFE: {
+        static const int lives[]={-1,0,300,900,1800};
+        CONFIG_SET(gore_life,step_choice(pc_config.gore_life,lives,5,dir));break;
+    }
+    case P_LIMIT: {
+        static const int limits[]={32,64,96,128};
+        CONFIG_SET(gore_limit,step_choice(pc_config.gore_limit,limits,4,dir));break;
+    }
     }
     Config_Save();
     return 0;
@@ -403,7 +421,7 @@ int PCOpt_Count(int page)
     case PCPAGE_GAMEPLAY: return P_COUNT;
     case PCPAGE_DEBUG: return D_COUNT;
     case PCPAGE_AUDIO: return 4;
-    case PCPAGE_CONTROLS: return 10;
+    case PCPAGE_CONTROLS: return 11;
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return PC_SAVE_SLOTS;
     }
@@ -428,7 +446,7 @@ const char *PCOpt_Title(int page)
 const char *PCOpt_Label(int page, int i)
 {
     static const char *audio[] = {"Music Volume", "Effects Volume", "Output Rate", "Immersion Sounds"};
-    static const char *controls[] = {"Move / Strafe", "Fire", "Aim Sights", "Use / Open", "Jump", "Kick", "Weapons", "Quick Save / Load", "Debug / Ray Tracing", "Fullscreen / Capture"};
+    static const char *controls[] = {"Move / Strafe", "Fire", "Aim Sights", "Use / Open", "Jump", "Kick", "Weapons", "Quick Save / Load", "Debug / Ray Tracing", "Fullscreen / Capture", "Flashlight"};
     if (i < 0 || i >= PCOpt_Count(page))
         return "";
     switch (page)
@@ -446,7 +464,7 @@ const char *PCOpt_Label(int page, int i)
 
 const char *PCOpt_Value(int page, int i, char *buf, int len)
 {
-    static const char *keys[] = {"W A S D", "LMB / Ctrl", "RMB", "E / MMB", "Space", "V / Mouse4", "1-8 / Wheel", "F5 / F9", "F7 / F10", "F11 / F12"};
+    static const char *keys[] = {"W A S D", "LMB / Ctrl", "RMB", "E / MMB", "Space", "V / Mouse4", "1-8 / Wheel", "F5 / F9", "F7 / F10", "F11 / F12", "F (Ray Tracing)"};
     if (i < 0 || i >= PCOpt_Count(page))
         return NULL;
     switch (page)
@@ -523,6 +541,10 @@ const char *PCOpt_Help(int page, int item)
     if (page == PCPAGE_GAMEPLAY) {
         if (item == P_FASTWEAP) return "Faster switching and attack recovery. Demos stay classic.";
         if (item == P_GORE) return "Blood spray, wall splashes, floor stains and overkill gibs.";
+        if (item == P_NATIVE) return "Ported pack behaviors. General GZDoom scripts need conversion.";
+        if (item == P_LIGHT) return "F toggles a shadowed RT cone. Battery drains and recharges.";
+        if (item == P_LIFE) return "Pack Default uses persistent blood when its adapter is loaded.";
+        if (item == P_LIMIT) return "Oldest stains are replaced. Native hard cap: 128.";
         if (item == P_AUTOSAVE) return "Keep an Auto slot at each level start. F5/F9 quicksave/load.";
         if (item == P_RUN) return "Run by default; hold Shift to walk.";
         if (item == P_ADS) return "Hold RMB to focus your view. V kicks without switching.";

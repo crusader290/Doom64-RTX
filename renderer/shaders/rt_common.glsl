@@ -22,6 +22,8 @@ struct Material {
 struct Light {
     vec4 pos_radius;
     vec4 color_intensity;
+    vec4 direction_outer;
+    vec4 inner_pad;
 };
 
 layout(std140, set = 0, binding = 4) uniform RtUniforms {

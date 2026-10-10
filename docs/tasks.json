@@ -287,9 +287,9 @@
     {
       "id": "T24",
       "subsystem": "GZDoom add-on compatibility",
-      "status": "pending",
-      "evidence": "Archived packs require ZScript EventHandler/Actor APIs, DECORATE, ACS and UDMF. Current loader supports only PNG art and RT material JSON.",
-      "next": "User chose native behavior ports. Implement selected archived add-on behaviors, with per-addon capability reporting; no GZDoom VM."
+      "status": "implemented",
+      "evidence": "User chose native behavior ports. Bounded declaration lexer maps persistent blood, monster BloodColor and flashlight battery/HUD to native C. True RT spotlight cone added to C/Rust/GPU light ABI. Sanitizer lexer/battery/ABI and persistent stain caps PASS. Linux and Windows RT smoke passed; cone image comparison pending.",
+      "next": "Verify cone illumination, document capability matrix and release next milestone."
     }
   ]
 }

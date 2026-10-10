@@ -61,6 +61,7 @@ set(D64_PORT_SOURCES
   src/port/gu.c
   src/port/gore.c
   src/port/combat_fx.c
+  src/port/native_addons.c
   src/port/pc_text.c
   src/port/rtlights.c
   src/port/log.c

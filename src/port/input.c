@@ -219,6 +219,7 @@ int I_PCActions(void)
 
     if (keys[SDL_SCANCODE_SPACE])
         a |= PCACT_JUMP;
+    if (keys[SDL_SCANCODE_F]) a |= 8; /* native flashlight toggle edge */
     if (input_grab && (mb & SDL_BUTTON_RMASK))
         a |= PCACT_ADS;
     if (keys[SDL_SCANCODE_V] || (input_grab && (mb & SDL_BUTTON_X1MASK)))

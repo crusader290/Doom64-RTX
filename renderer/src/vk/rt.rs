@@ -49,7 +49,10 @@ struct RtMaterial {
 struct RtLightGpu {
     pos_radius: [f32; 4],
     color_intensity: [f32; 4],
+    direction_outer: [f32; 4],
+    inner_pad: [f32; 4],
 }
+const _: () = assert!(std::mem::size_of::<RtLightGpu>() == 64);
 
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
@@ -568,6 +571,8 @@ impl RayTracer {
             .map(|l| RtLightGpu {
                 pos_radius: [l.pos[0], l.pos[1], l.pos[2], l.radius],
                 color_intensity: [l.color[0], l.color[1], l.color[2], l.intensity],
+                direction_outer: [l.direction[0],l.direction[1],l.direction[2],l.cos_outer],
+                inner_pad: [l.cos_inner,0.0,0.0,0.0],
             })
             .collect();
 
@@ -602,7 +607,7 @@ impl RayTracer {
         fr.verts.write(0, as_bytes(all));
         Self::ensure_buffer(be, &mut fr.mats, std::mem::size_of_val(mats), vk::BufferUsageFlags::STORAGE_BUFFER, true)?;
         fr.mats.write(0, as_bytes(mats));
-        let light_bytes = std::mem::size_of_val(lights).max(32);
+        let light_bytes = std::mem::size_of_val(lights).max(std::mem::size_of::<RtLightGpu>());
         Self::ensure_buffer(be, &mut fr.lights, light_bytes, vk::BufferUsageFlags::STORAGE_BUFFER, true)?;
         if !lights.is_empty() {
             fr.lights.write(0, as_bytes(lights));

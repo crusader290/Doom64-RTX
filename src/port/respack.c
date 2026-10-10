@@ -23,6 +23,7 @@
 
 #include "respack.h"
 #include "config.h"
+#include "native_addons.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_ONLY_PNG
@@ -251,7 +252,7 @@ static void scan_zip(void)
             break;
         SDL_memcpy(fname, z + pos + 46, nlen < 511 ? nlen : 511);
         fname[nlen < 511 ? nlen : 511] = 0;
-        if (is_matjson(fname))
+        if (is_matjson(fname) || PCAddon_IsDefinition(fname))
         {
             entry_t tmp;
             size_t jl = 0;
@@ -263,8 +264,10 @@ static void scan_zip(void)
             tmp.usize = rd32(z + pos + 24);
             tmp.local_ofs = rd32(z + pos + 42);
             js = read_entry(&tmp, &jl);
-            if (js)
-                parse_matjson((const char *)js, jl);
+            if (js) {
+                if(PCAddon_IsDefinition(fname)) PCAddon_Definition(fname,js,jl);
+                else parse_matjson((const char *)js, jl);
+            }
             SDL_free(js);
         }
         e = add_entry(fname);
@@ -296,12 +299,14 @@ static SDL_EnumerationResult SDLCALL scan_dir_cb(void *userdata, const char *dir
         SDL_strlcat(full, "/", sizeof(full));
         SDL_EnumerateDirectory(full, scan_dir_cb, NULL);
     }
-    else if (is_matjson(full))
+    else if (is_matjson(full) || PCAddon_IsDefinition(fname))
     {
         size_t jl = 0;
         void *js = SDL_LoadFile(full, &jl);
-        if (js)
-            parse_matjson(js, jl);
+        if (js) {
+            if(PCAddon_IsDefinition(fname)) PCAddon_Definition(fname,js,jl);
+            else parse_matjson(js, jl);
+        }
         SDL_free(js);
     }
     else
@@ -324,6 +329,11 @@ static void add_pack(const char *path)
 
     if (!SDL_GetPathInfo(path, &info))
         return;
+    if(info.type!=SDL_PATHTYPE_DIRECTORY && SDL_strlen(path)>=4 &&
+       !SDL_strcasecmp(path+SDL_strlen(path)-4,".wad")) {
+        SDL_Log("native add-on: %s skipped; GZDoom WAD maps/scripts require a native map conversion",path);
+        return;
+    }
     for (i = 0; i < npacks; i++)
         if (!SDL_strcmp(packs[i].path, path))
             return;
@@ -380,6 +390,7 @@ void ResPack_Init(void)
     char list[1024], *tok, *save;
 
     enabled = pc_config.respacks;
+    PCAddon_Init();
     scan_packs_dir(exe);
     if (cwd && (!exe || SDL_strcmp(cwd, exe)))
         scan_packs_dir(cwd);

@@ -101,3 +101,6 @@ underflow in backward weapon selection; fixed signed loop index, replay pending.
 Level-start macro globals reset and loaded macro line vertices repaired without
 changing save structs. User selected native add-on behavior ports, not a new engine.
 Validation complete: actual MAP01 slot 0 save/load passed (117 actors, 38 thinkers); backward weapon crash replay ran 1400 frames normally. 0.5.1 binaries being packaged.
+
+## 2026-10-10 — 0.5.1 published; native ports in validation
+0.5.1 is published with both archives/checksums. Fresh Windows default RT/audio passed; fresh Linux RT/audio passed at 320x240/30fps because full-resolution software Vulkan exceeded the timeout. Native adapters now recognize selected blood/flashlight declarations and literal BloodColor properties. Persistent stains remain hard-capped at 128. A native battery/HUD and actual cone-light shader are implemented; C, Rust FFI and GPU packing all use a 64-byte light record. Unknown script classes are logged. No general VM or map compatibility is claimed.

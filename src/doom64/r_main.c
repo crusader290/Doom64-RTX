@@ -4,6 +4,7 @@
 #ifdef D64_PC
 #include "gore.h" /* [PC] */
 #include "combat_fx.h"
+#include "native_addons.h"
 #include "interp.h"
 #endif
 #include "r_local.h"
@@ -308,6 +309,7 @@ void R_RenderPlayerView(void) // 80023448
         R_RenderPSprites();
 #ifdef D64_PC
         PCCombat_Draw();
+        PCAddon_Draw();
 #endif
     }
 }

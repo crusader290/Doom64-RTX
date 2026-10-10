@@ -131,6 +131,8 @@ typedef struct {
     float radius;     /* influence radius, world units */
     float color[3];   /* linear RGB, 0..1 */
     float intensity;
+    float direction[3], cos_outer; /* inner >0: shadowed spotlight */
+    float cos_inner, pad[3];
 } D64GfxLight;
 
 typedef struct {

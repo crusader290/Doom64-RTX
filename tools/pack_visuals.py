@@ -46,6 +46,12 @@ for path in sorted((materials / 'rt/mat').glob('*.png')):
 for path in sorted((materials / 'rt/data').glob('*.json')):
     add(path.relative_to(materials).as_posix(), path.read_bytes(), 'Retribution-RT-Materials')
 add('CREDITS.txt', (root / 'tools/release/PACKS_CREDITS.txt').read_bytes(), 'Doom64-RTX')
+# Native adapters inspect selected declarations. They do not execute scripts.
+for pack in ('d64r-blood-persist.pk3','d64r-rt-flashlight.pk3'):
+    with zipfile.ZipFile(source / pack) as archive:
+        for name in ('DECORATE','ZSCRIPT'):
+            if name in archive.namelist():
+                add('native/' + pack[:-4] + '/' + name,archive.read(name),pack)
 for path in sorted((root / 'assets/combat/kick').glob('*.png')):
     add('fx/kick/' + path.name, path.read_bytes(), 'BrutalDoomPlatinum 423b716')
 for path in sorted((root / 'assets/sounds').glob('*.wav')):

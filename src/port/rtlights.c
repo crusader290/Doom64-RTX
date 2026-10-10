@@ -23,6 +23,7 @@
 #include "gbi.h"
 #include "rtlights.h"
 #include "respack.h"
+#include "native_addons.h"
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -83,7 +84,7 @@ static const lightdef_t *find_def(int sprite)
     return NULL;
 }
 
-static void add_light(float x, float y, float z, float r, float g, float b, float intensity,
+static int add_light(float x, float y, float z, float r, float g, float b, float intensity,
                       float radius, float px, float py, float pz, int *count)
 {
     float dx = x - px, dy = y - py, dz = z - pz;
@@ -98,12 +99,13 @@ static void add_light(float x, float y, float z, float r, float g, float b, floa
             if (light_dist[i] > light_dist[far])
                 far = i;
         if (d >= light_dist[far])
-            return;
+            return -1;
         slot = far;
     }
     else
         (*count)++;
 
+    memset(&lights_buf[slot],0,sizeof(lights_buf[slot]));
     lights_buf[slot].pos[0] = x;
     lights_buf[slot].pos[1] = y;
     lights_buf[slot].pos[2] = z;
@@ -113,6 +115,7 @@ static void add_light(float x, float y, float z, float r, float g, float b, floa
     lights_buf[slot].color[2] = b;
     lights_buf[slot].intensity = intensity;
     light_dist[slot] = d;
+    return slot;
 }
 
 /* ---- static lights from emissive world textures (rebuilt per level) ---- */
@@ -329,6 +332,22 @@ void RT_CollectLights(void)
         float fx = px + (float)(finecosine[an] >> 10) / 64.0f * 24.0f;
         float fz = pz - (float)(finesine[an] >> 10) / 64.0f * 24.0f;
         add_light(fx, py - 8.0f, fz, 1.0f, 0.85f, 0.55f, 1.6f, 360.0f, px, py, pz, &count);
+    }
+
+    /* Native port of the flashlight: one real shadowed cone, aimed with the
+     * interpolated camera. Kept nearest to reserve a shadow-budget slot. */
+    float beam=PCAddon_Flashlight();
+    if(beam>0 && cameratarget==pl->mo) {
+        angle_t yaw=pl->mo->angle>>ANGLETOFINESHIFT;
+        angle_t pitch=((angle_t)(pl->pc_pitch+pl->recoilpitch)>>ANGLETOFINESHIFT)&FINEMASK;
+        int slot=add_light(px,py-3,pz,1,.9f,.72f,2.8f*beam,640,px,py,pz,&count);
+        if(slot>=0) {
+        lights_buf[slot].direction[0]=finecosine[yaw]/(float)FRACUNIT*finecosine[pitch]/(float)FRACUNIT;
+        lights_buf[slot].direction[1]=finesine[pitch]/(float)FRACUNIT;
+        lights_buf[slot].direction[2]=-finesine[yaw]/(float)FRACUNIT*finecosine[pitch]/(float)FRACUNIT;
+        lights_buf[slot].cos_outer=.9063078f; /* 25 degree cone */
+        lights_buf[slot].cos_inner=.9659258f; /* 15 degree core */
+        }
     }
 
     /* nearest first: the shader shadows a limited number of lights per pixel */

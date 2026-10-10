@@ -264,6 +264,9 @@ void main()
             continue;
         float att = 1.0 - dist / radius;
         att *= att;
+        if(L.inner_pad.x>0.0)
+            att*=smoothstep(L.direction_outer.w,L.inner_pad.x,dot(-ldir,L.direction_outer.xyz));
+        if(att<=0.0) continue;
         vec3 c = L.color_intensity.rgb * L.color_intensity.w * ndl * att;
         if (max(c.r, max(c.g, c.b)) < 0.004)
             continue;

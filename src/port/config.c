@@ -42,6 +42,8 @@ void Config_Defaults(void)
     pc_config.weapon_bob = 100;
     pc_config.ads = 1;
     pc_config.gore = 1;
+    pc_config.native_addons = pc_config.flashlight = 1;
+    pc_config.gore_life = -1;pc_config.gore_limit = 128;
     pc_config.autosave = 1;
     pc_config.respacks = 1;
     pc_config.audio_rate = 44100;
@@ -54,6 +56,10 @@ typedef enum { CV_INT, CV_FLOAT, CV_STR, CV_RENDERER } cvtype_t;
 typedef struct { const char *name; cvtype_t type; void *ptr; size_t len; } cvar_t;
 
 static const cvar_t cvars[] = {
+    { "native_addons", CV_INT, &pc_config.native_addons, 0 },
+    { "flashlight", CV_INT, &pc_config.flashlight, 0 },
+    { "gore_life", CV_INT, &pc_config.gore_life, 0 },
+    { "gore_limit", CV_INT, &pc_config.gore_limit, 0 },
     { "rom",            CV_STR,      pc_config.rom, sizeof(pc_config.rom) },
     { "renderer",       CV_RENDERER, &pc_config.renderer, 0 },
     { "raytracing",     CV_INT,      &pc_config.raytracing, 0 },

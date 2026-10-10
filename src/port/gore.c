@@ -6,17 +6,20 @@
 #include "r_local.h"
 #include "config.h"
 #include "gore.h"
+#include "native_addons.h"
 
 #define PARTICLES 128
 #define STAINS 128
 typedef struct {
     float x, y, z, ox, oy, oz, vx, vy, vz, size;
     int life, total, gib;
+    uint32_t color;
 } gore_particle_t;
 typedef struct {
     float x, y, z, nx, ny, size;
     sector_t *sector;
     int life, total;
+    uint32_t color;
 } gore_stain_t;
 static gore_particle_t particles[PARTICLES];
 static gore_stain_t stains[STAINS];
@@ -49,8 +52,10 @@ void I_PCGoreReset(void)
 static void stain(float x, float y, float z, float nx, float ny,
                   float size, sector_t *sector)
 {
-    gore_stain_t *s = &stains[stain_cursor++ % STAINS];
-    *s = (gore_stain_t){x, y, z, nx, ny, size, sector, 900, 900};
+    int life=PCAddon_GoreLife();
+    gore_stain_t *s = &stains[stain_cursor++ % PCAddon_GoreLimit()];
+    *s = (gore_stain_t){x, y, z, nx, ny, size, sector, life ? life : -1, life,
+                       moving ? moving->color : 0x730403};
 }
 
 void I_PCGoreDamage(mobj_t *target, mobj_t *inflictor, int damage)
@@ -79,6 +84,7 @@ void I_PCGoreDamage(mobj_t *target, mobj_t *inflictor, int damage)
         p->vy = dy * force + (random01() - .5f) * force * 2;
         p->vz = 1.5f + random01() * (lethal ? 7 : 4);
         p->gib = gib && i < 6;
+        p->color=PCAddon_BloodColor(target->type);
         p->size = p->gib ? 2 + random01() * 2 : .6f + random01();
         p->life = p->total = p->gib ? 90 : 60;
     }
@@ -112,7 +118,11 @@ void I_PCGoreTick(void)
 {
     int i;
     if (!enabled()) { I_PCGoreReset(); return; }
-    for (i = 0; i < STAINS; i++) if (stains[i].life) stains[i].life--;
+    int limit=PCAddon_GoreLimit();
+    for (i = 0; i < STAINS; i++) {
+        if(i>=limit) stains[i].life=0;
+        else if (stains[i].life>0) stains[i].life--;
+    }
     for (i = 0; i < PARTICLES; i++) {
         gore_particle_t *p = &particles[i];
         sector_t *sector;
@@ -145,12 +155,13 @@ static void vertex(int i, float x, float y, float z, int color)
     VTX1[i].v.ob[2] = (short)-y;
     memcpy(VTX1[i].v.cn, &color, sizeof(color));
 }
-static int blood_color(sector_t *sector, int life, int gib)
+static int blood_color(sector_t *sector, int life, int gib, uint32_t rgb)
 {
     int light = sector->lightlevel;
-    int alpha = life < 60 ? life * 255 / 60 : 255;
-    return PACKRGBA((gib ? 170 : 115) * (light + 80) / 335,
-                    gib ? 24 : 4, gib ? 20 : 3, alpha);
+    int alpha = life>=0 && life < 60 ? life * 255 / 60 : 255;
+    if(gib && rgb==0x730403) rgb=0xaa1814;
+    return PACKRGBA(((rgb>>16)&255)*(light+80)/335,
+                    ((rgb>>8)&255)*(light+80)/335,(rgb&255)*(light+80)/335,alpha);
 }
 
 void I_PCGoreDraw(float fraction)
@@ -171,7 +182,7 @@ void I_PCGoreDraw(float fraction)
         if (!s->life) continue;
         sector = s->sector ? s->sector : R_PointInSubsector(fixed(s->x), fixed(s->y))->sector;
         z = s->sector ? sector->floorheight / (float)FRACUNIT + 1 : s->z;
-        color = blood_color(sector, s->life, 0);
+        color = blood_color(sector, s->life, 0, s->color);
         I_CheckGFX();
         vertex(0, s->x, s->y, z, color);
         for (j = 0; j < 8; j++) {
@@ -193,7 +204,7 @@ void I_PCGoreDraw(float fraction)
         x = p->ox + (p->x - p->ox) * fraction;
         y = p->oy + (p->y - p->oy) * fraction;
         z = p->oz + (p->z - p->oz) * fraction;
-        color = blood_color(R_PointInSubsector(fixed(x), fixed(y))->sector, p->life, p->gib);
+        color = blood_color(R_PointInSubsector(fixed(x), fixed(y))->sector, p->life, p->gib,p->color);
         sx = viewsin / (float)FRACUNIT * p->size;
         sy = -viewcos / (float)FRACUNIT * p->size;
         I_CheckGFX();
