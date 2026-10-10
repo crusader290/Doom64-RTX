@@ -44,10 +44,12 @@ combat passes. Gore on/off 1400-frame gameplay traces match. Vulkan 680-frame
 and RT 620-frame smoke pass. Menu screenshots visually reviewed; initial large
 VT323 layout replaced following user feedback. Consolidated archive passes ZIP
 integrity and byte-for-byte reproducibility. Native MSYS2 dependency setup passes;
-native compilation and final release-extraction tests are in progress.
+native compilation and fresh Linux/Windows release-extraction tests pass. Windows
+Vulkan RT/audio/MAP01 verified on RX 7900 XTX; Linux on Mesa. Forced Windows
+0xc0000094 report includes fault/module offsets, registers and division reason.
 
 ## Remaining requested work
-Publish milestone 0.5.0 after final package tests; update this evidence on success.
+Milestone 0.5.0 archives and checksums verified; GitHub release publication next.
 Then implement smoother recoil/sway, visible kick and hit feedback; inspect/import
 Brutal Doom sounds with source/licence attribution (selected source files are only
 in work/sound-reference so far, not shipped). User also requested GZDoom script

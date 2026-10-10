@@ -227,7 +227,7 @@
     "src/port/log.c",
     "tests/test_bsp_math.c"
    ],
-   "evidence": "Bundled 0.4.0 PE disassembly: RVA 0x7ebc = FixedDiv2 IDIV, return 0x2736c = first R_CheckBBox projection. Linux + MinGW builds OK; ASan/UBSan math and 396608 BSP cases PASS; GL 2300-frame MAP01 and Vulkan/RT smoke PASS. Exact user camera state unavailable.",
+   "evidence": "Bundled 0.4.0 PE disassembly: RVA 0x7ebc = FixedDiv2 IDIV, return 0x2736c = first R_CheckBBox projection. Linux + MinGW builds OK; ASan/UBSan math and 396608 BSP cases PASS; GL 2300-frame MAP01 and Vulkan/RT smoke PASS. Exact user camera state unavailable. Native Windows forced 0xc0000094 logs fault/module offsets, registers and reason correctly.",
    "next": "Verify at the original MAP01 location on the user GPU; Windows crash logging runtime test in release validation."
   },
   {
@@ -245,14 +245,14 @@
   {
    "id": "T20",
    "subsystem": "retro PC menus and aggressive defaults",
-   "status": "implemented",
+   "status": "verified",
    "paths": [
     "src/port/pc_text.c",
     "src/port/pc_options.c",
     "src/doom64/m_main.c"
    ],
-   "evidence": "Linux/MinGW builds PASS; revised title/settings screenshots reviewed; 120 FPS, always-run, faster weapon cadence and stronger kick defaults; console menus removed.",
-   "next": "Final release extraction smoke, native Windows visual check."
+   "evidence": "Linux/MinGW builds PASS; revised title/settings screenshots reviewed; 120 FPS, always-run, faster weapon cadence and stronger kick defaults; console menus removed. Final release extraction PASS: Windows native RX7900XTX Vulkan RT/audio/MAP01; Linux Mesa RT/audio/MAP01; one PK3 auto-loaded.",
+   "next": null
   },
   {
    "id": "T21",
@@ -268,14 +268,14 @@
   {
    "id": "T22",
    "subsystem": "root build launchers and dependency downloaders",
-   "status": "implemented",
+   "status": "verified",
    "paths": [
     "build.sh",
     "build.bat",
     "tools/build_windows.ps1"
    ],
-   "evidence": "Root bash launcher built both targets; Windows portable archive SHA256 verification/extraction and package installation PASS; native compilation in progress.",
-   "next": "Complete native build.bat compile test."
+   "evidence": "Root build.sh built Linux + MinGW Windows; build.bat downloaded SHA256-verified portable MSYS2, installed dependencies and completed native Windows compilation.",
+   "next": null
   },
   {
    "id": "T23",

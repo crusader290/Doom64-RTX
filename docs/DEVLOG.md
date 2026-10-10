@@ -89,3 +89,4 @@ to docs/DISCOVERIES.md, task state to docs/tasks.json.
 - Added root Linux/Windows build launchers with dependency downloads; native setup verified.
 - Sanitizer tests, both platform builds and GL/Vulkan/RT smoke passed; final packaging/native build pending.
 - Remaining requested milestones: animations/sounds, broader QoL, add-on script compatibility.
+- Final verification: native build.bat compilation PASS; fresh Windows RX 7900 XTX and Linux Mesa RT/audio/MAP01 release tests PASS; forced Windows 0xc0000094 diagnostic report PASS. Archives and SHA256SUMS ready for publication.

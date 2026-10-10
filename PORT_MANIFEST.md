@@ -80,7 +80,7 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | tools/check.sh | ✅ | build entry point: preflight, incremental build, first-error excerpt, failure class, repeat guard, build-logs/ |
 | tools/smoke.sh | ✅ | headless runtime test (Xvfb, ROM, presses, shots, WAV); PASS/FAIL/SKIPPED |
 | tools/setup_env.sh | ✅ | idempotent environment setup (apt, rust target, prebuilt SDL3 in ../deps); `--check` |
-| build.sh, build.bat, tools/build_windows.ps1 | 🟡 | root launchers; Linux/Windows cross build verified; native Windows SHA256-verified portable MSYS2 setup verified, native compile being tested |
+| build.sh, build.bat, tools/build_windows.ps1 | ✅ | root launchers; Linux/Windows cross build verified; native Windows SHA256-verified portable MSYS2 setup and compile verified |
 | tools/pack_visuals.py | ✅ | reproducible single PK3: sprites, two ceiling-light replacements, RT maps/defaults; per-entry origins, no ROM required |
 | tools/session_status.sh, .claude/ | ✅ | SessionStart status hook; skills build-diagnose, runtime-test, session-handoff |
 | tools/dm64ex.c | ref | Erick194's ROM extractor (reference for ROM offsets), not built |
