@@ -280,9 +280,9 @@
     {
       "id": "T23",
       "subsystem": "Brutal Doom inspired animations and sounds",
-      "status": "implemented",
-      "evidence": "Combat recoil/inertia, 13 kick sprites, timed kick impact and hit marker. Four attributed PCM imports, bounded 16-voice mixer. Sanitizer animation/audio checks PASS; 1050-frame gameplay traces identical on/off; native Windows RT 1000 frames PASS.",
-      "next": "Complete save/load regression and publish 0.5.1."
+      "status": "verified",
+      "evidence": "Combat recoil/inertia, 13 kick sprites, timed kick impact and hit marker. Four attributed PCM imports, bounded 16-voice mixer. Sanitizer animation/audio checks PASS; 1050-frame gameplay traces identical on/off; native Windows RT 1000 frames PASS. Real MAP01 slot 0 save/load and 1400-frame crash replay PASS.",
+      "next": "Publish 0.5.1 archives."
     },
     {
       "id": "T24",

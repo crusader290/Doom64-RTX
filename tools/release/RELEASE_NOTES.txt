@@ -1,30 +1,27 @@
 Doom64-RTX @VERSION@, commit @COMMIT@
-
 Requires your own Doom 64 ROM (.z64/.n64/.v64). No ROM is included.
 
-New in 0.5.0:
-- Fix MAP01 integer-divide crash in BSP bounding-box projection. Windows crash
-  reports include fault registers and module-relative addresses for diagnosis.
-- Immersive gore: bounded blood sprays, overkill gibs, wall/floor splashes,
-  gravity and fade. Cosmetic randomness does not alter gameplay RNG.
-- Aggressive defaults: 120 FPS, always run, faster weapon switching/firing,
-  stronger kick with more knockback and a shorter cooldown.
-- Cleaner retro main/settings menus with scalable Share Tech Mono text,
-  compact rows, contextual help, audio volume controls and PC key prompts.
-- Remove console password/storage/controller menus from PC flows. Use native
-  save/load slots, F5/F9 and level-start autosaves.
-- One auto-loaded packs/doom64rtx-visuals.pk3 combines compatible Retribution
-  sprites, ceiling-light textures and RT materials. Credits/manifest included.
-- Root build.sh/build.bat download dependencies and initiate builds.
+New in 0.5.1:
+- Native recoil, turn inertia, breathing, impact feedback and a 13-frame boot
+  animation adapted from Brutal Doom Platinum. Kick impact matches extension.
+- Four attributed sound upgrades: pistol, melee impact, flesh/slop and kick.
+  Preloaded PCM, stereo positioning, volume/pause controls and bounded reverb.
+- Combat Animation and Immersion Sounds settings; both default to enabled.
+- Main menu gains Quit Game. Console password/storage controls remain removed.
+- Fix backward weapon selection underflow when the chainsaw is not owned.
+- Reset stale macro references between maps and restore loaded macro geometry.
+- Bound ZIP decompression; native Windows downloader bundles SDL's libiconv.
 
-Validation: Linux and MinGW Windows builds; sanitizer math/gore checks;
-GL combat traces; Vulkan and RT smoke; native Windows MAP01 run.
-Original reported crash camera state was unavailable for exact replay.
+Retains 0.5.0: divide-crash fix/diagnostic logs, heavy cosmetic gore, faster weapons,
+stronger kick, 120 FPS default, retro text/settings and one consolidated PK3.
 
-Known limitations: general GZDoom ZScript/DECORATE/ACS and UDMF map support
-is not implemented in this milestone. Animation/sound upgrades and a bounded
-add-on compatibility layer are planned as subsequent tested releases.
-RT performance and lighting vary by GPU. MSVC remains experimental.
+Validation: Linux, MinGW Windows and native Windows builds; sanitizer math/gore,
+animation and audio tests; 1050-frame on/off gameplay traces match; native Windows
+RT combat 1000 frames; actual slot save/load and backward weapon crash replay pass.
 
-Texture pack assets retain upstream attribution and licence status; see
-packs/CREDITS.txt. Share Tech Mono font is SIL OFL; see assets/fonts/.
+General ZScript/DECORATE/ACS execution and UDMF maps remain unsupported. Subsequent
+milestones will port selected add-on behaviors to this native engine. Demo playback
+and recording disable modern combat effects. RT performance varies by GPU.
+
+Imported assets retain upstream provenance/licence status. See packs/CREDITS.txt,
+credits/brutaldoom in the PK3 and assets/sounds/SOURCES.txt. Share Tech Mono is SIL OFL.

@@ -100,3 +100,4 @@ now also bundles libiconv. Save/load navigation exposed a separate unsigned-enum
 underflow in backward weapon selection; fixed signed loop index, replay pending.
 Level-start macro globals reset and loaded macro line vertices repaired without
 changing save structs. User selected native add-on behavior ports, not a new engine.
+Validation complete: actual MAP01 slot 0 save/load passed (117 actors, 38 thinkers); backward weapon crash replay ran 1400 frames normally. 0.5.1 binaries being packaged.
