@@ -30,6 +30,8 @@ for d in "$L" "$W"; do
 done
 for d in "$L" "$W"; do
   cp README.md LICENSE "$d/"
+  mkdir -p "$d/docs"
+  cp docs/ADDON_COMPATIBILITY.md "$d/docs/"
   cp tools/release/doom64rtx.ini "$d/"
   sed "s/@VERSION@/$V/; s/@COMMIT@/$(git rev-parse --short HEAD)/" tools/release/RELEASE_NOTES.txt > "$d/RELEASE_NOTES.txt"
 done
