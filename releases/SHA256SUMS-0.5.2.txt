@@ -1,0 +1,2 @@
+2fff2b36bad608be8432e68f3cd2eb9acb711e69322200e753d7ad77ddde1c20  doom64rtx-0.5.2-linux-x86_64.tar.gz
+bdefe4e2174028d533c0967efbd232a442ea109b2d44dc4d1d5edc5b4bb6abc1  doom64rtx-0.5.2-windows-x86_64.zip
