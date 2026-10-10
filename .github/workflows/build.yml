@@ -53,6 +53,8 @@ jobs:
         run: |
           bash tools/test_bsp_math.sh
           bash tools/test_gore.sh
+          D64_DEPS="$PWD/deps" bash tools/test_soundpack.sh
+          D64_DEPS="$PWD/deps" bash tools/test_combat_fx.sh
       - name: Upload build log
         if: failure()
         uses: actions/upload-artifact@v4

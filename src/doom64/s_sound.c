@@ -4,6 +4,7 @@
 #include "r_local.h"
 
 #ifdef D64_PC
+#include "soundpack.h"
 #define AUDIO_HEAP_SIZE	(0x100000) /* [PC] native structs are larger */
 #else
 #define AUDIO_HEAP_SIZE	(0x44800)
@@ -194,16 +195,25 @@ S_IMPL void S_StopMusic_impl(void) // 80029878
 
 S_IMPL void S_PauseSound_impl(void) // 800298A4
 {
+#ifdef D64_PC
+    PCSound_Pause(1);
+#endif
     wess_seq_pauseall(YesMute, (REMEMBER_MUSIC|REMEMBER_SNDFX));
 }
 
 S_IMPL void S_ResumeSound_impl(void) // 800298C8
 {
+#ifdef D64_PC
+    PCSound_Pause(0);
+#endif
     wess_seq_restartall(YesVoiceRestart);
 }
 
 S_IMPL void S_StopSound_impl(mobj_t *origin,int seqnum) // 800298E8
 {
+#ifdef D64_PC
+    PCSound_Stop(origin,seqnum);
+#endif
     if (!origin)
         wess_seq_stop(seqnum);
     else
@@ -212,6 +222,9 @@ S_IMPL void S_StopSound_impl(mobj_t *origin,int seqnum) // 800298E8
 
 S_IMPL void S_StopAll_impl(void) // 8002991C
 {
+#ifdef D64_PC
+    PCSound_StopAll();
+#endif
     wess_seq_stopall();
 }
 
@@ -220,6 +233,9 @@ S_IMPL void S_StopAll_impl(void) // 8002991C
 
 S_IMPL int S_SoundStatus_impl(int seqnum) // 8002993C
 {
+#ifdef D64_PC
+    if (PCSound_Active(seqnum)) return SND_PLAYING;
+#endif
     if (wess_seq_status(seqnum) == SEQUENCE_PLAYING)
         return SND_PLAYING;
     else
@@ -266,6 +282,10 @@ S_IMPL void S_StartSound_impl(mobj_t *origin, int sound_id) // 80029970
 			}
 		}
 
+#ifdef D64_PC
+        if (PCSound_Play(origin,sound_id,vol,pan,attr.reverb)) return;
+        if (sound_id >= NUMSFX) return; /* PC-only optional sounds have no WESS sequence. */
+#endif
 		wess_seq_trigger_type_special(sound_id, (unsigned int)(uintptr_t)origin, &attr);
 	}
 }

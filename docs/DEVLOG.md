@@ -90,3 +90,13 @@ to docs/DISCOVERIES.md, task state to docs/tasks.json.
 - Sanitizer tests, both platform builds and GL/Vulkan/RT smoke passed; final packaging/native build pending.
 - Remaining requested milestones: animations/sounds, broader QoL, add-on script compatibility.
 - Final verification: native build.bat compilation PASS; fresh Windows RX 7900 XTX and Linux Mesa RT/audio/MAP01 release tests PASS; forced Windows 0xc0000094 diagnostic report PASS. Archives and SHA256SUMS ready for publication.
+
+## 2026-10-10 — combat animation/audio milestone in validation
+Native recoil/inertia/breathing, attributed BDP kick frames, hit marker and delayed
+kick impact; four attributed PCM overrides with fixed voice/tail limits. Audio
+and animation sanitizer checks pass; 1050-frame GL traces match with both effects
+on/off. Native Windows RT ran 1000 frames normally. Its downloaded SDL dependency
+now also bundles libiconv. Save/load navigation exposed a separate unsigned-enum
+underflow in backward weapon selection; fixed signed loop index, replay pending.
+Level-start macro globals reset and loaded macro line vertices repaired without
+changing save structs. User selected native add-on behavior ports, not a new engine.

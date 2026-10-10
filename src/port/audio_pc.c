@@ -27,6 +27,7 @@
 
 #include "config.h"
 #include "n64synth.h"
+#include "soundpack.h"
 #include "rom.h"
 
 extern void N64_wdd_location(char *wdd_location);
@@ -129,6 +130,7 @@ static void render_frames(int frames)
     {
         int n = frames > 1024 ? 1024 : frames;
         Synth_Render(buf, n);
+        PCSound_Mix(buf,n);
         if (stream && !pump_mode)
             SDL_PutAudioStreamData(stream, buf, n * 4);
         if (wav_file)
@@ -262,6 +264,7 @@ void wess_init(WessConfig *wessconfig)
     SSP_SeqpNew();
     wesssys_init();
     init_completed = 1;
+    PCSound_Init(rate);
 
     if (pc_config.sound)
         open_output();
@@ -332,6 +335,7 @@ void wess_exit(void)
         wesssys_exit(1);
         alClose(&am_globals);
         init_completed = 0;
+        PCSound_Shutdown();
     }
     wav_close();
     I_PCAudioUnlock();

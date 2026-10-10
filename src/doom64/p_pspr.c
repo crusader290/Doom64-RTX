@@ -4,6 +4,7 @@
 #include "p_local.h"
 #ifdef D64_PC
 #include "config.h" /* [PC] */
+#include "combat_fx.h"
 #endif
 void P_Thrust (player_t *player, angle_t angle, fixed_t move); /* [PC] */
 
@@ -457,6 +458,9 @@ void P_FireWeapon (player_t *player) // 8001B7CC
 
 	if (!P_CheckAmmo (player))
 		return;
+#ifdef D64_PC
+    PCCombat_Fire(); /* [PC] cosmetic recoil after a valid shot */
+#endif
 
 	P_SetMobjState (player->mo, S_006/*S_PLAY_ATK1*/);
 

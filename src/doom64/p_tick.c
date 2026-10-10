@@ -5,6 +5,7 @@
 #include "savegame.h"
 #include "config.h"
 #include "gore.h" /* [PC] */
+#include "combat_fx.h"
 #endif
 #include "st_main.h"
 
@@ -287,6 +288,9 @@ int P_Ticker (void)//80021A00
 
 	if ((!gamepaused) && (gamevbls < gametic))
 	{
+#ifdef D64_PC
+        PCCombat_Tick(); /* [PC] advance once before this tic's events */
+#endif
 	    P_RunThinkers();
 		P_CheckSights();
 		P_RunMobjBase();
@@ -386,6 +390,7 @@ void P_Start (void) // 80021C50
     fadebright_t *fb;
 #ifdef D64_PC
     I_PCGoreReset(); /* [PC] no cosmetic pointers survive level/load changes */
+    PCCombat_Reset();
 #endif
 
     DrawerStatus = 1;
@@ -428,6 +433,7 @@ void P_Stop (int exit) // 80021D58
 {
 #ifdef D64_PC
     I_PCGoreReset(); /* [PC] before freeing sectors */
+    PCCombat_Reset();
 #endif
     /* [d64] stop plasma buzz */
 	S_StopSound(0, sfx_electric);

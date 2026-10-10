@@ -31,6 +31,7 @@ void Config_Defaults(void)
     pc_config.sound = 1;
     pc_config.music_volume = 70;
     pc_config.sfx_volume = 90;
+    pc_config.sound_upgrades = pc_config.combat_anims = 1;
     pc_config.fps = 120;
     pc_config.fast_weapons = 1;
     pc_config.always_run = 1;
@@ -76,6 +77,8 @@ static const cvar_t cvars[] = {
     { "log",            CV_INT,      &pc_config.log, 0 },
     { "sound",          CV_INT,      &pc_config.sound, 0 },
     { "music_volume",   CV_INT,      &pc_config.music_volume, 0 },
+    { "sound_upgrades", CV_INT,      &pc_config.sound_upgrades, 0 },
+    { "combat_anims",   CV_INT,      &pc_config.combat_anims, 0 },
     { "sfx_volume",     CV_INT,      &pc_config.sfx_volume, 0 },
     { "audio_rate",     CV_INT,      &pc_config.audio_rate, 0 },
     { "fps",            CV_INT,      &pc_config.fps, 0 },

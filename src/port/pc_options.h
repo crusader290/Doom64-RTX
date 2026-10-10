@@ -18,5 +18,6 @@ int         PCOpt_Change(int page, int i, int dir);
 int         PCOpt_IsAction(int page, int i);
 int         PCOpt_ValueX(int page);  /* x of the value column */
 const char *PCOpt_Help(int page, int item);
+void PCOpt_RequestQuit(void);
 
 #endif

@@ -1,0 +1,24 @@
+Immersion sounds and first-person ground-kick sprites
+
+Source: https://github.com/EmeraldCoasttt/BrutalDoomPlatinum
+Pinned commit: 423b7167849a4b1f87975a81f43410f0189d9e9e
+Upstream repository declares GPLv3 (included as LICENSE.BDP).
+Its DetailedCredits.txt is retained verbatim. Specific creators of these audio
+files and first-person KICK frames are not individually listed there; do not
+invent individual attribution. Credit the Brutal Doom/Platinum contributors,
+Sergeant_Mark_IV's Brutal Doom lineage and EmeraldCoasttt's maintained source.
+
+pistol.wav <- SOUNDS/COMBAT/WEAPONS/DSPISTOL.ogg
+meat.wav   <- SOUNDS/COMBAT/WEAPONS/Slot 1/MELEE/FOOTMEAT
+slop.wav   <- SOUNDS/GORE/DSSLOP (DMX 8-bit PCM converted without resampling)
+kick.wav   <- SOUNDS/COMBAT/WEAPONS/Slot 1/MELEE/KICK
+assets/combat/kick/KICK[A-M]0.png <- SPRITES/WEAPONS/Slot 1/MELEE/KICKS/
+
+Audio originals are retained under source/. WAV conversion of the compressed
+audio uses ffmpeg (mono 44100 Hz signed 16-bit PCM); the original files remain
+the preferred source. No upstream game scripts are executed or copied into
+the engine. Kick timing/anchors are implemented by Doom64-RTX's render sidecar.
+
+The release's single visuals PK3 includes the converted sounds, kick PNGs,
+this source record, the upstream licence and full credits. Gameplay/Audio
+settings can disable the upgrades. Missing audio falls back to the ROM synth.

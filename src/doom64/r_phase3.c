@@ -3,6 +3,9 @@
 
 #include "doomdef.h"
 #include "r_local.h"
+#ifdef D64_PC
+#include "combat_fx.h"
+#endif
 
 //-----------------------------------//
 void R_RenderWorld(subsector_t *sub);
@@ -1195,6 +1198,9 @@ void R_RenderPSprites(void) // 80028f20
 
             x = (((psp->sx >> 16) - BE16(((spriteN64_t*)data)->xoffs)) + 160) << 2;
             y = (((psp->sy >> 16) - BE16(((spriteN64_t*)data)->yoffs)) + 239) << 2;
+#ifdef D64_PC
+            { float px,py; PCCombat_Offsets(&px,&py); x+=(int)(px*4);y+=(int)(py*4); }
+#endif
             if (viewplayer->onground)
             {
                 x += (quakeviewx >> 20);

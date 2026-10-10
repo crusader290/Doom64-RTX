@@ -92,6 +92,7 @@ char *ControlText[] =   //8007517C
 #define M_TXT55 "Load Game"     // [PC]
 #define M_TXT56 "Audio"         // [PC]
 #define M_TXT57 "Controls"      // [PC]
+#define M_TXT58 "Quit Game"     // [PC]
 
 char *MenuText[] =   // 8005ABA0
 {
@@ -107,16 +108,17 @@ char *MenuText[] =   // 8005ABA0
     M_TXT45, M_TXT46, M_TXT47,
     M_TXT48, M_TXT49, M_TXT50,  // [GEC] NEW
     M_TXT51, M_TXT52, M_TXT53,  // [PC]
-    M_TXT54, M_TXT55, M_TXT56, M_TXT57 // [PC]
+    M_TXT54, M_TXT55, M_TXT56, M_TXT57, M_TXT58 // [PC]
 };
 
 #ifdef D64_PC
-#define TITLE_ITEMS 3 /* [PC] +Load Game */
+#define TITLE_ITEMS 4 /* [PC] +Load Game and native Quit */
 menuitem_t Menu_Title[TITLE_ITEMS] = // 8005A978
 {
     { 14, 115, 180 },   // New Game
     { 55, 115, 200 },   // [PC] Load Game
 	{ 11, 115, 220 },   // Options
+    { 58, 115, 230 },   // [PC] Quit
 };
 #else
 #define TITLE_ITEMS 2
@@ -868,6 +870,11 @@ int M_MenuTicker(void) // 80007E0C
 
                 switch(MenuItem[cursorpos].casepos)
                 {
+#ifdef D64_PC
+                case 58:
+                    if(truebuttons) PCOpt_RequestQuit();
+                    break;
+#endif
 
                 case 0: // Control Pad
                     if (truebuttons)
@@ -1724,14 +1731,14 @@ void M_MenuTitleDrawer(void) // 80008E7C
         for (i = 0; i < itemlines; i++) {
             menuitem_t *pc_item = &MenuItem[i];
             unsigned color = text_alpha | (i == cursorpos ? 0xffe2b700 : 0xb9afa300);
-            int pc_y = MenuItem == Menu_Title ? 148 + i * 23 : pc_item->y + 3;
+            int pc_y = MenuItem == Menu_Title ? 141 + i * 21 : pc_item->y + 3;
             int pc_x = MenuItem == Menu_Title ? 93 : 51;
             if (i == cursorpos) {
                 PCText_Box(pc_x - 10, pc_y - 3, MenuItem == Menu_Title ? 154 : 226, 20, 0x211a18c0);
                 PCText_Box(pc_x - 10, pc_y + 1, 1.5f, 12, text_alpha | 0xba493700);
             }
             PCText_Draw(pc_x, pc_y, MenuItem == Menu_Title ? 15 : 12,
-                        pc_item->casepos == 6 ? "Back" : MenuText[pc_item->casepos], color);
+                        pc_item->casepos == 6 ? "Back" : pc_item->casepos == 11 ? "Settings" : MenuText[pc_item->casepos], color);
         }
         PCText_Draw(-1, MenuItem == Menu_Title ? 229 : 219, 7,
                     MenuItem == Menu_Game ? "ESC  RESUME    F5/F9  QUICK SAVE/LOAD" :

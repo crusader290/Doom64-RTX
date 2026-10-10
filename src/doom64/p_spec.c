@@ -152,6 +152,17 @@ void P_SpawnSpecials (void) // 8001F490
     macrocounter = 0;
     macroidx1 = 0;
     macroidx2 = 0;
+#ifdef D64_PC
+    /* [PC] Level-owned macro pointers must not outlive the previous level. */
+    extern int tempMacroIndex;
+    macroactivator = NULL;
+    macroline = NULL;
+    macrothinker = NULL;
+    restartmacro = NULL;
+    macrointeger = tempMacroIndex = 0;
+    memset(&macrotempline,0,sizeof(macrotempline));
+    memset(macroqueue,0,sizeof(macroqueue));
+#endif
 
 	/* */
 	/*	Init special SECTORs */

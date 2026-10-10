@@ -849,6 +849,12 @@ void G_PCApplyPendingLoad(void)
         macrotempline = tl;
     }
     macroline = decode(get64(&b));
+    /* The saved template deliberately omits vertices; recover them from its
+     * original map line so a resumed active macro has valid line geometry. */
+    if(macroline && macroline!=&macrotempline) {
+        macrotempline.v1=macroline->v1;
+        macrotempline.v2=macroline->v2;
+    }
     if (macroline && macroline != &macrotempline)
     {
         macrotempline.v1 = macroline->v1;

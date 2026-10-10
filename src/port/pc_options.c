@@ -23,6 +23,12 @@ extern mapthing_t *spawnlist;
 extern int spawncount;
 
 void I_PCSetFullscreen(int on);
+void PCOpt_RequestQuit(void)
+{
+    SDL_Event event={0};
+    event.type=SDL_EVENT_QUIT;
+    SDL_PushEvent(&event);
+}
 
 static const char *onoff(int v)
 {
@@ -162,13 +168,13 @@ static int gfx_change(int i, int dir)
 /* ---- Gameplay ------------------------------------------------------------ */
 
 enum { P_MOUSELOOK, P_INVERT, P_SENS, P_RUN, P_AUTOAIM, P_CROSSHAIR, P_JUMP, P_BOB, P_ADS, P_FASTWEAP,
-       P_GORE, P_AUTOSAVE, P_COUNT };
+       P_GORE, P_AUTOSAVE, P_ANIMS, P_COUNT };
 
 static const char *play_label(int i)
 {
     static const char *l[P_COUNT] = { "Mouse Look", "Invert Mouse", "Mouse Speed", "Always Run",
                                       "Autoaim", "Crosshair", "Jumping", "Bobbing", "Aim Sights",
-                                      "Fast Weapons", "Immersive Gore", "Autosave" };
+                                      "Fast Weapons", "Immersive Gore", "Autosave", "Combat Animation" };
     return l[i];
 }
 
@@ -192,6 +198,7 @@ static const char *play_value(int i, char *buf, int len)
     case P_FASTWEAP: return onoff(pc_config.fast_weapons);
     case P_GORE: return onoff(pc_config.gore);
     case P_AUTOSAVE: return onoff(pc_config.autosave);
+    case P_ANIMS: return onoff(pc_config.combat_anims);
     }
     return NULL;
 }
@@ -226,6 +233,7 @@ static int play_change(int i, int dir)
     case P_FASTWEAP: CONFIG_SET(fast_weapons, !pc_config.fast_weapons); break;
     case P_GORE: CONFIG_SET(gore, !pc_config.gore); break;
     case P_AUTOSAVE: CONFIG_SET(autosave, !pc_config.autosave); break;
+    case P_ANIMS: CONFIG_SET(combat_anims, !pc_config.combat_anims); break;
     }
     Config_Save();
     return 0;
@@ -394,7 +402,7 @@ int PCOpt_Count(int page)
     case PCPAGE_GRAPHICS: return G_COUNT;
     case PCPAGE_GAMEPLAY: return P_COUNT;
     case PCPAGE_DEBUG: return D_COUNT;
-    case PCPAGE_AUDIO: return 3;
+    case PCPAGE_AUDIO: return 4;
     case PCPAGE_CONTROLS: return 10;
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return PC_SAVE_SLOTS;
@@ -419,7 +427,7 @@ const char *PCOpt_Title(int page)
 
 const char *PCOpt_Label(int page, int i)
 {
-    static const char *audio[] = {"Music Volume", "Effects Volume", "Output Rate"};
+    static const char *audio[] = {"Music Volume", "Effects Volume", "Output Rate", "Immersion Sounds"};
     static const char *controls[] = {"Move / Strafe", "Fire", "Aim Sights", "Use / Open", "Jump", "Kick", "Weapons", "Quick Save / Load", "Debug / Ray Tracing", "Fullscreen / Capture"};
     if (i < 0 || i >= PCOpt_Count(page))
         return "";
@@ -450,6 +458,7 @@ const char *PCOpt_Value(int page, int i, char *buf, int len)
     case PCPAGE_AUDIO:
         SDL_snprintf(buf, len, i == 2 ? "%d Hz" : "%d%%",
                      i == 0 ? pc_config.music_volume : i == 1 ? pc_config.sfx_volume : pc_config.audio_rate);
+        if (i==3) return onoff(pc_config.sound_upgrades);
         return buf;
     case PCPAGE_SAVE:
     case PCPAGE_LOAD: return slot_value(i, buf, len);
@@ -473,6 +482,8 @@ int PCOpt_Change(int page, int i, int dir)
         } else if (i == 1) {
             CONFIG_SET(sfx_volume, SDL_clamp(pc_config.sfx_volume + (dir < 0 ? -5 : 5), 0, 100));
             SfxVolume = pc_config.sfx_volume; S_SetSoundVolume(SfxVolume);
+        } else if (i==3) {
+            CONFIG_SET(sound_upgrades,!pc_config.sound_upgrades);
         } else {
             static const int rates[] = {22050, 44100, 48000};
             CONFIG_SET(audio_rate, step_choice(pc_config.audio_rate, rates, 3, dir));
@@ -517,7 +528,9 @@ const char *PCOpt_Help(int page, int item)
         if (item == P_ADS) return "Hold RMB to focus your view. V kicks without switching.";
         return "Changes apply immediately and are saved to your configuration.";
     }
-    if (page == PCPAGE_AUDIO) return item == 2 ? "Output rate changes apply after restarting." : "Separate music and effects levels; changes apply immediately.";
+    if (page == PCPAGE_AUDIO) return item == 2 ? "Output rate changes apply after restarting." :
+        item == 3 ? "Upgraded impacts and weapon sounds. Off restores original audio." :
+        "Separate music and effects levels; changes apply immediately.";
     if (page == PCPAGE_CONTROLS) return "Keyboard / mouse shortcuts. Standard gamepads supported.";
     if (page == PCPAGE_SAVE) return "Confirm to save. The Auto slot is managed by the game.";
     if (page == PCPAGE_LOAD) return "Confirm a populated slot to restore the level.";

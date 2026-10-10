@@ -260,6 +260,7 @@ static void scan_zip(void)
             tmp.pack = npacks - 1;
             tmp.method = rd16(z + pos + 10);
             tmp.csize = rd32(z + pos + 20);
+            tmp.usize = rd32(z + pos + 24);
             tmp.local_ofs = rd32(z + pos + 42);
             js = read_entry(&tmp, &jl);
             if (js)
@@ -419,27 +420,83 @@ static Uint8 *read_entry(entry_t *e, size_t *len)
             return NULL;
         if (e->method == 0)
         {
+            if(e->csize != e->usize) return NULL;
             Uint8 *out = SDL_malloc(e->csize);
+            if(!out) return NULL;
             SDL_memcpy(out, z + data, e->csize);
             *len = e->csize;
             return out;
         }
         if (e->method == 8)
         {
-            int outlen = 0;
-            char *out = stbi_zlib_decode_noheader_malloc((const char *)z + data, (int)e->csize, &outlen);
-            *len = (size_t)outlen;
-            if (out)
-            {
-                Uint8 *copy = SDL_malloc((size_t)outlen);
-                SDL_memcpy(copy, out, (size_t)outlen);
-                STBI_FREE(out);
-                return copy;
+            /* Trust neither declared size nor compressed content. */
+            if(!e->usize || e->usize > 64u*1024u*1024u || e->csize > INT_MAX) return NULL;
+            Uint8 *out=SDL_malloc(e->usize);
+            if(!out) return NULL;
+            int outlen=stbi_zlib_decode_noheader_buffer((char *)out,(int)e->usize,
+                (const char *)z+data,(int)e->csize);
+            if(outlen==(int)e->usize) { *len=(size_t)outlen;return out; }
+            SDL_free(out);
+        }
+    }
+    return NULL;
+}
+
+void *ResPack_File(const char *path, size_t *size)
+{
+    int pidx;
+    size_t length = strlen(path);
+    *size = 0;
+    if (!length || path[0] == '/' || strstr(path, "..") || strchr(path, '\\') || strchr(path, ':')) return NULL;
+    for (pidx = npacks - 1; pidx >= 0; pidx--) {
+        pack_t *p = &packs[pidx];
+        if (p->is_dir) {
+            char full[1536];
+            SDL_snprintf(full, sizeof(full), "%s/%s", p->path, path);
+            void *data = SDL_LoadFile(full, size);
+            if (data) return data;
+        } else if (p->zip_size >= 22) {
+            size_t eocd = p->zip_size - 22, pos;
+            int total, k;
+            for (;;) {
+                if (rd32(p->zip + eocd) == 0x06054b50) break;
+                if (!eocd || p->zip_size - eocd > 65558) break;
+                eocd--;
+            }
+            if (rd32(p->zip + eocd) != 0x06054b50) continue;
+            pos = rd32(p->zip + eocd + 16); total = rd16(p->zip + eocd + 10);
+            for (k = 0; k < total && pos + 46 <= p->zip_size; k++) {
+                const Uint8 *z = p->zip + pos;
+                size_t nlen, step;
+                if (rd32(z) != 0x02014b50) break;
+                nlen = rd16(z + 28); step = 46 + nlen + rd16(z + 30) + rd16(z + 32);
+                if (step > p->zip_size - pos) break;
+                if (nlen == length && !SDL_strncasecmp((const char *)z + 46, path, length)) {
+                    entry_t entry = {0};
+                    entry.pack = pidx; entry.method = rd16(z + 10);
+                    entry.csize = rd32(z + 20); entry.usize = rd32(z + 24);
+                    entry.local_ofs = rd32(z + 42);
+                    if (entry.csize > 32u * 1024 * 1024 || entry.usize > 32u * 1024 * 1024) return NULL;
+                    return read_entry(&entry, size);
+                }
+                pos += step;
             }
         }
     }
     return NULL;
 }
+
+uint8_t *ResPack_LoadPNG(const char *path, int *w, int *h)
+{
+    size_t size;
+    void *data = SDL_LoadFile(path, &size);
+    uint8_t *image;
+    if (!data) return NULL;
+    image = size <= 32u*1024*1024 ? stbi_load_from_memory(data, (int)size, w, h, NULL, 4) : NULL;
+    SDL_free(data);
+    return image;
+}
+void ResPack_FreePNG(void *pixels) { stbi_image_free(pixels); }
 
 static void norm_name(const char *lumpname, char name[9])
 {

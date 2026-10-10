@@ -60,6 +60,7 @@ set(D64_PORT_SOURCES
   src/port/config.c
   src/port/gu.c
   src/port/gore.c
+  src/port/combat_fx.c
   src/port/pc_text.c
   src/port/rtlights.c
   src/port/log.c
@@ -73,7 +74,7 @@ if(D64_NULL_RENDERER)
   list(APPEND D64_PORT_SOURCES src/gfx/gfx_null.c)
 endif()
 if(D64_WITH_AUDIO)
-  list(APPEND D64_PORT_SOURCES src/port/n64synth.c src/port/audio_pc.c)
+  list(APPEND D64_PORT_SOURCES src/port/n64synth.c src/port/audio_pc.c src/port/soundpack.c)
 else()
   list(APPEND D64_PORT_SOURCES src/port/s_sound_stub.c)
 endif()

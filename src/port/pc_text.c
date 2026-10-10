@@ -7,7 +7,7 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "third_party/stb_truetype.h"
 
-typedef struct { float x, y, size, w, h; unsigned color; char text[192]; } textcmd_t;
+typedef struct { float x, y, size, w, h; unsigned color, texture; char text[192]; } textcmd_t;
 static textcmd_t commands[256];
 static unsigned command_count, atlas, solid;
 static int attempted;
@@ -77,7 +77,7 @@ void PCText_Emit(const void *command)
     const textcmd_t *cmd = command;
     int pass;
     if (cmd->w > 0) {
-        GBI_OverlayQuad(solid, cmd->x, cmd->y, cmd->w, cmd->h, 0, 0, 1, 1, cmd->color);
+        GBI_OverlayQuad(cmd->texture ? cmd->texture : solid, cmd->x, cmd->y, cmd->w, cmd->h, 0, 0, 1, 1, cmd->color);
         return;
     }
     for (pass = 0; pass < 2; pass++) {
@@ -96,4 +96,15 @@ void PCText_Emit(const void *command)
             x += gx * scale;
         }
     }
+}
+
+void PCText_Image(unsigned texture, float x, float y, float w, float h, unsigned color)
+{
+    textcmd_t *cmd;
+    if (!texture || command_count>=256) return;
+    cmd=&commands[command_count++];
+    memset(cmd,0,sizeof(*cmd));
+    cmd->texture=texture;cmd->x=x;cmd->y=y;cmd->w=w;cmd->h=h;cmd->color=color;
+    I_CheckGFX();
+    _gW(GFX1++,_SHIFTL(G_PC_TEXT,24,8),(uintptr_t)cmd);
 }

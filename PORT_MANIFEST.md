@@ -84,3 +84,5 @@ All files compile for x86-64. Changes are marked `[PC]`.
 | tools/pack_visuals.py | ✅ | reproducible single PK3: sprites, two ceiling-light replacements, RT maps/defaults; per-entry origins, no ROM required |
 | tools/session_status.sh, .claude/ | ✅ | SessionStart status hook; skills build-diagnose, runtime-test, session-handoff |
 | tools/dm64ex.c | ref | Erick194's ROM extractor (reference for ROM offsets), not built |
+
+Combat milestone: combat_fx.c/.h (recoil, boot overlay, hit feedback), soundpack.c/.h (four PCM clips, bounded stereo mixer), tests/test_combat_fx.c and test_soundpack.c are implemented and sanitizer-verified. Native Windows RT 1000-frame run passed. Save/load regression and 0.5.1 packaging in progress.

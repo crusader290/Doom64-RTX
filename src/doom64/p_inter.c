@@ -4,6 +4,8 @@
 #include "doomdef.h"
 #ifdef D64_PC
 #include "gore.h" /* [PC] cosmetic damage/death effects */
+#include "combat_fx.h"
+#include "config.h"
 #endif
 #include "p_local.h"
 #include "st_main.h"
@@ -828,6 +830,11 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 	/* */
 #ifdef D64_PC
     I_PCGoreDamage(target, inflictor, damage); /* [PC] before health/death state changes */
+    if (damage>0 && source && source->player && !target->player)
+        PCCombat_Hit(damage>=target->health);
+    if (pc_config.gore && !demoplayback && !demorecording && !(target->flags&MF_NOBLOOD) &&
+        damage>=target->health && (int64_t)target->health-damage < -target->info->spawnhealth)
+        S_StartSound(target,sfx_slop);
 #endif
 	target->health -= damage;
 	if (target->health <= 0)

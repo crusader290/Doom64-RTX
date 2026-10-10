@@ -46,6 +46,13 @@ for path in sorted((materials / 'rt/mat').glob('*.png')):
 for path in sorted((materials / 'rt/data').glob('*.json')):
     add(path.relative_to(materials).as_posix(), path.read_bytes(), 'Retribution-RT-Materials')
 add('CREDITS.txt', (root / 'tools/release/PACKS_CREDITS.txt').read_bytes(), 'Doom64-RTX')
+for path in sorted((root / 'assets/combat/kick').glob('*.png')):
+    add('fx/kick/' + path.name, path.read_bytes(), 'BrutalDoomPlatinum 423b716')
+for path in sorted((root / 'assets/sounds').glob('*.wav')):
+    add('sounds/immersion/' + path.name, path.read_bytes(), 'BrutalDoomPlatinum 423b716')
+if (root / 'assets/sounds/SOURCES.txt').exists():
+    for name in ('SOURCES.txt','LICENSE.BDP','DetailedCredits.txt'):
+        add('credits/brutaldoom/' + name,(root / 'assets/sounds' / name).read_bytes(),'BrutalDoomPlatinum 423b716')
 add('manifest.json', json.dumps({'format': 1, 'sources': origins}, indent=2).encode(), 'Doom64-RTX')
 args.output.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(args.output, 'w') as archive:

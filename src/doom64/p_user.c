@@ -5,6 +5,8 @@
 #include "st_main.h"
 #ifdef D64_PC
 #include "config.h" /* [PC] */
+#include "combat_fx.h"
+#include "soundpack.h"
 #endif
 
 #define MAXMOCKTIME     1800
@@ -832,11 +834,15 @@ static void P_PCPlayerThink(player_t *player)
 	}
 
 	if (player->pc_kicktics > 0)
-		player->pc_kicktics--;
+	{
+        player->pc_kicktics--;
+        if(player->pc_kicktics==11 && player->playerstate==PST_LIVE) P_PCKick(player);
+    }
 	if (player->playerstate == PST_LIVE && (player->pc_buttons & PCACT_KICK) && !player->pc_kicktics)
 	{
 		player->pc_kicktics = 14;
-		P_PCKick(player);
+        PCCombat_Kick();
+        S_StartSound(player->mo, PC_SOUND_KICK);
 	}
 }
 
@@ -851,7 +857,13 @@ void P_PlayerThink (player_t *player) // 80022D60
 {
 	int		     buttons, oldbuttons;
 	buttons_t    *cbutton;
+#ifdef D64_PC
+    /* GCC may store this nonnegative enum unsigned. A backward search must
+     * stop at -1 before indexing weaponowned, even without a chainsaw. */
+    int weapon;
+#else
 	weapontype_t weapon;
+#endif
 	sector_t     *sec;
 
 	buttons = ticbuttons[0];
@@ -860,8 +872,10 @@ void P_PlayerThink (player_t *player) // 80022D60
 
 #ifdef D64_PC
     /* [PC] Modern combat must not alter recorded or played-back demos. */
-    if (!demoplayback && !demorecording && !gamepaused)
+    if (!demoplayback && !demorecording && !gamepaused && gamevbls < gametic) {
+        player->pc_buttons=I_PCActions();
 	    P_PCPlayerThink(player);
+    }
 #endif
 
 	/* */

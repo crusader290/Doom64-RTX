@@ -6,6 +6,7 @@
 #define D64_RESPACK_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 enum { RESPACK_OTHER, RESPACK_TEXTURE, RESPACK_SPRITE };
 
@@ -23,6 +24,11 @@ int  ResPack_Count(void);
 void ResPack_SetEnabled(int on);
 /* Decoded RGBA replacement for a lump name, or NULL. Owned by the pack cache. */
 const uint8_t *ResPack_Image(const char *lumpname, int *w, int *h);
+/* Named pack resources (sounds/scripts): SDL-allocated, caller SDL_free(). */
+void *ResPack_File(const char *path, size_t *size);
+/* Decode an external PNG for PC overlays; free with ResPack_FreePNG(). */
+uint8_t *ResPack_LoadPNG(const char *path, int *w, int *h);
+void ResPack_FreePNG(void *pixels);
 
 /* RT material for a lump: maps (orm, normal, emissive; NULL if absent) and
  * doom64-rt defaults (rough/metal < 0 = not set). Returns 0 if nothing. */

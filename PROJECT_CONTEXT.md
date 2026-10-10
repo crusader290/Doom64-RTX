@@ -65,3 +65,13 @@ copied outside Git. tools/smoke.sh starts Xvfb. User GPU crash-location validati
 still needed. MSVC remains experimental; MinGW supported. Saves tied to struct
 sizes; these changes do not change those structs. RT emitter lights still need
 isolated visual validation (T17).
+
+## 2026-10-10 — combat animation/audio milestone in validation
+Native recoil/inertia/breathing, attributed BDP kick frames, hit marker and delayed
+kick impact; four attributed PCM overrides with fixed voice/tail limits. Audio
+and animation sanitizer checks pass; 1050-frame GL traces match with both effects
+on/off. Native Windows RT ran 1000 frames normally. Its downloaded SDL dependency
+now also bundles libiconv. Save/load navigation exposed a separate unsigned-enum
+underflow in backward weapon selection; fixed signed loop index, replay pending.
+Level-start macro globals reset and loaded macro line vertices repaired without
+changing save structs. User selected native add-on behavior ports, not a new engine.

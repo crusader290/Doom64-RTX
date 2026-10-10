@@ -29,6 +29,7 @@ typedef struct {
     int   log;               /* write doom64rtx.log (default on) */
     int   sound;             /* 1 = sound and music (WESS synth) */
     int   music_volume, sfx_volume; /* 0..100, applied by audio settings */
+    int   sound_upgrades, combat_anims; /* optional immersive PC audio/animation */
     int   fps;               /* frame rate cap: 30 (N64), 60 or 120 (interpolated) */
     int   mouselook;         /* free look with the mouse (pitch) */
     int   invert_mouse;      /* invert vertical mouse look */
