@@ -40,6 +40,7 @@ void ST_Drawer (void); // 80029DC0
 void ST_Message(int x,int y,char *text,int color); // 8002A36C
 void ST_DrawNumber(int x, int y, int val, int mode, int color); // 8002A79C
 void ST_DrawString(int x, int y, char *text, int color); // 8002A930
+void ST_DrawClassicString(int x, int y, char *text, int color);
 int ST_GetCenterTextX(byte *text); // 8002AAF4
 void ST_UpdateFlash(void); // 8002AC30
 void ST_DrawSymbol(int xpos, int ypos, int index, int color); // 8002ADEC

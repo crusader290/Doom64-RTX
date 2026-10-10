@@ -6,6 +6,7 @@
 #include "combat_fx.h"
 #include "native_addons.h"
 #include "env_fx.h"
+#include "native_visuals.h"
 #include "interp.h"
 #endif
 #include "r_local.h"
@@ -214,6 +215,9 @@ void R_RenderPlayerView(void) // 80023448
 	if (rendersky)
     {
         R_RenderSKY();
+#ifdef D64_PC
+        PCVisual_Sky(skytexture);
+#endif
         gDPPipeSync(GFX1++);
     }
 
@@ -311,9 +315,11 @@ void R_RenderPlayerView(void) // 80023448
         R_RenderPSprites();
 #ifdef D64_PC
         PCCombat_Draw();
-        PCAddon_Draw();
 #endif
     }
+#ifdef D64_PC
+    PCVisual_Title();
+#endif
 }
 
 /*============================================================================= */

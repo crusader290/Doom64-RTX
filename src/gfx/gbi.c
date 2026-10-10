@@ -931,6 +931,26 @@ void GBI_WorldQuad(uint32_t tex,const float corners[4][3],unsigned color)
     }
 }
 
+void GBI_SkyQuad(uint32_t tex,float u0,float span,float pitch)
+{
+    static const int indices[6]={0,1,2,0,2,3};
+    static const float x[4]={-1,1,1,-1},y[4]={1,1,-1,-1};
+    D64GfxDrawCmd c={0};
+    if(!tex || out_vn+6>MAX_VERTS_OUT || out_cn+1>=MAX_CMDS_OUT) return;
+    c.tex[0]=tex;c.flags=D64GFX_CMD_SKY|D64GFX_CMD_FILTER;
+    c.wrap[0]=D64GFX_WRAP_REPEAT|(D64GFX_WRAP_CLAMP<<2);
+    c.cc[0]=D64GFX_CC_TEXEL0;c.cc[1]=D64GFX_CC_ZERO;c.cc[2]=D64GFX_CC_SHADE;c.cc[3]=D64GFX_CC_ZERO;
+    c.cc[4]=D64GFX_CC_TEXEL0_A;c.cc[5]=D64GFX_CC_ZERO;c.cc[6]=D64GFX_CC_SHADE_A;c.cc[7]=D64GFX_CC_ZERO;
+    memcpy(c.cc+8,c.cc,8);c.scissor[2]=(int16_t)(vw+.999f);c.scissor[3]=240;
+    flush_cmd();c.first_vertex=out_vn;cur_cmd=c;cur_cmd_valid=1;
+    for(int i=0;i<6;i++) {
+        int k=indices[i];D64GfxVertex *v=&out_v[out_vn++];memset(v,0,sizeof(*v));
+        v->pos[0]=x[k];v->pos[1]=y[k];v->pos[3]=1;
+        v->uv[0]=u0+(k==1 || k==2 ? span : 0);v->uv[1]=(k>=2 ? 1.f : 0)-pitch*2;
+        memset(v->shade,255,sizeof(v->shade));cur_cmd.vertex_count++;
+    }
+}
+
 static void tile_uv(const tile_t *tl, float s, float t, float *u, float *v)
 {
     int w, h;

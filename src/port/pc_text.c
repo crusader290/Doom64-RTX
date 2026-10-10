@@ -77,6 +77,7 @@ void PCText_Emit(const void *command)
 {
     const textcmd_t *cmd = command;
     int pass;
+    if(cmd->world==2) { GBI_SkyQuad(cmd->texture,cmd->z,cmd->rx,cmd->ry);return; }
     if(cmd->world) {
         float sx=cmd->rx*cmd->w*.5f,sy=cmd->ry*cmd->w*.5f;
         float vertices[4][3]={{cmd->x-sx,cmd->z+cmd->h*.5f,-(cmd->y-sy)},
@@ -124,5 +125,13 @@ void PCText_WorldImage(unsigned texture,float x,float y,float z,float w,float h,
     cmd=&commands[command_count++];memset(cmd,0,sizeof(*cmd));
     cmd->texture=texture;cmd->x=x;cmd->y=y;cmd->z=z;cmd->w=w;cmd->h=h;cmd->color=color;
     cmd->world=1;cmd->rx=viewsin/(float)FRACUNIT;cmd->ry=-viewcos/(float)FRACUNIT;
+    I_CheckGFX();_gW(GFX1++,_SHIFTL(G_PC_TEXT,24,8),(uintptr_t)cmd);
+}
+
+void PCText_SkyImage(unsigned texture,float u0,float span,float pitch)
+{
+    if(!texture || command_count>=256) return;
+    textcmd_t *cmd=&commands[command_count++];memset(cmd,0,sizeof(*cmd));
+    cmd->world=2;cmd->texture=texture;cmd->z=u0;cmd->rx=span;cmd->ry=pitch;
     I_CheckGFX();_gW(GFX1++,_SHIFTL(G_PC_TEXT,24,8),(uintptr_t)cmd);
 }

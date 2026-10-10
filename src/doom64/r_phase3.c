@@ -5,6 +5,7 @@
 #include "r_local.h"
 #ifdef D64_PC
 #include "combat_fx.h"
+#include "arsenal.h"
 #endif
 
 //-----------------------------------//
@@ -1132,6 +1133,9 @@ void R_RenderLaser(mobj_t *thing) // 80028CCC
 
 void R_RenderPSprites(void) // 80028f20
 {
+#ifdef D64_PC
+    if(PCArsenal_Draw(viewplayer)) return;
+#endif
     int				i;
 	pspdef_t		*psp, *psptmp;
 	state_t			*state;

@@ -251,7 +251,7 @@
         "src/port/pc_options.c",
         "src/doom64/m_main.c"
       ],
-      "evidence": "Linux/MinGW builds PASS; revised title/settings screenshots reviewed; 120 FPS, always-run, faster weapon cadence and stronger kick defaults; console menus removed. Final release extraction PASS: Windows native RX7900XTX Vulkan RT/audio/MAP01; Linux Mesa RT/audio/MAP01; one PK3 auto-loaded.",
+      "evidence": "Centered main/pause with original lettering/skull; simplified settings, bottom Brutal Doom panel/digits. GL screenshots reviewed, Quit normal exit, no flashlight meter or hitmarker. Linux/Windows builds pass; 120 FPS default retained.",
       "next": null
     },
     {
@@ -288,8 +288,8 @@
       "id": "T24",
       "subsystem": "GZDoom add-on compatibility",
       "status": "in_progress",
-      "evidence": "0.5.2 blood/color/flashlight/key ports published. Native face HUD and bounded liquid effects verified with seven sanitizer suites, real MAP07 GL and Windows RT captures. General scripts/maps remain unsupported.",
-      "next": "Publish 0.5.3; continue composite sky/title native visual ports."
+      "evidence": "0.5.2/0.5.3 ports published; native panorama/title/PCM and SMG/rifle adaptations implemented and sanitizer-tested. General actor/script/map VM and full arsenal unsupported.",
+      "next": "Publish tested 0.5.4 and retain explicit compatibility limits."
     },
     {
       "id": "T25",
@@ -309,7 +309,14 @@
         "tools/pack_visuals.py"
       ],
       "evidence": "Reactive portraits and bounded liquid mapping/collision/draw purity sanitizer PASS; 550 on/off gameplay/RNG traces identical; all 32 native map startups PASS; MAP07 GL and Windows hardware RT paired captures differ as expected. Transient warp/skill config tests PASS.",
-      "next": "Publish 0.5.3 archives."
+      "next": null
+    },
+    {
+      "id": "T27",
+      "subsystem": "Native SMG/rifle, unlimited flashlight, jump and level view refinements",
+      "status": "verified",
+      "evidence": "Actual weapon ammo/damage/ADS/render purity, jump takeoff/normal+long landing, unlimited flashlight 10000 ticks, PCM and demo gates pass ASAN/UBSAN. Imported weapon variants retain existing slots/save fields; New Sounds has conservative gain and ROM fallback. Fresh map resets pitch/recoil; load restores saved view.",
+      "next": "Publish 0.5.4 after extraction smoke."
     }
   ]
 }

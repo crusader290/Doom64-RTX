@@ -284,6 +284,7 @@ S_IMPL void S_StartSound_impl(mobj_t *origin, int sound_id) // 80029970
 
 #ifdef D64_PC
         if (PCSound_Play(origin,sound_id,vol,pan,attr.reverb)) return;
+        if(sound_id==PC_SOUND_SMG || sound_id==PC_SOUND_RIFLE) sound_id=sfx_pistol;
         if (sound_id >= NUMSFX) return; /* PC-only optional sounds have no WESS sequence. */
 #endif
 		wess_seq_trigger_type_special(sound_id, (unsigned int)(uintptr_t)origin, &attr);

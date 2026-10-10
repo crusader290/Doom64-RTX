@@ -64,14 +64,14 @@ static int step_choice(int cur, const int *vals, int n, int dir)
 /* ---- Graphics ------------------------------------------------------------ */
 
 enum { G_RT, G_RT_SPP, G_RT_BOUNCES, G_RT_DENOISE, G_FPS, G_ASPECT, G_VSYNC, G_FULLSCREEN, G_RENDERER, G_PACKS,
-       G_BRIGHTNESS, G_FILTER,
+       G_BRIGHTNESS, G_FILTER, G_SKY, G_INTRO,
        G_COUNT };
 
 static const char *gfx_label(int i)
 {
     static const char *l[G_COUNT] = { "Ray Tracing", "RT Samples", "RT Bounces", "RT Denoiser",
                                       "Frame Rate", "Aspect Ratio", "VSync", "Fullscreen", "Renderer",
-                                      "Texture Packs", "Brightness", "Texture Filter" };
+                                      "Texture Packs", "Brightness", "Texture Filter", "Sky Upgrade", "Title Intro" };
     return l[i];
 }
 
@@ -105,6 +105,8 @@ static const char *gfx_value(int i, char *buf, int len)
     case G_PACKS:
         return onoff(pc_config.respacks);
     case G_BRIGHTNESS: SDL_snprintf(buf, len, "%d%%", pc_config.brightness); return buf;
+    case G_SKY: return onoff(pc_config.sky_upgrades);
+    case G_INTRO: return onoff(pc_config.title_intro);
     case G_FILTER: return pc_config.filter ? "Nearest" : "Smooth";
     }
     return NULL;
@@ -123,6 +125,8 @@ static int gfx_change(int i, int dir)
         brightness = pc_config.brightness;
         P_RefreshBrightness();
         break;
+    case G_SKY: CONFIG_SET(sky_upgrades,!pc_config.sky_upgrades);break;
+    case G_INTRO: CONFIG_SET(title_intro,!pc_config.title_intro);break;
     case G_FILTER: CONFIG_SET(filter, !pc_config.filter); break;
     case G_RT:
         I_PCToggleRaytracing();
@@ -169,14 +173,14 @@ static int gfx_change(int i, int dir)
 /* ---- Gameplay ------------------------------------------------------------ */
 
 enum { P_MOUSELOOK, P_INVERT, P_SENS, P_RUN, P_AUTOAIM, P_CROSSHAIR, P_JUMP, P_BOB, P_ADS, P_FASTWEAP,
-       P_GORE, P_AUTOSAVE, P_ANIMS, P_NATIVE, P_LIGHT, P_LIFE, P_LIMIT, P_FACE, P_ENV, P_COUNT };
+       P_GORE, P_AUTOSAVE, P_ANIMS, P_NATIVE, P_LIGHT, P_LIFE, P_LIMIT, P_FACE, P_ENV, P_WEAPONS, P_COUNT };
 
 static const char *play_label(int i)
 {
     static const char *l[P_COUNT] = { "Mouse Look", "Invert Mouse", "Mouse Speed", "Always Run",
                                       "Autoaim", "Crosshair", "Jumping", "Bobbing", "Aim Sights",
                                       "Fast Weapons", "Immersive Gore", "Autosave", "Combat Animation",
-                                      "Native Add-ons", "Flashlight", "Blood Lifetime", "Blood Limit", "Face HUD", "Liquid Effects" };
+                                      "Native Add-ons", "Flashlight", "Blood Lifetime", "Blood Limit", "Face HUD", "Liquid Effects", "Imported Weapons" };
     return l[i];
 }
 
@@ -203,6 +207,7 @@ static const char *play_value(int i, char *buf, int len)
     case P_ANIMS: return onoff(pc_config.combat_anims);
     case P_NATIVE: return onoff(pc_config.native_addons);
     case P_LIGHT: return onoff(pc_config.flashlight);
+    case P_WEAPONS: return onoff(pc_config.imported_weapons);
     case P_ENV: return onoff(pc_config.environment_fx);
     case P_FACE: return onoff(pc_config.mugshot);
     case P_LIFE:
@@ -247,6 +252,7 @@ static int play_change(int i, int dir)
     case P_ANIMS: CONFIG_SET(combat_anims, !pc_config.combat_anims); break;
     case P_NATIVE: CONFIG_SET(native_addons,!pc_config.native_addons);break;
     case P_LIGHT: CONFIG_SET(flashlight,!pc_config.flashlight);break;
+    case P_WEAPONS: CONFIG_SET(imported_weapons,!pc_config.imported_weapons);break;
     case P_ENV: CONFIG_SET(environment_fx,!pc_config.environment_fx);break;
     case P_FACE: CONFIG_SET(mugshot,!pc_config.mugshot);break;
     case P_LIFE: {
@@ -452,7 +458,7 @@ const char *PCOpt_Title(int page)
 
 const char *PCOpt_Label(int page, int i)
 {
-    static const char *audio[] = {"Music Volume", "Effects Volume", "Output Rate", "Immersion Sounds"};
+    static const char *audio[] = {"Music Volume", "Effects Volume", "Output Rate", "New Sounds"};
     static const char *bindings[B_COUNT]={"Forward","Backward","Strafe Left","Strafe Right","Use / Open",
         "Jump","Kick","Flashlight","Fire","Automap","Run / Walk","Previous Weapon"};
     static const char *controls[] = {"Move / Strafe", "Fire", "Aim Sights", "Use / Open", "Jump", "Kick", "Weapons", "Quick Save / Load", "Debug / Ray Tracing", "Fullscreen / Capture", "Flashlight"};
@@ -561,14 +567,18 @@ const char *PCOpt_Help(int page, int item)
             "30 Hz logic; 60/120 fps interpolate motion.", "Wider view; menus and HUD retain proportions.",
             "Sync presentation to the display refresh.", "F11 or Alt+Enter toggles fullscreen.",
             "Renderer changes apply after restarting.", "Bundled sprite and RT material upgrades.",
-            "Lift visibility while preserving sector light.", "Nearest is crisp; Smooth blends texels."};
+            "Lift visibility while preserving sector light.", "Nearest is crisp; Smooth blends texels.",
+            "High-resolution panoramas follow camera yaw and pitch.",
+            "Fading title logo and a one-shot sting through Music Volume."};
+        _Static_assert(sizeof(help)/sizeof(help[0])==G_COUNT,"graphics help matches settings");
         return item >= 0 && item < G_COUNT ? help[item] : "";
     }
     if (page == PCPAGE_GAMEPLAY) {
         if (item == P_FASTWEAP) return "Faster switching and attack recovery. Demos stay classic.";
         if (item == P_GORE) return "Blood spray, wall splashes, floor stains and overkill gibs.";
         if (item == P_NATIVE) return "Ported pack behaviors. General GZDoom scripts need conversion.";
-        if (item == P_LIGHT) return "Flashlight key toggles an RT beam. Battery recharges when off.";
+        if (item == P_LIGHT) return "Flashlight key toggles an unlimited RT beam.";
+        if (item == P_WEAPONS) return "Brutal Doom SMG and rifle use the pistol and chaingun pickups.";
         if (item == P_FACE) return "Reactive portraits, health, armor, ammo and key indicators.";
         if (item == P_ENV) return "Poison bubbles and compatible lava sparks, with small RT lights.";
         if (item == P_LIFE) return "Pack Default uses persistent blood when its adapter is loaded.";

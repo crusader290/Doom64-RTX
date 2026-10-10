@@ -11,11 +11,11 @@
 #include "d64gfx.h"
 #include "combat_fx.h"
 
-typedef struct { float x,y,kick,hit; } pose_t;
+typedef struct { float x,y,kick; } pose_t;
 static pose_t pose, previous;
 static float velocity, recoil;
 static angle_t last_angle;
-static int angle_valid, lethal_hit, attempted;
+static int angle_valid, attempted;
 static unsigned boots[13];
 static int widths[13], heights[13];
 /* Upstream grAb offsets, translated to Doom64's 320x240 overlay. */
@@ -46,8 +46,8 @@ static void load_boots(void)
 }
 void PCCombat_Reset(void)
 {
-    pose=previous=(pose_t){0,0,-1,0};
-    recoil=velocity=0;angle_valid=0;lethal_hit=0;
+    pose=previous=(pose_t){0,0,-1};
+    recoil=velocity=0;angle_valid=0;
 }
 void PCCombat_Tick(void)
 {
@@ -66,7 +66,6 @@ void PCCombat_Tick(void)
     if(fabsf(recoil)<.01f && fabsf(velocity)<.01f) recoil=velocity=0;
     pose.y=recoil+sin((float)gametic*.1f)*.35f*(1-ads*.85f)*(pc_config.weapon_bob/100.0f);
     if(pose.kick>=0 && ++pose.kick>=14) pose.kick=-1;
-    if(pose.hit>0) pose.hit--;
 }
 void PCCombat_Fire(void)
 {
@@ -85,7 +84,6 @@ void PCCombat_Fire(void)
     pose.y=recoil;
 }
 void PCCombat_Kick(void) { if(enabled()) { pose.kick=0;previous.kick=0; } }
-void PCCombat_Hit(int lethal) { if(enabled()) { pose.hit=8;lethal_hit=lethal; } }
 static float blend(float a,float b) { return a+(b-a)*(float)I_PCInterpDrawFraction(); }
 void PCCombat_Offsets(float *x,float *y)
 {
@@ -108,10 +106,5 @@ void PCCombat_Draw(void)
         PCText_Image(boots[frame],bx[frame]+(bx[next]-bx[frame])*amount,
             by[frame]+(by[next]-by[frame])*amount,widths[frame],heights[frame],
             (shade<<24)|(shade<<16)|(shade<<8)|255u);
-    }
-    if(pc_config.crosshair && pose.hit>0) {
-        unsigned alpha=(unsigned)SDL_clamp(blend(previous.hit,pose.hit)*64,0,255);
-        unsigned color=(lethal_hit ? 0xe5794500u : 0xe5d5ba00u)|alpha;
-        PCText_Draw(155,112,17,"x",color);
     }
 }

@@ -18,3 +18,8 @@ C adapters, not executed. Mugface portraits and poison/lava sprites are retained
 unmodified from d64r-mugshot, d64r-poison-fx and d64r-lava-fx.
 
 Brutal Doom Platinum boot/PCM imports: pinned commit 423b7167849a4b1f87975a81f43410f0189d9e9e. See credits/brutaldoom inside the PK3 for sources, upstream declared GPLv3, and DetailedCredits. No individual authorship or independent rights for uncredited assets is asserted.
+
+0.5.4 adds unmodified sky panoramas/title logo and converted title music from the
+archived Retribution packs. Brutal Doom Platinum SMG/rifle frames, firing sounds,
+status digits and panel are attributed under credits/assets and credits/brutaldoom.
+Native C behavior is an adaptation; original scripts are not executed.

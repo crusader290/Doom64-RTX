@@ -6,9 +6,11 @@
 #include "config.h"
 #include "gore.h" /* [PC] */
 #include "combat_fx.h"
+#include "arsenal.h"
 #include "native_addons.h"
 #include "pc_hud.h"
 #include "env_fx.h"
+#include "native_visuals.h"
 #include <SDL3/SDL.h>
 #endif
 #include "st_main.h"
@@ -297,6 +299,7 @@ int P_Ticker (void)//80021A00
         PCAddon_Tick();
         PCHud_Tick();
         PCEnv_Tick();
+        PCVisual_Tick();
 #endif
 	    P_RunThinkers();
 		P_CheckSights();
@@ -411,9 +414,28 @@ void P_Start (void) // 80021C50
     }
     I_PCGoreReset(); /* [PC] no cosmetic pointers survive level/load changes */
     PCCombat_Reset();
+    PCArsenal_Reset();
     PCAddon_ResetLevel();
     PCHud_Reset();
     PCEnv_Reset();
+    PCVisual_Reset();
+    if (!demoplayback && !demorecording) {
+        players[0].pc_pitch = 0;
+        players[0].recoilpitch = 0;
+        players[0].pc_jumptics = 0;
+        /* Discard mouse movement accumulated during the transition. */
+        I_PCMousePitch();
+    }
+    const char *test_weapon=SDL_getenv("D64_TEST_WEAPON");
+    int weapon;
+    if(test_weapon && SDL_getenv("D64_HEADLESS") && SDL_getenv("D64_FIXED_TIMESTEP") &&
+       sscanf(test_weapon,"%d",&weapon)==1 && weapon>=0 && weapon<NUMWEAPONS &&
+       !demoplayback && !demorecording) {
+        player_t *p=&players[0];p->weaponowned[weapon]=true;
+        p->readyweapon=weapon;p->pendingweapon=wp_nochange;
+        for(int i=0;i<NUMAMMO;i++) p->ammo[i]=p->maxammo[i];
+        P_SetupPsprites(0);
+    }
 #endif
 
     DrawerStatus = 1;
@@ -457,6 +479,7 @@ void P_Stop (int exit) // 80021D58
 #ifdef D64_PC
     I_PCGoreReset(); /* [PC] before freeing sectors */
     PCCombat_Reset();
+    PCVisual_Stop();
 #endif
     /* [d64] stop plasma buzz */
 	S_StopSound(0, sfx_electric);

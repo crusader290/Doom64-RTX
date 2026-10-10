@@ -189,6 +189,10 @@ void P_PlayerZMovement (mobj_t *mo) // 80021f38
 			if (mo->momz < -(GRAVITY*2))	/* squat down */
 			{
 				mo->player->deltaviewheight = mo->momz>>3;
+#ifdef D64_PC
+                /* Jump feedback plays at takeoff; ordinary falls retain their grunt. */
+                if (!pc_config.jump || demoplayback || demorecording || !mo->player->pc_jumptics)
+#endif
 				S_StartSound (mo, sfx_oof);
 			}
 			mo->momz = 0;
@@ -604,7 +608,8 @@ void P_MovePlayer (player_t *player) // 8002282C
 
 #ifdef D64_PC
 	/* [PC] jumping */
-	if (player->pc_jumptics > 0)
+	/* Keep a takeoff marker until landing, including long jumps off ledges. */
+	if (player->pc_jumptics > 1 || (player->pc_jumptics > 0 && player->onground))
 		player->pc_jumptics--;
 	if ((player->pc_buttons & PCACT_JUMP) && pc_config.jump && player->onground &&
 		!player->pc_jumptics && !(player->mo->flags & MF_NOCLIP))
@@ -612,6 +617,7 @@ void P_MovePlayer (player_t *player) // 8002282C
 		player->mo->momz = PC_JUMPSPEED;
 		player->onground = false;
 		player->pc_jumptics = 18;
+		S_StartSound(player->mo, sfx_oof);
 	}
 #endif
 

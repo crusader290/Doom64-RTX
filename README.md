@@ -24,8 +24,8 @@ Download the latest milestone from [GitHub Releases](https://github.com/crusader
 
 | File | Platform |
 |---|---|
-| `doom64rtx-0.5.2-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
-| `doom64rtx-0.5.2-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
+| `doom64rtx-0.5.4-windows-x86_64.zip` | Windows 10/11 x86-64 (`SDL3.dll` included) |
+| `doom64rtx-0.5.4-linux-x86_64.tar.gz` | Linux x86-64, glibc 2.39+ (`libSDL3.so.0` included) |
 
 Extract, put your ROM next to the executable, run `doom64rtx`. CI artifacts from
 `.github/workflows/build.yml` are built the same way.

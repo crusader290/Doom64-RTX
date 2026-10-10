@@ -7,7 +7,7 @@
 pcconfig_t pc_config;
 boolean demoplayback,demorecording;
 player_t players[MAXPLAYERS];
-int gametic;
+int gametic,gamemap;
 weaponinfo_t weaponinfo[NUMWEAPONS];
 sbflash_t flashCards[6];
 static char loaded_face[9];
@@ -16,7 +16,7 @@ float PCText_Width(float size,const char *text) { return size*strlen(text)/2; }
 void PCText_Image(unsigned id,float x,float y,float w,float h,unsigned c)
 { (void)id;(void)x;(void)y;(void)w;(void)h;(void)c; }
 const uint8_t *ResPack_Image(const char *name,int *w,int *h)
-{ static uint8_t pixels[36*37*4];SDL_strlcpy(loaded_face,name,sizeof(loaded_face));*w=36;*h=37;return pixels; }
+{ static uint8_t pixels[36*37*4];if(!strncmp(name,"STF",3)) SDL_strlcpy(loaded_face,name,sizeof(loaded_face));*w=36;*h=37;return pixels; }
 uint32_t d64gfx_texture_create(uint32_t w,uint32_t h,const uint8_t *data)
 { (void)w;(void)h;(void)data;return 1; }
 static int actions,sounds;
@@ -35,10 +35,11 @@ int main(void)
     pc_config.gore_life=-1;pc_config.gore_limit=128;PCAddon_Init();
     const char fake[]="// class RTBloodPersistHandler\n /* class D64RtFlashlightHud */ \"class RTBloodPersistHandler\"";
     PCAddon_Definition("ZSCRIPT",fake,sizeof(fake)-1);assert(!persistent && !flashlight);
-    const char scripts[]="class RTBloodPersistHandler : EventHandler {} class D64RtFlashlightHud : EventHandler {} class D64PoisonFx : EventHandler {} class D64LavaFx : EventHandler {} class Unknown : Actor {}";
+    const char scripts[]="class RTBloodPersistHandler : EventHandler {} class D64RtFlashlightHud : EventHandler {} class D64PoisonFx : EventHandler {} class D64LavaFx : EventHandler {} class D64RtSkyFix : EventHandler {} class D64RtTitleLogo : EventHandler {} class Unknown : Actor {}";
     PCAddon_Definition("ZSCRIPT",scripts,sizeof(scripts)-1);
     assert(persistent && flashlight && PCAddon_GoreLife()==0);
     assert(PCAddon_Environment()==3);
+    assert(PCAddon_Sky() && !PCAddon_Title());gamemap=33;assert(PCAddon_Title());gamemap=1;
     const char sbarfake[]="// DrawMugShot\n \"DrawMugShot\"";
     PCAddon_Definition("SBARINFO",sbarfake,sizeof(sbarfake)-1);assert(!mugshot);
     const char sbar[]="statusbar fullscreen { DrawMugShot 5, 102, -38; }";
@@ -59,17 +60,18 @@ int main(void)
     pc_config.gore_limit=0;assert(PCAddon_GoreLimit()==1);pc_config.gore_limit=1500;assert(PCAddon_GoreLimit()==128);
     pc_config.gore_life=INT_MAX;assert(PCAddon_GoreLife()==108000);pc_config.gore_life=-1;
     mobj_t mo={0};players[0].mo=&mo;players[0].playerstate=PST_LIVE;
-    actions=8;PCAddon_Tick();assert(burning && charge==899 && sounds==1);
+    actions=8;PCAddon_Tick();assert(burning && sounds==1);
     for(int i=0;i<50;i++) PCAddon_Tick();assert(burning && sounds==1);
-    int before=charge;for(int i=0;i<100;i++) { PCAddon_Draw();PCAddon_Flashlight(); }
-    assert(charge==before);actions=0;
-    for(int i=0;i<900;i++) PCAddon_Tick();assert(!burning && charge>0 && sounds==2);
-    for(int i=0;i<450;i++) PCAddon_Tick();assert(charge==900);
-    PCAddon_ResetLevel();assert(!burning && charge==900);
+    for(int i=0;i<100;i++) assert(PCAddon_Flashlight()==1);
+    actions=0;
+    for(int i=0;i<10000;i++) PCAddon_Tick();assert(burning && sounds==1);
+    actions=8;PCAddon_Tick();assert(!burning && sounds==2);
+    PCAddon_ResetLevel();assert(!burning);
     demoplayback=1;actions=8;PCAddon_Tick();assert(!burning && PCAddon_GoreLife()==900 && !PCHud_Active());
     assert(!PCAddon_Environment());
+    gamemap=33;assert(PCAddon_Title() && !PCAddon_Sky());gamemap=1;assert(!PCAddon_Title());
     assert(PCAddon_BloodColor(MT_IMP2)==0x730403);demoplayback=0;
     pc_config.native_addons=0;assert(PCAddon_Flashlight()==0 && PCAddon_GoreLife()==900);
-    puts("PASS: bounded definition lexer, colors, limits, portraits/render purity, battery edges/expiry, ABI and demo gates");
+    puts("PASS: bounded definition lexer, colors, limits, portraits/render purity, unlimited flashlight edges, ABI and demo gates");
     return 0;
 }

@@ -42,6 +42,7 @@ void Config_Defaults(void)
     pc_config.music_volume = 70;
     pc_config.sfx_volume = 90;
     pc_config.sound_upgrades = pc_config.combat_anims = 1;
+    pc_config.imported_weapons = 1;
     pc_config.fps = 120;
     pc_config.fast_weapons = 1;
     pc_config.always_run = 1;
@@ -52,7 +53,7 @@ void Config_Defaults(void)
     pc_config.weapon_bob = 100;
     pc_config.ads = 1;
     pc_config.gore = 1;
-    pc_config.native_addons = pc_config.flashlight = pc_config.mugshot = pc_config.environment_fx = 1;
+    pc_config.native_addons = pc_config.flashlight = pc_config.mugshot = pc_config.environment_fx = pc_config.sky_upgrades = pc_config.title_intro = 1;
     pc_config.gore_life = -1;pc_config.gore_limit = 128;
     pc_config.autosave = 1;
     pc_config.respacks = 1;
@@ -82,6 +83,8 @@ static const cvar_t cvars[] = {
     { "flashlight", CV_INT, &pc_config.flashlight, 0 },
     { "mugshot", CV_INT, &pc_config.mugshot, 0 },
     { "environment_fx", CV_INT, &pc_config.environment_fx, 0 },
+    { "sky_upgrades", CV_INT, &pc_config.sky_upgrades, 0 },
+    { "title_intro", CV_INT, &pc_config.title_intro, 0 },
     { "gore_life", CV_INT, &pc_config.gore_life, 0 },
     { "gore_limit", CV_INT, &pc_config.gore_limit, 0 },
     { "rom",            CV_STR,      pc_config.rom, sizeof(pc_config.rom) },
@@ -121,6 +124,7 @@ static const cvar_t cvars[] = {
     { "weapon_bob",     CV_INT,      &pc_config.weapon_bob, 0 },
     { "ads",            CV_INT,      &pc_config.ads, 0 },
     { "fast_weapons",   CV_INT,      &pc_config.fast_weapons, 0 },
+    { "imported_weapons", CV_INT, &pc_config.imported_weapons, 0 },
     { "gore",           CV_INT,      &pc_config.gore, 0 },
     { "autosave",       CV_INT,      &pc_config.autosave, 0 },
     { "respacks",       CV_INT,      &pc_config.respacks, 0 },

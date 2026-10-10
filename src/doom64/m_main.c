@@ -7,6 +7,7 @@
 #include "pc_options.h" /* [PC] */
 #include "input.h"
 #include "pc_text.h"
+#include "native_visuals.h"
 #endif
 
 //intermission
@@ -743,19 +744,17 @@ static void M_PCPageDrawer(void)
     int i, y, count;
 
     M_DrawOverlay(20, 10, 300, 232, 176);
-    PCText_Draw(32, 18, 19, PCOpt_Title(pc_page), text_alpha | 0xd9c2a000);
-    PCText_Box(32, 40, 256, .5f, 0x55463aff);
+    ST_DrawClassicString(-1, 18, (char *)PCOpt_Title(pc_page), text_alpha | 0xc5231600);
 
     count = PCOpt_Count(pc_page);
     sprintf(position, "%02d / %02d", cursorpos + 1, count);
     PCText_Draw(251, 24, 9, position, text_alpha | 0x81766b00);
     for (i = linepos; i < count && i < linepos + PCPAGE_ROWS; i++)
     {
-        unsigned color = text_alpha | (i == cursorpos ? 0xffe2b700 : 0xb9afa300);
+        unsigned color = text_alpha | (i == cursorpos ? 0xff503800 : 0xc3b5a000);
         y = 47 + (i - linepos) * 18;
         if (i == cursorpos) {
-            PCText_Box(28, y, 264, 17, 0x241b19b0);
-            PCText_Box(28, y + 3, 1.5f, 11, text_alpha | 0xd84c3900);
+            PCText_Draw(25,y+2,11,">",text_alpha|0xff503800);
         }
         PCText_Draw(36, y + 2, 11, PCOpt_Label(pc_page, i), color);
         val = PCOpt_Value(pc_page, i, buf, sizeof(buf));
@@ -766,7 +765,6 @@ static void M_PCPageDrawer(void)
             PCText_Draw(x, y + 2, size, val, color);
         }
     }
-    PCText_Box(32, 193, 256, .5f, 0x55463aff);
     PCText_Draw(32, 201, 8, PCOpt_Help(pc_page, cursorpos), text_alpha | 0xb19b8000);
     PCText_Draw(32, 218, 8, pc_page==PCPAGE_BINDINGS ? "UP/DOWN SELECT   ENTER REBIND   ESC BACK" :
         pc_page==PCPAGE_SAVE || pc_page==PCPAGE_LOAD ? "UP/DOWN SELECT   ENTER CONFIRM   ESC BACK" :
@@ -1747,22 +1745,18 @@ void M_MenuTitleDrawer(void) // 80008E7C
                               MenuItem == Menu_Game || MenuItem == Menu_Skill || MenuItem == Menu_Quit)) {
         if (MenuItem != Menu_Title) {
             M_DrawOverlay(24, 10, 296, 232, 120);
-            PCText_Draw(38, 18, 19, MenuItem == Menu_Options ? "Settings" :
+            ST_DrawClassicString(-1, 18, MenuItem == Menu_Options ? "Settings" :
                         MenuItem == Menu_Game ? "Paused" : MenuItem == Menu_Quit ? pc_confirmation : "Choose Your Skill", text_alpha | 0xd9c2a000);
-            PCText_Box(38, 41, 244, .5f, 0x55463aff);
-        } else PCText_Draw(-1, 121, 8, "R A Y   T R A C E D", text_alpha | 0x99857400);
+        }
         for (i = 0; i < itemlines; i++) {
             menuitem_t *pc_item = &MenuItem[i];
-            unsigned color = text_alpha | (i == cursorpos ? 0xffe2b700 : 0xb9afa300);
+            unsigned color = text_alpha | (i == cursorpos ? 0xff503800 : 0xc5231600);
             int pc_y = MenuItem == Menu_Title ? 141 + i * 21 : pc_item->y + 3;
-            int pc_x = MenuItem == Menu_Title ? 93 : 51;
-            if (i == cursorpos) {
-                PCText_Box(pc_x - 10, pc_y - 3, MenuItem == Menu_Title ? 154 : 226, 20, 0x211a18c0);
-                PCText_Box(pc_x - 10, pc_y + 1, 1.5f, 12, text_alpha | 0xba493700);
-            }
-            PCText_Draw(pc_x, pc_y, MenuItem == Menu_Title ? 15 : 12,
-                        MenuItem == Menu_Quit ? (i==0 ? "Confirm" : "Cancel") :
-                        pc_item->casepos == 6 ? "Back" : pc_item->casepos == 11 ? "Settings" : MenuText[pc_item->casepos], color);
+            char *label=MenuItem == Menu_Quit ? (i==0 ? "Confirm" : "Cancel") :
+                        pc_item->casepos == 6 ? "Back" : pc_item->casepos == 11 ? "Settings" : MenuText[pc_item->casepos];
+            ST_DrawClassicString(-1, pc_y, label, color);
+            if(i==cursorpos) ST_DrawSymbol(ST_GetCenterTextX((byte *)label)-28,pc_y-9,
+                                         MenuAnimationTic+70,text_alpha|0xffffff00);
         }
         PCText_Draw(-1, MenuItem == Menu_Title ? 229 : 219, 7,
                     MenuItem == Menu_Game ? "ESC  RESUME    F5/F9  QUICK SAVE/LOAD" :
@@ -2017,6 +2011,7 @@ void M_DrawBackground(int x, int y, int color, char *name) // 80009A68
     /* [PC] Make space for the title menu rather than crowding full-size art. */
     float pc_scale = 1;
     if (MenuItem == Menu_Title && !strcmp(name, "TITLE") && PCText_Available()) {
+        if(PCVisual_MenuLogo()) return;
         pc_scale = .68f; x = 89; y = 29; color = 160;
     }
 #endif

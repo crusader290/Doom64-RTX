@@ -35,5 +35,6 @@ const gbistats_t *GBI_Stats(void);
 void GBI_OverlayQuad(uint32_t tex, float x, float y, float w, float h,
                      float u0, float v0, float u1, float v1, unsigned color);
 void GBI_WorldQuad(uint32_t tex,const float corners[4][3],unsigned color);
+void GBI_SkyQuad(uint32_t tex,float u0,float span,float pitch);
 
 #endif

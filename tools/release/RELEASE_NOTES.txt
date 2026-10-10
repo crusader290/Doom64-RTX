@@ -1,30 +1,36 @@
 Doom64-RTX @VERSION@, commit @COMMIT@
 Requires your own Doom 64 ROM. No ROM is included.
 
-New in 0.5.3:
-- Native Retribution face HUD: portraits react to damage, death, invulnerability,
-  firing and weapon pickups. Clean health/armor/ammo/key and battery layout.
-- Native poison bubbles and compatible lava sparks: 48-particle cap, separate
-  cosmetic RNG, portal visibility, ceiling/floor collision, growing frames,
-  interpolated depth-tested billboards and at most eight small RT lights.
-  Native slime floors work; the ROM has no matching HLAVA/D64LAVA lava flats.
-- Face HUD and Liquid Effects settings; original art and selected declarations
-  consolidated into the same single PK3, with per-file provenance.
-- Direct map startup: -warp 1..32 -skill 1..5. Choices are not saved in the ini.
+New in 0.5.4:
+- Centered main and pause items, original game lettering and animated skull cursor;
+  simplified red settings styling. Bottom status bar uses attributed Brutal Doom
+  panel/digits with reactive Retribution portraits.
+- Unlimited flashlight: battery, recharge, burnout/flicker and flashlight UI removed.
+  Hitmarker feedback removed. Ordinary crosshair remains optional.
+- Quieter imported effects (0.32 gain), Audio > New Sounds toggle, original sound
+  fallback when disabled or missing. Title sting gain 0.5 through Music Volume.
+- Native Brutal Doom SMG and assault-rifle variants with original frames/sounds,
+  base damage 12/20, faster cadence and ADS spread reduction. Existing pistol and
+  chaingun pickup/ammo slots; Gameplay > Imported Weapons restores original guns.
+  No magazine/reload scripting, grenade launcher or complete Brutal Doom arsenal.
+- Fresh level entry resets pitch/recoil to look straight ahead. Save loading retains
+  saved view. Jump grunt plays at takeoff, with silent jump landing; normal fall
+  grunts remain. Long jumps off ledges are covered by a native code regression test.
+- Seven native sky panoramas selected by native sky type, yaw/pitch and widescreen;
+  original sky simulation/RNG preserved. Fire/void/evil skies retain native visuals.
+- Native title fade and one-shot imported music sting. Full composite skies, sky
+  actors and replacement maps are not interpreted.
 
-Retains 0.5.2 persistent colored blood, flashlight battery/shadowed RT cone,
-key rebinding and confirmation polish; 0.5.1 boot/recoil animations and four
-attributed sounds; crash fixes, aggressive combat and 120 FPS defaults.
+Retains crash hardening/logging, heavy bounded gore, key rebinding, aggressive
+combat, 120 FPS defaults, native portrait/liquid effects and direct -warp/-skill.
+One consolidated PK3 contains compatible art, sounds, descriptors and provenance.
 
-Validation: seven sanitizer suites, Linux/Windows builds, all 32 native map
-startups, MAP01/MAP07 GL and Windows hardware RT on/off captures. 550-frame
-environmental on/off gameplay/RNG traces match. Original crash camera unavailable.
+Validation: Linux, Windows cross and native dependency builds; sanitizer suites
+for actual weapon/ammo/ADS logic, jump sound timing, unlimited flashlight, PCM,
+combat, title/sky and earlier math/gore/bindings/liquid regressions. Real main/pause,
+SMG/rifle and Windows hardware RT/audio captures; main-menu Quit exits normally.
+Original crash camera unavailable; no exact camera replay claim.
 
-Native adaptations, not a GZDoom VM. General ZScript/DECORATE states, ACS,
-UDMF/SBARINFO and replacement maps require conversion. Composite sky/title
-handlers, original environmental fragment/saturation CVars and diagnostic
-add-ons remain unported. See docs/ADDON_COMPATIBILITY.md for exact limits.
-
-F toggles the RT flashlight; V kicks. Settings > Key Bindings changes 12 primary
-actions. Arrow/Enter/Esc, weapon number slots and function shortcuts stay fixed.
-F5/F9 quicksave/load, F7 debug, F8 RT toggle, F11 fullscreen, F12 capture.
+Native adapters, not a GZDoom VM: general ZScript/DECORATE, ACS, UDMF, SBARINFO,
+replacement maps and full Brutal Doom gameplay remain unsupported.
+See docs/ADDON_COMPATIBILITY.md and bundled asset provenance for exact limits.

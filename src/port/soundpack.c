@@ -7,14 +7,14 @@
 #include "respack.h"
 #include "soundpack.h"
 
-#define CLIPS 4
+#define CLIPS 6
 #define VOICES 16
 typedef struct { Sint16 *pcm; int frames; } clip_t;
 typedef struct { int clip, pos, id; uintptr_t origin; float l, r, send; } voice_t;
 static clip_t clips[CLIPS];
 static voice_t voices[VOICES];
-static const int ids[CLIPS] = {sfx_pistol, sfx_punch, sfx_slop, PC_SOUND_KICK};
-static const char *names[CLIPS] = {"pistol.wav", "meat.wav", "slop.wav", "kick.wav"};
+static const int ids[CLIPS] = {sfx_pistol, sfx_punch, sfx_slop, PC_SOUND_KICK, PC_SOUND_SMG, PC_SOUND_RIFLE};
+static const char *names[CLIPS] = {"pistol.wav", "meat.wav", "slop.wav", "kick.wav", "smg.wav", "rifle.wav"};
 static float *tail;
 static int tail_size, tail_pos, paused;
 static unsigned cursor;
@@ -79,7 +79,7 @@ int PCSound_Play(const void *origin, int id, int volume, int pan, int reverb)
     for (int v=0; v<VOICES; v++) if (voices[v].clip<0) { slot=v; break; }
     if (slot<0) slot=(int)(cursor++ % VOICES);
     position=SDL_clamp(pan,0,127)/127.0f;
-    gain=SDL_clamp(volume,0,127)/127.0f * .65f;
+    gain=SDL_clamp(volume,0,127)/127.0f * .32f;
     voice=&voices[slot];
     *voice=(voice_t){i,0,id,(uintptr_t)origin,
         sqrtf(1-position)*gain,sqrtf(position)*gain,reverb ? .12f : 0};

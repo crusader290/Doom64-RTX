@@ -12,6 +12,8 @@ pistol.wav <- SOUNDS/COMBAT/WEAPONS/DSPISTOL.ogg
 meat.wav   <- SOUNDS/COMBAT/WEAPONS/Slot 1/MELEE/FOOTMEAT
 slop.wav   <- SOUNDS/GORE/DSSLOP (DMX 8-bit PCM converted without resampling)
 kick.wav   <- SOUNDS/COMBAT/WEAPONS/Slot 1/MELEE/KICK
+smg.wav    <- SOUNDS/COMBAT/WEAPONS/Slot 2/SMG/SMGFIRE.ogg
+rifle.wav  <- SOUNDS/COMBAT/WEAPONS/Slot 4/RIFLE/DSRIFLE.ogg
 assets/combat/kick/KICK[A-M]0.png <- SPRITES/WEAPONS/Slot 1/MELEE/KICKS/
 
 Audio originals are retained under source/. WAV conversion of the compressed

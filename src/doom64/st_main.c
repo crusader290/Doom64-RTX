@@ -548,6 +548,12 @@ void ST_DrawString(int x, int y, char *text, int color) // 8002A930
         return;
     }
 #endif
+    ST_DrawClassicString(x, y, text, color);
+}
+
+/* Original game lettering for the main and pause menus. */
+void ST_DrawClassicString(int x, int y, char *text, int color)
+{
     byte c;
     int xpos, ypos, index;
 

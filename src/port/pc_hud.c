@@ -36,7 +36,13 @@ static unsigned face(const char *name)
 static void value(float right,int number,unsigned color)
 {
     char text[16];SDL_snprintf(text,sizeof(text),"%d",SDL_max(number,0));
-    PCText_Draw(right-PCText_Width(15,text),216,15,text,color);
+    float x=right-strlen(text)*10;
+    for(char *p=text;*p;p++,x+=10) {
+        char lump[9];SDL_snprintf(lump,sizeof(lump),"BDNUM%c",*p);
+        unsigned digit=face(lump);
+        if(digit) PCText_Image(digit,x,211,10,16,color);
+        else { char fallback[2]={*p,0};PCText_Draw(x,211,15,fallback,color); }
+    }
 }
 void PCHud_Draw(void)
 {
@@ -50,18 +56,19 @@ void PCHud_Draw(void)
     else SDL_snprintf(name,sizeof(name),"STFST%d%d",band,(gametic/35)%3);
     unsigned portrait=face(name);
     if(!portrait) portrait=face("STFST00");
-    PCText_Box(76,200,64,40,0x151311c0u);
-    PCText_Box(101,201,38,39,0x645744c0u);
-    if(portrait) PCText_Image(portrait,102,202,36,37,0xffffffffu);
-    PCText_Draw(76,205,7,"HP",0xcbbb9cffu);value(99,p->health,p->health<25 ? 0xe97050ffu : 0xe5d4afffu);
-    PCText_Draw(227,205,7,"ARMOR",0xcbbb9cffu);value(255,p->armorpoints,0xe5d4afffu);
-    PCText_Draw(279,205,7,"AMMO",0xcbbb9cffu);
+    unsigned bar=face("BDBAR");
+    if(bar) PCText_Image(bar,0,208,320,32,0xffffffffu);
+    else PCText_Box(0,208,320,32,0x302d28ffu);
+    if(portrait) PCText_Image(portrait,145,209,30,30,0xffffffffu);
+    PCText_Draw(65,230,7,"HEALTH",0xb9a98fffu);value(107,p->health,0xffffffffu);
+    PCText_Draw(188,230,7,"ARMOR",0xb9a98fffu);value(225,p->armorpoints,0xffffffffu);
+    PCText_Draw(7,230,7,"AMMO",0xb9a98fffu);
     int weapon=p->pendingweapon==wp_nochange ? p->readyweapon : p->pendingweapon;
     if(weapon>=0 && weapon<NUMWEAPONS && weaponinfo[weapon].ammo!=am_noammo)
-        value(306,p->ammo[weaponinfo[weapon].ammo],0xe5d4afffu);
+        value(44,p->ammo[weaponinfo[weapon].ammo],0xffffffffu);
     static const unsigned colors[3]={0x559bdfffu,0xe0bd52ffu,0xdb6655ffu};
     for(int i=0;i<NUMCARDS;i++) if(p->cards[i] || (flashCards[i].active && flashCards[i].doDraw)) {
-        float x=174+(i%3)*14,y=210+(i/3)*11;
+        float x=240+(i%3)*14,y=211+(i/3)*11;
         PCText_Box(x,y,9,8,colors[i%3]);
         PCText_Draw(x+2,y,7,i<3 ? "I" : "S",0x211c18ffu);
     }

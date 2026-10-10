@@ -20,10 +20,10 @@ def add(name, data, origin):
     entries[name] = data
     origins[name] = origin
 
-for pack in ('d64r-lostsoul-rt.pk3', 'd64r-caco-ball-recolor.pk3', 'd64r-mugshot.pk3','d64r-lava-fx.pk3','d64r-poison-fx.pk3'):
+for pack in ('d64r-lostsoul-rt.pk3', 'd64r-caco-ball-recolor.pk3', 'd64r-mugshot.pk3','d64r-lava-fx.pk3','d64r-poison-fx.pk3','d64r-rt-sky.pk3','d64r-rt-titlelogo.pk3'):
     with zipfile.ZipFile(source / pack) as archive:
         for name in sorted(archive.namelist()):
-            if (name.startswith('sprites/') or name.startswith('mugface/')) and name.endswith('.png'):
+            if (name.startswith('sprites/') or name.startswith('mugface/') or name.startswith('textures/') or name=='graphics/D64RTLGO.png') and name.endswith('.png'):
                 add(name, archive.read(name), pack)
 
 # These PNG lumps match original N64 ceiling-light texture names. Do not include
@@ -47,18 +47,26 @@ for path in sorted((materials / 'rt/data').glob('*.json')):
     add(path.relative_to(materials).as_posix(), path.read_bytes(), 'Retribution-RT-Materials')
 add('CREDITS.txt', (root / 'tools/release/PACKS_CREDITS.txt').read_bytes(), 'Doom64-RTX')
 # Native adapters inspect selected declarations. They do not execute scripts.
-for pack in ('d64r-blood-persist.pk3','d64r-rt-flashlight.pk3','d64r-mugshot.pk3','d64r-lava-fx.pk3','d64r-poison-fx.pk3'):
+for pack in ('d64r-blood-persist.pk3','d64r-rt-flashlight.pk3','d64r-mugshot.pk3','d64r-lava-fx.pk3','d64r-poison-fx.pk3','d64r-rt-sky.pk3','d64r-rt-titlelogo.pk3'):
     with zipfile.ZipFile(source / pack) as archive:
         for name in ('DECORATE','ZSCRIPT','SBARINFO'):
             if name in archive.namelist():
                 add('native/' + pack[:-4] + '/' + name,archive.read(name),pack)
 for path in sorted((root / 'assets/combat/kick').glob('*.png')):
     add('fx/kick/' + path.name, path.read_bytes(), 'BrutalDoomPlatinum 423b716')
+for path in sorted((root / 'assets/combat/weapons').glob('*.png')):
+    add('weapons/' + path.name, path.read_bytes(), 'BrutalDoomPlatinum 423b716')
+for path in sorted((root / 'assets/ui').glob('*.png')):
+    add('graphics/' + path.name, path.read_bytes(), 'BrutalDoomPlatinum 423b716')
+for folder in ('assets/ui','assets/combat/weapons'):
+    add('credits/' + folder + '/SOURCES.txt',(root/folder/'SOURCES.txt').read_bytes(),'Doom64-RTX')
 for path in sorted((root / 'assets/sounds').glob('*.wav')):
     add('sounds/immersion/' + path.name, path.read_bytes(), 'BrutalDoomPlatinum 423b716')
 if (root / 'assets/sounds/SOURCES.txt').exists():
     for name in ('SOURCES.txt','LICENSE.BDP','DetailedCredits.txt'):
         add('credits/brutaldoom/' + name,(root / 'assets/sounds' / name).read_bytes(),'BrutalDoomPlatinum 423b716')
+add('music/title.wav',(root/'assets/title/title.wav').read_bytes(),'d64r-rt-titlelogo.pk3; ffmpeg stereo PCM 44100 Hz')
+add('credits/title/SOURCES.txt',(root/'assets/title/SOURCES.txt').read_bytes(),'Doom64-RTX')
 add('manifest.json', json.dumps({'format': 1, 'sources': origins}, indent=2).encode(), 'Doom64-RTX')
 args.output.parent.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(args.output, 'w') as archive:

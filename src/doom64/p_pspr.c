@@ -5,6 +5,7 @@
 #ifdef D64_PC
 #include "config.h" /* [PC] */
 #include "combat_fx.h"
+#include "arsenal.h"
 #endif
 void P_Thrust (player_t *player, angle_t angle, fixed_t move); /* [PC] */
 
@@ -213,6 +214,11 @@ void P_SetPsprite (player_t *player, int position, statenum_t stnum) // 8001B3FC
          * preserves zero-time actions and all demo timings. */
         if (pc_config.fast_weapons && !demoplayback && !demorecording && psp->tics > 2)
             psp->tics = (psp->tics * 3 + 3) / 4;
+        if(position==ps_weapon && PCArsenal_Active(player->readyweapon) && psp->tics>1 &&
+           stnum!=weaponinfo[player->readyweapon].downstate &&
+           stnum!=weaponinfo[player->readyweapon].upstate &&
+           stnum!=weaponinfo[player->readyweapon].readystate)
+            psp->tics=player->readyweapon==wp_pistol ? 1 : 3;
 #endif
 
 		/* call action routine */
@@ -930,6 +936,9 @@ void P_GunShot (mobj_t *mo, boolean accurate) // 8001C024
 
 void A_FirePistol (player_t *player, pspdef_t *psp) // 8001C0B4
 {
+#ifdef D64_PC
+    if(PCArsenal_Fire(player)) return;
+#endif
 	S_StartSound (player->mo, sfx_pistol);
 
 	player->ammo[weaponinfo[player->readyweapon].ammo]--;
@@ -1027,6 +1036,9 @@ void A_CockSgun (player_t *player, pspdef_t *psp)
 
 void A_FireCGun (player_t *player, pspdef_t *psp) // 8001C3F8
 {
+#ifdef D64_PC
+    if(PCArsenal_Fire(player)) return;
+#endif
     int ammo;
     int rand;
 

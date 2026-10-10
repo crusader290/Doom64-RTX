@@ -1,7 +1,7 @@
 #ifndef D64_SOUND_PACK_H
 #define D64_SOUND_PACK_H
 #include <stdint.h>
-enum { PC_SOUND_KICK = 1000 };
+enum { PC_SOUND_KICK = 1000, PC_SOUND_SMG, PC_SOUND_RIFLE };
 void PCSound_Init(int rate);
 void PCSound_Shutdown(void);
 /* Called under the same audio lock as WESS; no per-event allocations. */

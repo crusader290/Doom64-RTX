@@ -1,0 +1,10 @@
+Unmodified BrutalDoomPlatinum artwork, pinned commit
+423b7167849a4b1f87975a81f43410f0189d9e9e.
+https://github.com/EmeraldCoasttt/BrutalDoomPlatinum
+SMGRA0/SMGF[A-C]0 <- SPRITES/WEAPONS/Slot 2/SMG/
+RIFGA0/RIFF[A-C]0 <- SPRITES/WEAPONS/Slot 4/Rifle/
+Original grAb anchors adapted from a 320x200 canvas to Doom64's 320x240.
+Native SMG uses the pistol slot; rifle uses the chaingun slot. Existing pickups,
+ammo ownership and saves remain compatible. Base damage 12/20 follows upstream
+SubMachinegun/AssaultRifle definitions; no magazine/reload VM or grenades.
+See assets/sounds/LICENSE.BDP and DetailedCredits.txt for upstream licence/credits.

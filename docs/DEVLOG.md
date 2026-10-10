@@ -121,3 +121,23 @@ and liquid-center diagnostics support regression captures. Seven sanitizer suite
 PASS; MAP01/MAP07 GL, all 32 native-map startups, 550-frame on/off gameplay/RNG
 trace equality and Windows RT on/off captures PASS. Windows RT changed 2557 pixels
 with stronger green channel near bubbles; no full script/map VM claim.
+
+## 2026-10-10 — 0.5.4 UI, native arsenal and sky/title milestone
+0.5.3 was published with both archives/checksums. 0.5.4 centers main/pause items
+with original lettering/skull cursor and simplifies settings styling. Bottom HUD
+uses attributed Brutal Doom panel/digits, centered reactive face and native stats.
+Flashlight battery/HUD and hitmarkers removed; unlimited beam keeps manual toggle.
+Imported effects gain reduced from 0.65 to 0.32; New Sounds toggles effects,
+weapon PCM and title sting (0.5 music gain), with ROM fallback. Native SMG/rifle
+variants use pistol/chaingun slots and existing ownership/ammo/save fields; damage
+12/20, faster cadence, narrowed ADS spread, original PNGs and firing PCM. No
+magazine/reload, launcher or complete arsenal/actor VM is claimed.
+New level pitch/recoil reset; saved views restored on load. Actual jump regression
+verifies takeoff-only grunt, quiet normal/long jump landings and retained ordinary
+fall grunt. Seven panoramas map native sky type/yaw/pitch/widescreen; original sky
+simulation/RNG preserved. Native title fade/one-shot music, fallback when disabled.
+Sanitizers cover actual weapon/ammo/ADS/draw purity, jump paths, unlimited beam,
+PCM/combat/title/sky; Linux, MinGW cross and native Windows builds pass. Real GL
+main/pause/SMG/rifle captures and Windows RT/audio smoke pass. Quit UI reaches
+normal exit (smoke wrapper expects the timed exit, so its FAIL here is expected).
+0.5.4 release packaging/fresh-extraction verification in progress.

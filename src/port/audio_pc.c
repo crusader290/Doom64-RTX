@@ -28,6 +28,7 @@
 #include "config.h"
 #include "n64synth.h"
 #include "soundpack.h"
+#include "intro_audio.h"
 #include "rom.h"
 
 extern void N64_wdd_location(char *wdd_location);
@@ -131,6 +132,7 @@ static void render_frames(int frames)
         int n = frames > 1024 ? 1024 : frames;
         Synth_Render(buf, n);
         PCSound_Mix(buf,n);
+        PCIntroAudio_Mix(buf,n);
         if (stream && !pump_mode)
             SDL_PutAudioStreamData(stream, buf, n * 4);
         if (wav_file)
@@ -265,6 +267,7 @@ void wess_init(WessConfig *wessconfig)
     wesssys_init();
     init_completed = 1;
     PCSound_Init(rate);
+    PCIntroAudio_Init(rate);
 
     if (pc_config.sound)
         open_output();
@@ -336,6 +339,7 @@ void wess_exit(void)
         alClose(&am_globals);
         init_completed = 0;
         PCSound_Shutdown();
+        PCIntroAudio_Shutdown();
     }
     wav_close();
     I_PCAudioUnlock();
@@ -354,4 +358,11 @@ unsigned char *I_PCWddData(char *wdd_location)
     }
     SDL_Log("audio: WDD sample bank %u bytes", (unsigned)seg->size);
     return seg->data;
+}
+
+int I_PCIntroMusic(int start)
+{
+    int result=0;I_PCAudioLock();
+    if(init_completed) { if(start) result=PCIntroAudio_Start();else PCIntroAudio_Stop(); }
+    I_PCAudioUnlock();return result;
 }

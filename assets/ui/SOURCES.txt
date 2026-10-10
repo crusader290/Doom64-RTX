@@ -1,0 +1,7 @@
+Unmodified BrutalDoomPlatinum artwork, pinned commit
+423b7167849a4b1f87975a81f43410f0189d9e9e.
+https://github.com/EmeraldCoasttt/BrutalDoomPlatinum
+BDBAR.png <- GRAPHICS/HUDS/STMNBAR.png
+BDNUM[0-9].png <- GRAPHICS/DIGNUM[0-9]S.png
+See assets/sounds/LICENSE.BDP and DetailedCredits.txt for upstream licence/credits.
+The native engine renders this art; upstream SBARINFO is not executed.

@@ -26,7 +26,7 @@ int main(void)
     players[0].playerstate=PST_LIVE;players[0].readyweapon=wp_shotgun;
     pc_config.combat_anims=pc_config.crosshair=1;pc_config.weapon_bob=100;
     PCCombat_Reset();PCCombat_Tick();PCCombat_Fire();assert(recoil==6);
-    PCCombat_Kick();PCCombat_Hit(1);assert(pose.kick==0 && pose.hit==8);
+    PCCombat_Kick();assert(pose.kick==0);
     pose_t saved=pose;float saved_recoil=recoil,saved_velocity=velocity;
     for(int i=0;i<500;i++) {
         float x,y;fraction=(i%5)/4.0;PCCombat_Offsets(&x,&y);PCCombat_Draw();
@@ -35,13 +35,13 @@ int main(void)
     assert(images==500 && !memcmp(&saved,&pose,sizeof(pose)));
     assert(recoil==saved_recoil && velocity==saved_velocity);
     for(int i=0;i<14;i++) { gametic++;PCCombat_Tick(); }
-    assert(pose.kick==-1 && pose.hit==0);
+    assert(pose.kick==-1);
     players[0].pc_kicktics=11;PCCombat_Reset();PCCombat_Tick();
     assert(previous.kick==3 && pose.kick==4);players[0].pc_kicktics=0;
     demoplayback=1;PCCombat_Tick();PCCombat_Fire();PCCombat_Kick();
     assert(recoil==0 && pose.kick==-1);demoplayback=0;
-    demorecording=1;PCCombat_Hit(1);assert(pose.hit==0);demorecording=0;
+    demorecording=1;PCCombat_Kick();assert(pose.kick==-1);demorecording=0;
     pc_config.combat_anims=0;PCCombat_Fire();assert(recoil==0);
-    puts("PASS: recoil, kick timing/load recovery, hit expiry, render purity and demo gates");
+    puts("PASS: recoil, kick timing/load recovery, render purity and demo gates");
     return 0;
 }

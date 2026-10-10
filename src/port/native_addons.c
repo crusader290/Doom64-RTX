@@ -7,7 +7,7 @@
 #include "pc_text.h"
 #include "native_addons.h"
 
-static int persistent, flashlight, mugshot, environment, previous_action, charge, burning;
+static int persistent, flashlight, mugshot, environment, sky, title, previous_action, burning;
 static uint32_t colors[NUMMOBJTYPES];
 typedef struct { const char *p,*end; char token[128]; int quoted; } lexer_t;
 static int token(lexer_t *l)
@@ -50,7 +50,7 @@ static int actor_type(const char *s)
 }
 void PCAddon_Init(void)
 {
-    persistent=flashlight=mugshot=environment=0;memset(colors,0,sizeof(colors));
+    persistent=flashlight=mugshot=environment=sky=title=0;memset(colors,0,sizeof(colors));
     PCAddon_ResetLevel();
 }
 int PCAddon_IsDefinition(const char *name)
@@ -86,10 +86,12 @@ void PCAddon_Definition(const char *name,const void *data,size_t size)
                 SDL_Log("native add-on: persistent blood handler adapted (128 stain cap, native physics)");
             } else if(!SDL_strcasecmp(l.token,"D64RtFlashlightHud")) {
                 flashlight=1;recognized++;
-                SDL_Log("native add-on: flashlight battery/HUD adapted (native RT spotlight)");
+                SDL_Log("native add-on: unlimited native RT flashlight; battery and HUD omitted");
             } else if(!SDL_strcasecmp(l.token,"D64PoisonFx")) { environment|=1;recognized++; }
             else if(!SDL_strcasecmp(l.token,"D64LavaFx")) { environment|=2;recognized++; }
             else if(!SDL_strcasecmp(l.token,"D64PoisonBubble") || !SDL_strcasecmp(l.token,"D64LavaSpark")) recognized++;
+            else if(!SDL_strcasecmp(l.token,"D64RtSkyFix")) { sky=1;recognized++; }
+            else if(!SDL_strcasecmp(l.token,"D64RtTitleLogo")) { title=1;recognized++; }
             else unknown++;
         } else if(!SDL_strcasecmp(l.token,"ACTOR")) { type=-1;depth=0; }
         else if(!SDL_strcasecmp(l.token,"replaces")) {
@@ -107,6 +109,8 @@ void PCAddon_Definition(const char *name,const void *data,size_t size)
         name,recognized,unknown,classes ? "; general script execution unavailable" : "; native properties only");
 }
 static int active(void) { return pc_config.native_addons && pc_config.respacks && !demoplayback && !demorecording; }
+int PCAddon_Sky(void) { return active() && sky; }
+int PCAddon_Title(void) { return title && pc_config.native_addons && pc_config.respacks && gamemap==33 && !demorecording; }
 int PCAddon_Environment(void) { return active() ? environment : 0; }
 int PCAddon_Mugshot(void) { return active() && mugshot; }
 int PCAddon_GoreLife(void)
@@ -123,7 +127,7 @@ uint32_t PCAddon_BloodColor(int type)
     }
     return 0x730403;
 }
-void PCAddon_ResetLevel(void) { charge=900;burning=previous_action=0; }
+void PCAddon_ResetLevel(void) { burning=previous_action=0; }
 void PCAddon_Tick(void)
 {
     int action=I_PCActions()&8;
@@ -132,23 +136,9 @@ void PCAddon_Tick(void)
     }
     if(action && !previous_action) { burning=!burning;S_StartSound(NULL,sfx_switch1); }
     previous_action=action;
-    if(burning) {
-        if(charge>0) charge--;
-        if(!charge) { burning=0;S_StartSound(NULL,sfx_switch2); }
-    } else if(charge<900) charge=SDL_min(charge+2,900);
 }
 float PCAddon_Flashlight(void)
 {
     if(!active() || !flashlight || !pc_config.flashlight || !burning) return 0;
-    if(charge<120 && (gametic%11)<3) return .12f;
     return 1;
-}
-void PCAddon_Draw(void)
-{
-    if(!active() || !flashlight || !pc_config.flashlight) return;
-    unsigned color=burning ? (charge<120 ? 0xdc7648ffu : 0xdfd1adffu) : 0x867964ffu;
-    char label[32];
-    SDL_snprintf(label,sizeof(label),"%s  LIGHT",SDL_GetScancodeName((SDL_Scancode)pc_config.bind_keys[B_LIGHT]));
-    PCText_Draw(18,205,7,label,color);
-    for(int i=0;i<5;i++) PCText_Box(18+i*9,218,7,3,charge>i*180 ? color : 0x39332cffu);
 }

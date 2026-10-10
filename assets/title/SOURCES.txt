@@ -1,0 +1,9 @@
+Native title sting source: music/D64RTINT.mp3, archived d64r-rt-titlelogo.pk3.
+doom64-rt by jlrouzies, commit 750c1d84f87546de38fe8ad774da59ff6a606ed0,
+https://github.com/jlrouzies-fr/doom64-rt
+Original MP3 retained under source/. Converted with ffmpeg to stereo PCM S16,
+44100 Hz in title.wav. No trimming, normalization or other audio changes.
+The source repository supplies no file licence; included at the repository
+owner's request. These assets are not relabelled as Doom64-RTX GPLv3 code.
+Logo and panorama PNGs remain unmodified in the consolidated pack, with per-entry
+provenance in manifest.json. Native timing/layout is an adaptation of the handler.
